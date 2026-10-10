@@ -6,6 +6,7 @@ import hacknc2026.backend.model.Trip;
 import hacknc2026.backend.model.TripStatus;
 import hacknc2026.backend.repository.PointTransactionRepository;
 import hacknc2026.backend.repository.TripRepository;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,49 +15,50 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PointTransactionService {
-    private final PointTransactionRepository repository;
-    private final TripRepository tripRepository;
-    private final PointCalculationService calculator;
+  private final PointTransactionRepository repository;
+  private final TripRepository tripRepository;
+  private final PointCalculationService calculator;
 
-    public Page<PointTransactionResponse> getTransactions(UUID userId, Pageable pageable) {
-        return repository.findByUser_IdOrderByCreatedAtDesc(userId, pageable)
-                .map(PointTransactionResponse::from);
-    }
+  public Page<PointTransactionResponse> getTransactions(UUID userId, Pageable pageable) {
+    return repository
+        .findByUser_IdOrderByCreatedAtDesc(userId, pageable)
+        .map(PointTransactionResponse::from);
+  }
 
-    public long getTotalPoints(UUID userId) {
-        return repository.totalPointsForUser(userId);
-    }
+  public long getTotalPoints(UUID userId) {
+    return repository.totalPointsForUser(userId);
+  }
 
-    @Transactional
-    public int awardTripCompletion(UUID userId, UUID tripId) {
-        Trip trip = tripRepository.findForUpdate(tripId, userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found"));
-        if (trip.getStatus() != TripStatus.COMPLETED || trip.getCompletedAt() == null) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Trip must be completed first");
-        }
-        String awardKey = "trip:" + tripId + ":completion";
-        var existing = repository.findByAwardKey(awardKey);
-        if (existing.isPresent()) {
-            return existing.get().getPoints();
-        }
-        int points = calculator.calculatePoints(trip.getBaselineCo2Kg(), trip.getEstimatedCo2Kg());
-        if (points == 0) {
-            return 0;
-        }
-        PointTransaction transaction = new PointTransaction();
-        transaction.setUser(trip.getProfile());
-        transaction.setTrip(trip);
-        transaction.setPoints(points);
-        transaction.setReason("TRIP_COMPLETION");
-        transaction.setAwardKey(awardKey);
-        transaction.setLeaderboardEligible(false);
-        repository.save(transaction);
-        return points;
+  @Transactional
+  public int awardTripCompletion(UUID userId, UUID tripId) {
+    Trip trip =
+        tripRepository
+            .findForUpdate(tripId, userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found"));
+    if (trip.getStatus() != TripStatus.COMPLETED || trip.getCompletedAt() == null) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Trip must be completed first");
     }
+    String awardKey = "trip:" + tripId + ":completion";
+    var existing = repository.findByAwardKey(awardKey);
+    if (existing.isPresent()) {
+      return existing.get().getPoints();
+    }
+    int points = calculator.calculatePoints(trip.getBaselineCo2Kg(), trip.getEstimatedCo2Kg());
+    if (points == 0) {
+      return 0;
+    }
+    PointTransaction transaction = new PointTransaction();
+    transaction.setUser(trip.getProfile());
+    transaction.setTrip(trip);
+    transaction.setPoints(points);
+    transaction.setReason("TRIP_COMPLETION");
+    transaction.setAwardKey(awardKey);
+    transaction.setLeaderboardEligible(false);
+    repository.save(transaction);
+    return points;
+  }
 }
