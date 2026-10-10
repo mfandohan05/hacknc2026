@@ -21,7 +21,19 @@ const CO2_PER_KM: Record<RouteMode, number> = {
 };
 
 type DirectionsResponse = {
-    routes?: { distance: number; duration: number; geometry: { coordinates: [number, number][] } }[];
+    routes?: {
+        distance: number;
+        duration: number;
+        geometry: { coordinates: [number, number][] };
+        legs?: {
+            summary?: string;
+            steps?: {
+                distance: number;
+                duration: number;
+                maneuver: { instruction: string; type: string };
+            }[];
+        }[];
+    }[];
 };
 
 async function fetchRoute(
@@ -33,6 +45,7 @@ async function fetchRoute(
 ): Promise<Omit<RouteOption, "estimatedCost" | "estimatedCo2Kg" | "ecoScore">> {
     const params = new URLSearchParams({
         geometries: "geojson",
+        steps: "true",
         overview: "full",
         access_token: import.meta.env.VITE_MAPBOX_KEY,
     });
@@ -47,6 +60,15 @@ async function fetchRoute(
         mode,
         distanceKm: route.distance / 1000,
         durationMinutes: Math.max(1, Math.round(route.duration / 60)),
+        via: route.legs?.[0]?.summary || null,
+        steps: (route.legs ?? [])
+            .flatMap((leg) => leg.steps ?? [])
+            .filter((s) => s.maneuver.type !== "arrive")
+            .map((s) => ({
+                instruction: s.maneuver.instruction,
+                distanceKm: s.distance / 1000,
+                durationSeconds: s.duration,
+            })),
         geometry: route.geometry.coordinates,
     };
 }

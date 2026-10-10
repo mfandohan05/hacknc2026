@@ -5,6 +5,8 @@ import type { SearchResult } from "../MapSearchBox";
 import InteractiveMap from "../InteractiveMap";
 import DirectionsSheet from "../DirectionsSheet";
 import DirectionsScreen from "../DirectionsScreen";
+import RouteOptionsScreen from "@/components/routes/RouteOptionsScreen";
+import RouteDetailsScreen from "@/components/routes/RouteDetailsScreen";
 import type { DirectionsResult } from "../DirectionsScreen";
 import { useRouteComparison } from "@/hooks/useRouteComparison";
 import { useUserLocation } from "@/hooks/useUserLocation";
@@ -24,6 +26,8 @@ function ExplorePage() {
     // null means the user's current location
     const [originPlace, setOriginPlace] = useState<SearchResult | null>(null);
     const [screenOpen, setScreenOpen] = useState(false);
+    const [optionsOpen, setOptionsOpen] = useState(false);
+    const [detailsOpen, setDetailsOpen] = useState(false);
     const [screenMode, setScreenMode] = useState<DirectionsResult["mode"]>("drive");
     const [selectedMode, setSelectedMode] = useState<RouteMode | null>(null);
     const [weights, setWeights] = useState<PreferenceWeights>(DEFAULT_WEIGHTS);
@@ -53,9 +57,12 @@ function ExplorePage() {
         if (result.destination) setSheetOpen(true);
     };
 
+    const selectedRoute = routes.find((r) => r.routeId === selectedRouteId) ?? null;
+
     const handleStartTrip = (route: RouteOption) => {
         // TODO: call the backend (e.g. POST /api/v1/routes/start) once it exists
         console.info("Start trip", route.routeId);
+        setDetailsOpen(true);
     };
 
     return (
@@ -73,19 +80,37 @@ function ExplorePage() {
                 originLabel={originPlace?.name ?? "Your location"}
                 destinationLabel={destination?.name ?? null}
                 onEditRoute={() => setScreenOpen(true)}
-                routes={routes}
-                recommendedRouteId={recommendedId}
-                selectedRouteId={selectedRouteId}
-                loading={loading}
-                error={error}
-                weights={weights}
-                onWeightsChange={setWeights}
-                onSelectRoute={(id) => setSelectedMode(routes.find((r) => r.routeId === id)?.mode ?? null)}
-                onStartTrip={handleStartTrip}
+                onViewRoutes={() => setOptionsOpen(true)}
             />
             <div className="absolute top-20 left-4 right-4 z-40 flex">
                 <MapSearchBox onSelect={handlePlaceSelect} />
             </div>
+            {optionsOpen && destination && (
+                <RouteOptionsScreen
+                    originLabel={originPlace?.name ?? "Your location"}
+                    destinationName={destination.name}
+                    routes={routes}
+                    recommendedRouteId={recommendedId}
+                    selectedRouteId={selectedRouteId}
+                    loading={loading}
+                    error={error}
+                    weights={weights}
+                    onWeightsChange={setWeights}
+                    onSelectRoute={(id) => setSelectedMode(routes.find((r) => r.routeId === id)?.mode ?? null)}
+                    onStartTrip={handleStartTrip}
+                    onBack={() => setOptionsOpen(false)}
+                />
+            )}
+            {detailsOpen && selectedRoute && destination && (
+                <RouteDetailsScreen
+                    route={selectedRoute}
+                    originLabel={originPlace?.name ?? "Your location"}
+                    destinationName={destination.name}
+                    destinationAddress={destination.address}
+                    recommended={selectedRoute.routeId === recommendedId}
+                    onBack={() => setDetailsOpen(false)}
+                />
+            )}
             {screenOpen && (
                 <DirectionsScreen
                     initialMode={screenMode}

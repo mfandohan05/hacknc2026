@@ -6,8 +6,6 @@ type LeaderboardEntry = {
     points: number;
 };
 
-// Temporary data. Replace this with an import or API response later.
-// The list is expected to arrive already sorted from highest to lowest points.
 const leaderboard: LeaderboardEntry[] = [
     { id: "1", username: "GreenRunner", points: 1240 },
     { id: "2", username: "EcoExplorer", points: 1115 },
@@ -39,7 +37,7 @@ function LeaderboardPage() {
                         <Trophy className="size-6" />
                     </span>
                     <div>
-                        <h1 className="text-2xl font-semibold text-[#17334A]">Global leaderboard</h1>
+                        <h1 className="text-2xl font-semibold text-[#17334A]">Global Leaderboard</h1>
                     </div>
                 </div>
 

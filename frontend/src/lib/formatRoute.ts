@@ -5,6 +5,11 @@ export function formatDuration(minutes: number): string {
     return m === 0 ? `${h} h` : `${h} h ${m} min`;
 }
 
+export function formatStepDuration(seconds: number): string {
+    const minutes = Math.round(seconds / 60);
+    return minutes < 1 ? "< 1 min" : formatDuration(minutes);
+}
+
 export function formatDistance(km: number): string {
     return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
 }
