@@ -27,7 +27,7 @@ public class PointTransaction {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "profile_id", nullable = false)
     private Profile user;
 
     @ManyToOne(fetch = FetchType.LAZY)

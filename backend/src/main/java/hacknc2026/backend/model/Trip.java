@@ -1,75 +1,60 @@
 package hacknc2026.backend.model;
 
 import jakarta.persistence.*;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.UUID;
 
-enum TripMode{
-    WALK,
-    BIKE,
-    DRIVE
-}
-
-enum TripStatus {
-    COMPLETE,
-    IN_PROGRESS,
-    INCOMPLETE
-}
-
+@Data
 @Entity
 @Table(name = "trips", schema = "public")
-@Getter
-@Setter
-@NoArgsConstructor
 public class Trip {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "profile_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_id")
     private Profile profile;
 
-    @Column(name = "origin_lat")
-    private Double originLat;
+    @Column(name = "origin_latitude")
+    private Double originLatitude;
 
-    @Column(name = "origin_lon")
-    private Double originLon;
+    @Column(name = "origin_longitude")
+    private Double originLongitude;
 
-    @Column(name = "destination_lat")
-    private Double destinationLat;
+    @Column(name = "destination_latitude")
+    private Double destinationLatitude;
 
-    @Column(name = "destination_lon")
-    private Double destinationLon;
+    @Column(name = "destination_longitude")
+    private Double destinationLongitude;
 
+    @Enumerated(EnumType.STRING)
     private TripMode mode;
 
     @Column(name = "distance_meters")
     private Double distanceMeters;
+    @Column(name = "duration_seconds")
+    private Double durationSeconds;
 
-    @Column(name = "distance_seconds")
-    private Double distanceSeconds;
+    @Column(name = "estimated_co2_kg", precision = 12, scale = 6)
+    private BigDecimal estimatedCo2Kg;
 
-    @Column(name = "estimated_co2_kg")
-    private Double estimatedCo2Kg;
-
-    @Column(name = "baseline_co2_kg")
-    private Double baselineCo2Kg;
-
-    @Column(name = "co2_saved_kg")
+    @Column(name = "baseline_co2_kg", precision = 12, scale = 6)
+    private BigDecimal baselineCo2Kg;
     private Double co2SavedKg;
 
-    @Column(name = "estimated_cost")
-    private Double estimatedCost;
+    @Column(name = "estimated_cost", precision = 12, scale = 2)
+    private BigDecimal estimatedCost;
+
+    @Enumerated(EnumType.STRING)
     private TripStatus status;
 
-    @Column(name = "created_at")
-    private LocalDate createdAt;
-
-    @Column(name = "completed_at")
-    private LocalDate completedAt;
+    private Instant createdAt;
+    private Instant completedAt;
 }
