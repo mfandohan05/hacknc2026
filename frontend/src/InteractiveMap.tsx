@@ -1,6 +1,6 @@
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_KEY;
 
@@ -30,6 +30,8 @@ export default function InteractiveMap() {
         });
 
         mapRef.current = map;  
+        map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-right");
+        map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
         return () =>  {
             map.remove();
             mapRef.current = null;
