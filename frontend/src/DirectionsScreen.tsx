@@ -47,6 +47,7 @@ export default function DirectionsScreen({ initialMode = "drive", origin: initia
         place: destination ?? null,
     });
     const [swapKey, setSwapKey] = useState(0);
+    const destInputRef = useRef<HTMLInputElement>(null);
     const [originTyping, setOriginTyping] = useState(false);
     const [destTyping, setDestTyping] = useState(false);
 
@@ -72,7 +73,7 @@ export default function DirectionsScreen({ initialMode = "drive", origin: initia
                 <span className="aero-bubble bottom-64 left-1/2 size-8" />
             </div>
 
-            <div className="aero-glass relative rounded-b-3xl pb-3">
+            <div className="aero-glass relative z-20 rounded-b-3xl pb-3">
                 <div className="flex items-start gap-3 px-3 pt-4">
                     <button
                         type="button"
@@ -101,6 +102,7 @@ export default function DirectionsScreen({ initialMode = "drive", origin: initia
                             value={dest}
                             onChange={setDest}
                             near={near}
+                            inputRef={destInputRef}
                             onTypingChange={setDestTyping}
                             onPicked={(place) => onDone({ origin: origin.place, destination: place, mode })}
                             autoFocus={!dest.place}
@@ -147,16 +149,20 @@ export default function DirectionsScreen({ initialMode = "drive", origin: initia
 
             <div className="relative flex flex-1 items-start justify-center overflow-y-auto px-6 pt-10">
                 {!typing && (
-                    <div className="aero-glass flex max-w-xs flex-col items-center gap-3 rounded-3xl px-6 py-6 text-center">
+                    <button
+                        type="button"
+                        onClick={() => (dest.place ? done() : destInputRef.current?.focus())}
+                        className="aero-glass flex max-w-xs flex-col items-center gap-3 rounded-3xl px-6 py-6 text-center"
+                    >
                         <span className="aero-gel flex size-12 items-center justify-center rounded-full">
                             <Leaf className="size-6" />
                         </span>
                         <p className="text-sm font-medium text-[#17334A]">
                             {dest.place
-                                ? "Route options will appear here."
+                                ? `Go to ${dest.place.name} and see routes`
                                 : "Choose a destination to plan a greener trip."}
                         </p>
-                    </div>
+                    </button>
                 )}
             </div>
         </div>
@@ -171,11 +177,12 @@ type FieldProps = {
     onTypingChange?: (typing: boolean) => void;
     onPicked?: (place: SelectedPlace) => void;
     near?: { longitude: number; latitude: number } | null;
+    inputRef?: React.Ref<HTMLInputElement>;
     clearable?: boolean;
     autoFocus?: boolean;
 };
 
-function PlaceField({ label, placeholder, value, onChange, onTypingChange, onPicked, near, clearable, autoFocus }: FieldProps) {
+function PlaceField({ label, placeholder, value, onChange, onTypingChange, onPicked, near, inputRef, clearable, autoFocus }: FieldProps) {
     const [open, setOpen] = useState(false);
     const [active, setActive] = useState(-1);
     const rootRef = useRef<HTMLDivElement>(null);
@@ -221,6 +228,7 @@ function PlaceField({ label, placeholder, value, onChange, onTypingChange, onPic
         <div ref={rootRef}>
             <div className="aero-input flex h-11 items-center rounded-full px-4">
                 <input
+                    ref={inputRef}
                     type="text"
                     role="combobox"
                     aria-label={label}
