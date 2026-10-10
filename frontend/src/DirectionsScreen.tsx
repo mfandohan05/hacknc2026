@@ -34,20 +34,29 @@ export default function DirectionsScreen({ mode, destination, onModeChange, onCl
         place: destination ?? null,
     });
     const [swapKey, setSwapKey] = useState(0);
+    // whether the user is mid-edit in each field, used to hide the empty-state card
+    const [originTyping, setOriginTyping] = useState(false);
+    const [destTyping, setDestTyping] = useState(false);
+
+    const typing = originTyping || destTyping;
 
     const swap = () => {
         setOrigin(dest);
         setDest(origin);
+        setOriginTyping(false);
+        setDestTyping(false);
         setSwapKey((k) => k + 1);
     };
 
     return (
-        <div className="aero-bg fixed inset-0 z-[60] flex flex-col overflow-hidden">
-            <span aria-hidden className="aero-bubble -right-8 top-56 size-32" />
-            <span aria-hidden className="aero-bubble left-6 top-80 size-14" />
-            <span aria-hidden className="aero-bubble bottom-32 right-10 size-20" />
-            <span aria-hidden className="aero-bubble -left-6 bottom-12 size-28" />
-            <span aria-hidden className="aero-bubble bottom-64 left-1/2 size-8" />
+        <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden">
+            <div aria-hidden className="aero-bg pointer-events-none absolute inset-0 overflow-hidden">
+                <span className="aero-bubble -right-8 top-56 size-32" />
+                <span className="aero-bubble left-6 top-80 size-14" />
+                <span className="aero-bubble bottom-32 right-10 size-20" />
+                <span className="aero-bubble -left-6 bottom-12 size-28" />
+                <span className="aero-bubble bottom-64 left-1/2 size-8" />
+            </div>
 
             <div className="aero-glass relative rounded-b-3xl pb-3">
                 <div className="flex items-start gap-3 px-3 pt-4">
@@ -67,6 +76,7 @@ export default function DirectionsScreen({ mode, destination, onModeChange, onCl
                             placeholder="Choose starting point"
                             value={origin}
                             onChange={setOrigin}
+                            onTypingChange={setOriginTyping}
                             clearable
                         />
                         <PlaceField
@@ -75,6 +85,7 @@ export default function DirectionsScreen({ mode, destination, onModeChange, onCl
                             placeholder="Choose destination"
                             value={dest}
                             onChange={setDest}
+                            onTypingChange={setDestTyping}
                             autoFocus={!dest.place}
                         />
                     </div>
@@ -89,43 +100,47 @@ export default function DirectionsScreen({ mode, destination, onModeChange, onCl
                     </button>
                 </div>
 
-                <div role="tablist" className="mt-4 flex px-2">
-                    {tabs.map(({ id, label, Icon }) => {
-                        const active = mode === id;
-                        return (
-                            <button
-                                key={id}
-                                type="button"
-                                role="tab"
-                                aria-selected={active}
-                                aria-label={label}
-                                onClick={() => onModeChange(id)}
-                                className="flex flex-1 justify-center"
-                            >
-                                <span
-                                    className={`flex h-11 w-[4.5rem] items-center justify-center rounded-full transition ${
-                                        active ? "aero-gel" : "aero-orb"
-                                    }`}
+                {!typing && (
+                    <div role="tablist" className="mt-4 flex px-2">
+                        {tabs.map(({ id, label, Icon }) => {
+                            const active = mode === id;
+                            return (
+                                <button
+                                    key={id}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={active}
+                                    aria-label={label}
+                                    onClick={() => onModeChange(id)}
+                                    className="flex flex-1 justify-center"
                                 >
-                                    <Icon className="size-6" />
-                                </span>
-                            </button>
-                        );
-                    })}
-                </div>
+                                    <span
+                                        className={`flex h-11 w-[4.5rem] items-center justify-center rounded-full transition ${
+                                            active ? "aero-gel" : "aero-orb"
+                                        }`}
+                                    >
+                                        <Icon className="size-6" />
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
             <div className="relative flex flex-1 items-start justify-center overflow-y-auto px-6 pt-10">
-                <div className="aero-glass flex max-w-xs flex-col items-center gap-3 rounded-3xl px-6 py-6 text-center">
-                    <span className="aero-gel flex size-12 items-center justify-center rounded-full">
-                        <Leaf className="size-6" />
-                    </span>
-                    <p className="text-sm font-medium text-[#17334A]">
-                        {dest.place
-                            ? "Route options will appear here."
-                            : "Choose a destination to plan a greener trip."}
-                    </p>
-                </div>
+                {!typing && (
+                    <div className="aero-glass flex max-w-xs flex-col items-center gap-3 rounded-3xl px-6 py-6 text-center">
+                        <span className="aero-gel flex size-12 items-center justify-center rounded-full">
+                            <Leaf className="size-6" />
+                        </span>
+                        <p className="text-sm font-medium text-[#17334A]">
+                            {dest.place
+                                ? "Route options will appear here."
+                                : "Choose a destination to plan a greener trip."}
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -136,11 +151,12 @@ type FieldProps = {
     placeholder: string;
     value: Endpoint;
     onChange: (value: Endpoint) => void;
+    onTypingChange?: (typing: boolean) => void;
     clearable?: boolean;
     autoFocus?: boolean;
 };
 
-function PlaceField({ label, placeholder, value, onChange, clearable, autoFocus }: FieldProps) {
+function PlaceField({ label, placeholder, value, onChange, onTypingChange, clearable, autoFocus }: FieldProps) {
     const [open, setOpen] = useState(false);
     const [active, setActive] = useState(-1);
     const [dirty, setDirty] = useState(false);
@@ -159,6 +175,7 @@ function PlaceField({ label, placeholder, value, onChange, clearable, autoFocus 
     const choose = (r: SearchResult) => {
         setDirty(false);
         setOpen(false);
+        onTypingChange?.(false);
         onChange({ text: r.name, place: r });
     };
 
@@ -181,7 +198,7 @@ function PlaceField({ label, placeholder, value, onChange, clearable, autoFocus 
     const showDropdown = open && !loading && (results.length > 0 || error);
 
     return (
-        <div ref={rootRef} className="relative">
+        <div ref={rootRef}>
             <div className="aero-input flex h-11 items-center rounded-full px-4">
                 <input
                     type="text"
@@ -199,6 +216,7 @@ function PlaceField({ label, placeholder, value, onChange, clearable, autoFocus 
                         setDirty(true);
                         setActive(-1);
                         setOpen(true);
+                        onTypingChange?.(e.target.value.length > 0);
                         onChange({ text: e.target.value, place: null });
                     }}
                     onFocus={(e) => {
@@ -215,6 +233,7 @@ function PlaceField({ label, placeholder, value, onChange, clearable, autoFocus 
                         onClick={() => {
                             setDirty(false);
                             setOpen(false);
+                            onTypingChange?.(false);
                             onChange({ text: "", place: null });
                         }}
                         className="aero-orb ml-2 flex size-7 shrink-0 items-center justify-center rounded-full"
@@ -230,6 +249,7 @@ function PlaceField({ label, placeholder, value, onChange, clearable, autoFocus 
                     results={results}
                     active={active}
                     error={error}
+                    variant="screen"
                     onHover={setActive}
                     onChoose={choose}
                 />
