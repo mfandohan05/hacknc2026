@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import type { PointerEvent } from "react";
-import { Bike, Bus, Car, Footprints, LayoutGrid, TrainFront, TramFront } from "lucide-react";
+import { Bus, ChevronRight, LayoutGrid, Navigation, Route, TrainFront, TramFront } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export type Mode = "drive" | "walk" | "bike" | "all" | "bus" | "metro" | "train";
@@ -8,12 +8,6 @@ export type Mode = "drive" | "walk" | "bike" | "all" | "bus" | "metro" | "train"
 const SHEET_HEIGHT = 340;
 const PEEK_HEIGHT = 185;
 const MAX_OFFSET = SHEET_HEIGHT - PEEK_HEIGHT;
-
-const primaryModes: { id: Mode; label: string; Icon: LucideIcon }[] = [
-    { id: "drive", label: "Drive", Icon: Car },
-    { id: "walk", label: "Walk", Icon: Footprints },
-    { id: "bike", label: "Bike", Icon: Bike },
-];
 
 const transitModes: { id: Mode; label: string; Icon: LucideIcon }[] = [
     { id: "all", label: "All", Icon: LayoutGrid },
@@ -26,13 +20,27 @@ type Props = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSelectMode?: (mode: Mode) => void;
+    originLabel: string;
+    destinationLabel: string | null;
+    // opens the start / destination editor
+    onEditRoute: () => void;
+    // opens the walk / bike / drive comparison page
+    onViewRoutes: () => void;
 };
 
-export default function DirectionsSheet({ open, onOpenChange, onSelectMode }: Props) {
+export default function DirectionsSheet({
+    open,
+    onOpenChange,
+    onSelectMode,
+    originLabel,
+    destinationLabel,
+    onEditRoute,
+    onViewRoutes,
+}: Props) {
     const [dragOffset, setDragOffset] = useState<number | null>(null);
     const dragging = dragOffset !== null;
     const offset = dragOffset ?? (open ? 0 : MAX_OFFSET);
-    const [selected, setSelected] = useState<Mode | null>(null);
+    const [selectedTransit, setSelectedTransit] = useState<Mode | null>(null);
     const drag = useRef<{ startY: number; startOffset: number; moved: boolean } | null>(null);
 
     const clamp = (v: number) => Math.min(MAX_OFFSET, Math.max(0, v));
@@ -59,14 +67,14 @@ export default function DirectionsSheet({ open, onOpenChange, onSelectMode }: Pr
         onOpenChange(moved ? offset <= MAX_OFFSET / 2 : !open);
     };
 
-    const choose = (mode: Mode) => {
-        setSelected(mode);
+    const chooseTransit = (mode: Mode) => {
+        setSelectedTransit(mode);
         onSelectMode?.(mode);
     };
 
     return (
         <div
-            className="absolute inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] md:bottom-0 aero-glass z-50 rounded-t-3xl border-b-0"
+            className="aero-glass absolute inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] md:bottom-0 z-50 rounded-t-3xl border-b-0"
             style={{
                 height: SHEET_HEIGHT,
                 transform: `translateY(${offset}px)`,
@@ -81,72 +89,61 @@ export default function DirectionsSheet({ open, onOpenChange, onSelectMode }: Pr
                 onPointerCancel={onPointerUp}
             >
                 <div className="mx-auto h-1.5 w-10 rounded-full bg-[#17334A]/30 shadow-[inset_0_1px_1px_rgba(0,0,0,0.15)]" />
-                <h2 className="mt-3 text-center text-xl font-semibold text-[#17334A] drop-shadow-[0_1px_0_rgba(255,255,255,0.9)]">Directions</h2>
+                <h2 className="mt-3 text-center text-xl font-semibold text-[#17334A] drop-shadow-[0_1px_0_rgba(255,255,255,0.9)]">
+                    Directions
+                </h2>
             </div>
 
-            <div className="px-6 pt-4">
-                <div className="flex justify-around">
-                    {primaryModes.map(({ id, label, Icon }) => (
-                        <ModeButton
-                            key={id}
-                            label={label}
-                            Icon={Icon}
-                            active={selected === id}
-                            onClick={() => choose(id)}
-                            size="lg"
-                        />
-                    ))}
-                </div>
+            <div className="px-4 pt-2">
+                <button
+                    type="button"
+                    onClick={onEditRoute}
+                    className="aero-input flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-left text-[#17334A]"
+                >
+                    <Navigation className="size-5 shrink-0 text-[#208A5D]" />
+                    <span className="min-w-0 flex-1 truncate text-sm">
+                        <span className="font-semibold">{originLabel}</span>
+                        <span className="px-1.5 text-[#17334A]/60">→</span>
+                        <span className={destinationLabel ? "font-semibold" : "text-[#17334A]/70"}>
+                            {destinationLabel ?? "Choose destination"}
+                        </span>
+                    </span>
+                    <ChevronRight className="size-5 shrink-0 text-[#17334A]/60" />
+                </button>
 
-                <div className="my-5 h-px bg-gradient-to-r from-transparent via-[#17334A]/25 to-transparent" />
+                <button
+                    type="button"
+                    onClick={onViewRoutes}
+                    disabled={!destinationLabel}
+                    className="aero-gel mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-full text-base font-semibold disabled:opacity-50"
+                >
+                    <Route className="size-5" />
+                    {destinationLabel ? "Compare walk, bike & drive" : "Choose a destination first"}
+                </button>
+
+                <div className="my-4 h-px bg-gradient-to-r from-transparent via-[#17334A]/25 to-transparent" />
 
                 <p className="mb-3 text-center text-sm font-medium text-[#17334A]">Public transport</p>
                 <div className="flex justify-around">
                     {transitModes.map(({ id, label, Icon }) => (
-                        <ModeButton
+                        <button
                             key={id}
-                            label={label}
-                            Icon={Icon}
-                            active={selected === id}
-                            onClick={() => choose(id)}
-                            size="sm"
-                        />
+                            type="button"
+                            onClick={() => chooseTransit(id)}
+                            className="flex flex-col items-center gap-1.5 text-sm font-medium text-[#17334A]"
+                        >
+                            <span
+                                className={`flex h-12 w-12 items-center justify-center rounded-full transition ${
+                                    selectedTransit === id ? "aero-gel ring-4 ring-[#2FB6E8]/50" : "aero-orb"
+                                }`}
+                            >
+                                <Icon className="h-5 w-5" />
+                            </span>
+                            {label}
+                        </button>
                     ))}
                 </div>
             </div>
         </div>
-    );
-}
-
-function ModeButton({
-    label,
-    Icon,
-    active,
-    onClick,
-    size,
-}: {
-    label: string;
-    Icon: LucideIcon;
-    active: boolean;
-    onClick: () => void;
-    size: "lg" | "sm";
-}) {
-    const circle = size === "lg" ? "h-16 w-16" : "h-12 w-12";
-    const icon = size === "lg" ? "h-7 w-7" : "h-5 w-5";
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className="flex flex-col items-center gap-1.5 text-sm font-medium text-[#17334A]"
-        >
-            <span
-                className={`${circle} flex items-center justify-center rounded-full transition ${
-                    active ? "aero-gel ring-4 ring-[#2FB6E8]/50" : "aero-orb"
-                }`}
-            >
-                <Icon className={icon} />
-            </span>
-            {label}
-        </button>
     );
 }

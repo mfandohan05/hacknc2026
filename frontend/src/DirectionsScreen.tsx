@@ -20,15 +20,26 @@ type Endpoint = {
     place: SearchResult | null;
 };
 
-type Props = {
+export type DirectionsResult = {
+    // null origin means the user's current location
+    origin: SearchResult | null;
+    destination: SearchResult | null;
     mode: Mode;
-    destination?: SearchResult | null;
-    onModeChange: (mode: Mode) => void;
-    onClose: () => void;
 };
 
-export default function DirectionsScreen({ mode, destination, onModeChange, onClose }: Props) {
-    const [origin, setOrigin] = useState<Endpoint>({ text: YOUR_LOCATION, place: null });
+type Props = {
+    initialMode?: Mode;
+    origin?: SearchResult | null;
+    destination?: SearchResult | null;
+    onDone: (result: DirectionsResult) => void;
+};
+
+export default function DirectionsScreen({ initialMode = "drive", origin: initialOrigin, destination, onDone }: Props) {
+    const [mode, setMode] = useState<Mode>(initialMode);
+    const [origin, setOrigin] = useState<Endpoint>({
+        text: initialOrigin?.name ?? YOUR_LOCATION,
+        place: initialOrigin ?? null,
+    });
     const [dest, setDest] = useState<Endpoint>({
         text: destination?.name ?? "",
         place: destination ?? null,
@@ -39,6 +50,8 @@ export default function DirectionsScreen({ mode, destination, onModeChange, onCl
     const [destTyping, setDestTyping] = useState(false);
 
     const typing = originTyping || destTyping;
+
+    const done = () => onDone({ origin: origin.place, destination: dest.place, mode });
 
     const swap = () => {
         setOrigin(dest);
@@ -62,7 +75,7 @@ export default function DirectionsScreen({ mode, destination, onModeChange, onCl
                 <div className="flex items-start gap-3 px-3 pt-4">
                     <button
                         type="button"
-                        onClick={onClose}
+                        onClick={done}
                         aria-label="Back"
                         className="aero-orb mt-0.5 flex size-11 shrink-0 items-center justify-center rounded-full"
                     >
@@ -111,7 +124,7 @@ export default function DirectionsScreen({ mode, destination, onModeChange, onCl
                                     role="tab"
                                     aria-selected={active}
                                     aria-label={label}
-                                    onClick={() => onModeChange(id)}
+                                    onClick={() => setMode(id)}
                                     className="flex flex-1 justify-center"
                                 >
                                     <span
