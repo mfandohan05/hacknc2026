@@ -25,6 +25,7 @@ public class Trip {
     private UUID id;
 
     @ManyToOne
+    @JoinColumn(name = "profile_id")
     private Profile profile;
 
     private Double originLat;
