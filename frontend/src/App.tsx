@@ -1,4 +1,5 @@
 import './App.css'
+import MapSearchBox from './MapSearchBox'
 import NavigationBar from './NavigationBar'
 
 function App() {
@@ -6,6 +7,7 @@ function App() {
   return (
     <>
       <NavigationBar />
+      <MapSearchBox />
     </>
   )
 }
