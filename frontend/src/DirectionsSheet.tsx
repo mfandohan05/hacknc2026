@@ -3,7 +3,7 @@ import type { PointerEvent } from "react";
 import { Bike, Bus, Car, Footprints, LayoutGrid, TrainFront, TramFront } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-type Mode = "drive" | "walk" | "bike" | "all" | "bus" | "metro" | "train";
+export type Mode = "drive" | "walk" | "bike" | "all" | "bus" | "metro" | "train";
 
 const SHEET_HEIGHT = 340;
 const PEEK_HEIGHT = 185;
@@ -66,7 +66,7 @@ export default function DirectionsSheet({ open, onOpenChange, onSelectMode }: Pr
 
     return (
         <div
-            className="absolute inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-white/60 bg-white/40 backdrop-blur-xl backdrop-saturate-150 shadow-[0_-4px_24px_rgba(0,0,0,0.18)]"
+            className="absolute inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] md:bottom-0 aero-glass z-50 rounded-t-3xl border-b-0"
             style={{
                 height: SHEET_HEIGHT,
                 transform: `translateY(${offset}px)`,
@@ -80,8 +80,8 @@ export default function DirectionsSheet({ open, onOpenChange, onSelectMode }: Pr
                 onPointerUp={onPointerUp}
                 onPointerCancel={onPointerUp}
             >
-                <div className="mx-auto h-1.5 w-10 rounded-full bg-gray-500/40" />
-                <h2 className="mt-3 text-center text-xl font-semibold text-gray-900">Directions</h2>
+                <div className="mx-auto h-1.5 w-10 rounded-full bg-[#17334A]/30 shadow-[inset_0_1px_1px_rgba(0,0,0,0.15)]" />
+                <h2 className="mt-3 text-center text-xl font-semibold text-[#17334A] drop-shadow-[0_1px_0_rgba(255,255,255,0.9)]">Directions</h2>
             </div>
 
             <div className="px-6 pt-4">
@@ -98,9 +98,9 @@ export default function DirectionsSheet({ open, onOpenChange, onSelectMode }: Pr
                     ))}
                 </div>
 
-                <div className="my-5 h-px bg-white/60" />
+                <div className="my-5 h-px bg-gradient-to-r from-transparent via-[#17334A]/25 to-transparent" />
 
-                <p className="mb-3 text-center text-sm font-medium text-gray-900">Public transport</p>
+                <p className="mb-3 text-center text-sm font-medium text-[#17334A]">Public transport</p>
                 <div className="flex justify-around">
                     {transitModes.map(({ id, label, Icon }) => (
                         <ModeButton
@@ -137,11 +137,11 @@ function ModeButton({
         <button
             type="button"
             onClick={onClick}
-            className="flex flex-col items-center gap-1.5 text-sm font-medium text-gray-800"
+            className="flex flex-col items-center gap-1.5 text-sm font-medium text-[#17334A]"
         >
             <span
-                className={`${circle} flex items-center justify-center rounded-full bg-green-600 text-white transition ${
-                    active ? "ring-4 ring-green-300" : "hover:bg-green-700"
+                className={`${circle} flex items-center justify-center rounded-full transition ${
+                    active ? "aero-gel ring-4 ring-[#2FB6E8]/50" : "aero-orb"
                 }`}
             >
                 <Icon className={icon} />
