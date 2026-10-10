@@ -14,6 +14,7 @@ enum TripMode{
 
 enum TripStatus {
     COMPLETE,
+    IN_PROGRESS,
     INCOMPLETE
 }
 

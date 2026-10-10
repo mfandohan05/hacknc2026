@@ -9,9 +9,10 @@ import java.util.UUID;
 
 @Data
 @Entity
+@Table(name = "profiles", schema = "public")
 public class Profile {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private UUID id;
 
     @Column(unique = true)
