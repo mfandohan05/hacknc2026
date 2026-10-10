@@ -2,11 +2,21 @@ import mapboxgl from "mapbox-gl";
 import { useState, useEffect, useRef } from 'react';
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_KEY;
 
+type Location = {
+    latitude: number;
+    longitude: number;
+}
+
 export default function InteractiveMap() {
     const mapContainer = useRef<HTMLDivElement>(null);
 
+    // Location states
+    const mapRef = useRef<mapboxgl.Map | null>(null);
+    const markerRef = useRef<mapboxgl.Marker | null>(null);
+    const [location, setLocation] = useState<Location | null>(null);
+
     useEffect(() => {
-        if (!mapContainer) return;
+        if (!mapContainer.current) return;
 
         const map = new mapboxgl.Map({
             container: 'map', // container ID
@@ -15,13 +25,68 @@ export default function InteractiveMap() {
             zoom: 9 // starting zoom
         });
 
-        map.addControl(new mapboxgl.NavigationControl());
-        map.scrollZoom.disable();   
-        
-        return () => map.remove();
-    }, [])
+        mapRef.current = map;  
+        return () =>  {
+            map.remove();
+            mapRef.current = null;
+        }
+    }, []);
+
+    // GPT Codex helped implement asking for location plus tracking
+    // Ask for location and track
+    useEffect(() => {
+        if (!navigator.geolocation) {
+        console.error("Geolocation is not supported by this browser.");
+        return;
+        }
+
+        const watchId = navigator.geolocation.watchPosition(
+        (position) => {
+            const { latitude, longitude } = position.coords;
+
+            setLocation({ latitude, longitude });
+
+            const map = mapRef.current;
+            if (!map) return;
+
+            if (!markerRef.current) {
+            markerRef.current = new mapboxgl.Marker({ color: "#ef4444" })
+                .setLngLat([longitude, latitude])
+                .addTo(map);
+            } else {
+            markerRef.current.setLngLat([longitude, latitude]);
+            }
+
+            map.flyTo({
+            center: [longitude, latitude],
+            zoom: 14,
+            });
+        },
+        (error) => {
+            console.error("Unable to get location:", error.message);
+        },
+        {
+            enableHighAccuracy: true,
+            maximumAge: 10_000,
+            timeout: 10_000,
+        }
+        );
+
+        return () => {
+        navigator.geolocation.clearWatch(watchId);
+        };
+    }, []);
 
     return (
-        <div ref={mapContainer} id="map" className="w-100 h-500" />
-    )
+        <div className="relative h-screen w-full">
+            <div ref={mapContainer} id="map" className="h-full w-full" />
+            {location && (
+                <div className="absolute bottom-4 left-4 z-10 rounded bg-white p-3 shadow">
+                    Lat: {location.latitude.toFixed(5)}
+                    <br />
+                    Lng: {location.longitude.toFixed(5)}
+                </div>
+            )}
+        </div>
+    );
 }
