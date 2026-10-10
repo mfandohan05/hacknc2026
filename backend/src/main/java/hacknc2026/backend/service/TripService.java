@@ -23,6 +23,9 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class TripService {
 
+    private static final String EMISSIONS_METHODOLOGY_VERSION = "mapbox-directions-v1";
+    private static final String DEFAULT_CURRENCY = "USD";
+
     private final TripRepository tripRepository;
     private final ProfileRepository profileRepository;
     private final PointTransactionService pointTransactionService;
@@ -58,6 +61,10 @@ public class TripService {
         trip.setEstimatedCo2Kg(request.estimatedCo2Kg());
         trip.setBaselineCo2Kg(request.baselineCo2Kg());
         trip.setEstimatedCost(request.estimatedCost());
+        if (request.estimatedCost() != null) {
+            trip.setCurrency(DEFAULT_CURRENCY);
+        }
+        trip.setEmissionsMethodologyVersion(EMISSIONS_METHODOLOGY_VERSION);
         trip.setStatus(TripStatus.IN_PROGRESS);
         trip.setCreatedAt(Instant.now());
 
