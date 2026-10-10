@@ -9,8 +9,16 @@ type Location = {
     longitude: number;
 }
 
-export default function InteractiveMap() {
+type Props = {
+    onMapClick?: () => void;
+};
+
+export default function InteractiveMap({ onMapClick }: Props) {
     const mapContainer = useRef<HTMLDivElement>(null);
+    const onMapClickRef = useRef(onMapClick);
+    useEffect(() => {
+        onMapClickRef.current = onMapClick;
+    }, [onMapClick]);
 
     // Location states
     const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -30,6 +38,7 @@ export default function InteractiveMap() {
         });
 
         mapRef.current = map;  
+        map.on("click", () => onMapClickRef.current?.());
         map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-right");
         map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
         return () =>  {

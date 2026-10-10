@@ -23,12 +23,15 @@ const transitModes: { id: Mode; label: string; Icon: LucideIcon }[] = [
 ];
 
 type Props = {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
     onSelectMode?: (mode: Mode) => void;
 };
 
-export default function DirectionsSheet({ onSelectMode }: Props) {
-    const [offset, setOffset] = useState(0);
-    const [dragging, setDragging] = useState(false);
+export default function DirectionsSheet({ open, onOpenChange, onSelectMode }: Props) {
+    const [dragOffset, setDragOffset] = useState<number | null>(null);
+    const dragging = dragOffset !== null;
+    const offset = dragOffset ?? (open ? 0 : MAX_OFFSET);
     const [selected, setSelected] = useState<Mode | null>(null);
     const drag = useRef<{ startY: number; startOffset: number; moved: boolean } | null>(null);
 
@@ -37,26 +40,23 @@ export default function DirectionsSheet({ onSelectMode }: Props) {
     const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
         e.currentTarget.setPointerCapture(e.pointerId);
         drag.current = { startY: e.clientY, startOffset: offset, moved: false };
-        setDragging(true);
+        setDragOffset(offset);
     };
 
     const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
         if (!drag.current) return;
         const delta = e.clientY - drag.current.startY;
         if (Math.abs(delta) > 3) drag.current.moved = true;
-        setOffset(clamp(drag.current.startOffset + delta));
+        setDragOffset(clamp(drag.current.startOffset + delta));
     };
 
     const onPointerUp = () => {
         if (!drag.current) return;
-        const { moved, startOffset } = drag.current;
+        const { moved } = drag.current;
         drag.current = null;
-        setDragging(false);
-        if (!moved) {
-            setOffset(startOffset === 0 ? MAX_OFFSET : 0);
-            return;
-        }
-        setOffset(offset > MAX_OFFSET / 2 ? MAX_OFFSET : 0);
+        setDragOffset(null);
+        // a tap toggles; a drag snaps to the nearest end
+        onOpenChange(moved ? offset <= MAX_OFFSET / 2 : !open);
     };
 
     const choose = (mode: Mode) => {
