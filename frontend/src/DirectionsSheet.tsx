@@ -22,9 +22,7 @@ type Props = {
     onSelectMode?: (mode: Mode) => void;
     originLabel: string;
     destinationLabel: string | null;
-    // opens the start / destination editor
     onEditRoute: () => void;
-    // opens the walk / bike / drive comparison page
     onViewRoutes: () => void;
 };
 
@@ -63,7 +61,6 @@ export default function DirectionsSheet({
         const { moved } = drag.current;
         drag.current = null;
         setDragOffset(null);
-        // a tap toggles; a drag snaps to the nearest end
         onOpenChange(moved ? offset <= MAX_OFFSET / 2 : !open);
     };
 

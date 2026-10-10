@@ -1,18 +1,21 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import NavigationBar from "../NavigationBar";
-import MapSearchBox from "../MapSearchBox";
-import type { SearchResult } from "../MapSearchBox";
+import MapSearchBox from "@/components/MapSearchBox";
 import InteractiveMap from "../InteractiveMap";
+import type { MapHandle } from "../InteractiveMap";
 import DirectionsSheet from "../DirectionsSheet";
 import DirectionsScreen from "../DirectionsScreen";
 import RouteOptionsScreen from "@/components/routes/RouteOptionsScreen";
 import RouteDetailsScreen from "@/components/routes/RouteDetailsScreen";
 import type { DirectionsResult } from "../DirectionsScreen";
 import { useRouteComparison } from "@/hooks/useRouteComparison";
-import { useUserLocation } from "@/hooks/useUserLocation";
 import { DEFAULT_WEIGHTS, recommendedRouteId } from "@/lib/routeScoring";
 import type { PreferenceWeights } from "@/lib/routeScoring";
+import type { SelectedPlace } from "@/services/searchService";
 import type { RouteMode, RouteOption } from "@/types/route";
+
+// ignore GPS updates smaller than this (about 50 m) so route requests are not refired by jitter
+const LOCATION_JITTER_DEG = 0.0005;
 
 const TAB_TO_ROUTE_MODE: Partial<Record<DirectionsResult["mode"], RouteMode>> = {
     drive: "CAR",
@@ -22,9 +25,8 @@ const TAB_TO_ROUTE_MODE: Partial<Record<DirectionsResult["mode"], RouteMode>> = 
 
 function ExplorePage() {
     const [sheetOpen, setSheetOpen] = useState(false);
-    const [destination, setDestination] = useState<SearchResult | null>(null);
-    // null means the user's current location
-    const [originPlace, setOriginPlace] = useState<SearchResult | null>(null);
+    const [destination, setDestination] = useState<SelectedPlace | null>(null);
+    const [originPlace, setOriginPlace] = useState<SelectedPlace | null>(null);
     const [screenOpen, setScreenOpen] = useState(false);
     const [optionsOpen, setOptionsOpen] = useState(false);
     const [detailsOpen, setDetailsOpen] = useState(false);
@@ -32,18 +34,32 @@ function ExplorePage() {
     const [selectedMode, setSelectedMode] = useState<RouteMode | null>(null);
     const [weights, setWeights] = useState<PreferenceWeights>(DEFAULT_WEIGHTS);
 
-    const userLocation = useUserLocation();
-    const origin = originPlace ?? userLocation;
-    const { data, loading, error } = useRouteComparison(origin, destination);
+    const [userLocation, setUserLocation] = useState<{ longitude: number; latitude: number } | null>(null);
+    const mapRef = useRef<MapHandle>(null);
+
+    const originPoint = originPlace ?? userLocation;
+    const origin = originPoint ? { lng: originPoint.longitude, lat: originPoint.latitude } : null;
+    const destinationPoint = destination ? { lng: destination.longitude, lat: destination.latitude } : null;
+    const { data, loading, error } = useRouteComparison(origin, destinationPoint);
     const routes = useMemo(() => data?.routes ?? [], [data]);
 
-    // recommendation re-ranks live as the sliders move
     const recommendedId = useMemo(() => recommendedRouteId(routes, weights), [routes, weights]);
     const selectedRouteId =
         routes.find((r) => r.mode === selectedMode)?.routeId ?? recommendedId;
 
-    const handlePlaceSelect = (place: SearchResult) => {
+    const handleUserLocation = (loc: { longitude: number; latitude: number }) => {
+        setUserLocation((prev) =>
+            prev &&
+            Math.abs(prev.longitude - loc.longitude) < LOCATION_JITTER_DEG &&
+            Math.abs(prev.latitude - loc.latitude) < LOCATION_JITTER_DEG
+                ? prev
+                : loc,
+        );
+    };
+
+    const handlePlaceSelect = (place: SelectedPlace) => {
         setDestination(place);
+        mapRef.current?.showPlace(place);
         setSelectedMode(null);
         setSheetOpen(true);
     };
@@ -51,6 +67,8 @@ function ExplorePage() {
     const handleScreenDone = (result: DirectionsResult) => {
         setOriginPlace(result.origin);
         setDestination(result.destination);
+        if (result.destination) mapRef.current?.showPlace(result.destination);
+        else mapRef.current?.clearPlace();
         setScreenMode(result.mode);
         setSelectedMode(TAB_TO_ROUTE_MODE[result.mode] ?? null);
         setScreenOpen(false);
@@ -69,7 +87,8 @@ function ExplorePage() {
         <div className="relative h-screen w-full overflow-hidden">
             <InteractiveMap
                 onMapClick={() => setSheetOpen(false)}
-                target={destination}
+                ref={mapRef}
+                onUserLocation={handleUserLocation}
                 routes={routes}
                 selectedRouteId={selectedRouteId}
             />
@@ -83,7 +102,7 @@ function ExplorePage() {
                 onViewRoutes={() => setOptionsOpen(true)}
             />
             <div className="absolute top-20 left-4 right-4 z-40 flex">
-                <MapSearchBox onSelect={handlePlaceSelect} />
+                <MapSearchBox onSelectPlace={handlePlaceSelect} userLocation={userLocation} />
             </div>
             {optionsOpen && destination && (
                 <RouteOptionsScreen
@@ -117,6 +136,7 @@ function ExplorePage() {
                     origin={originPlace}
                     destination={destination}
                     onDone={handleScreenDone}
+                    near={userLocation}
                 />
             )}
         </div>

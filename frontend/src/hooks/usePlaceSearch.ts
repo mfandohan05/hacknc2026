@@ -1,62 +1,44 @@
-import { useEffect, useState } from "react";
-
-export type SearchResult = {
-    id: string;
-    name: string;
-    address: string;
-    lng: number;
-    lat: number;
-};
-
-type GeocodeFeature = {
-    properties: { mapbox_id: string; name: string; place_formatted?: string; full_address?: string };
-    geometry: { coordinates: [number, number] };
-};
+import { useCallback, useEffect, useRef, useState } from "react";
+import { retrievePlace, suggestPlaces } from "@/services/searchService";
+import type { SelectedPlace, Suggestion } from "@/services/searchService";
 
 const DEBOUNCE_MS = 300;
 const MIN_CHARS = 2;
 
-// Debounced place autocomplete against the Mapbox Geocoding API
-export function usePlaceSearch(query: string, enabled = true) {
-    // the query the stored results/error belong to; loading means it lags behind the input
-    const [settled, setSettled] = useState<{ q: string; results: SearchResult[]; error: boolean } | null>(null);
+type Near = { longitude: number; latitude: number } | null | undefined;
+type Settled = { q: string; suggestions: Suggestion[]; error: boolean };
 
-    const q = query.trim();
-    const active = enabled && q.length >= MIN_CHARS;
+// Debounced place autocomplete on the Mapbox Search Box API (suggest + retrieve).
+// One session token covers a typing session: every suggest call plus the final retrieve.
+export function usePlaceSearch(near?: Near) {
+    const [query, setQueryState] = useState("");
+    // text filled in by a selection; it is not searched again
+    const [suppressed, setSuppressed] = useState<string | null>(null);
+    const [settled, setSettled] = useState<Settled | null>(null);
+    const [selecting, setSelecting] = useState(false);
+    const [selectError, setSelectError] = useState(false);
+    const sessionRef = useRef<string | null>(null);
+    const nearRef = useRef<Near>(near);
 
     useEffect(() => {
-        if (!active) return;
+        nearRef.current = near;
+    }, [near]);
+
+    const q = query.trim();
+    const active = q.length >= MIN_CHARS && query !== suppressed;
+
+    useEffect(() => {
+        const sessionToken = sessionRef.current;
+        if (!active || !sessionToken) return;
 
         const controller = new AbortController();
         const timer = setTimeout(async () => {
             try {
-                const params = new URLSearchParams({
-                    q,
-                    autocomplete: "true",
-                    limit: "5",
-                    proximity: "ip",
-                    access_token: import.meta.env.VITE_MAPBOX_KEY,
-                });
-                const res = await fetch(
-                    `https://api.mapbox.com/search/geocode/v6/forward?${params}`,
-                    { signal: controller.signal },
-                );
-                if (!res.ok) throw new Error(`Geocoding failed: ${res.status}`);
-                const data: { features: GeocodeFeature[] } = await res.json();
-                setSettled({
-                    q,
-                    error: false,
-                    results: data.features.map((f) => ({
-                        id: f.properties.mapbox_id,
-                        name: f.properties.name,
-                        address: f.properties.place_formatted ?? f.properties.full_address ?? "",
-                        lng: f.geometry.coordinates[0],
-                        lat: f.geometry.coordinates[1],
-                    })),
-                });
+                const suggestions = await suggestPlaces(q, sessionToken, nearRef.current, controller.signal);
+                setSettled({ q, suggestions, error: false });
             } catch (e) {
                 if ((e as Error).name === "AbortError") return;
-                setSettled({ q, results: [], error: true });
+                setSettled({ q, suggestions: [], error: true });
             }
         }, DEBOUNCE_MS);
 
@@ -66,11 +48,54 @@ export function usePlaceSearch(query: string, enabled = true) {
         };
     }, [q, active]);
 
+    const setQuery = useCallback((value: string) => {
+        // a new session starts when the user starts typing
+        if (!sessionRef.current && value.trim().length > 0) sessionRef.current = crypto.randomUUID();
+        setSelectError(false);
+        setQueryState(value);
+    }, []);
+
+    const clear = useCallback(() => {
+        sessionRef.current = null;
+        setSelectError(false);
+        setSuppressed(null);
+        setQueryState("");
+    }, []);
+
+    const select = useCallback(async (suggestion: Suggestion): Promise<SelectedPlace | null> => {
+        const sessionToken = sessionRef.current ?? crypto.randomUUID();
+        setSelecting(true);
+        try {
+            const place = await retrievePlace(suggestion.mapbox_id, sessionToken);
+            // the session ends with a retrieve; the next keystroke starts a new one
+            sessionRef.current = null;
+            setSuppressed(place.name);
+            setQueryState(place.name);
+            return place;
+        } catch {
+            setSelectError(true);
+            return null;
+        } finally {
+            setSelecting(false);
+        }
+    }, []);
+
     const current = active && settled?.q === q ? settled : null;
+    const suggestions = current?.suggestions ?? [];
+    const error = selectError || (current?.error ?? false);
 
     return {
-        results: current?.results ?? [],
+        query,
+        setQuery,
+        clear,
+        select,
+        suggestions,
         loading: active && current === null,
-        error: current?.error ?? false,
+        selecting,
+        error,
+        // a finished search with nothing found
+        noResults: current !== null && !current.error && suggestions.length === 0,
+        // there is a query worth showing a list for
+        hasQuery: active,
     };
 }

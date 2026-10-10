@@ -13,7 +13,6 @@ type Props = {
     route: RouteOption;
     selected: boolean;
     recommended: boolean;
-    // kg CO2e saved compared with driving the same trip, when known and positive
     savingsKg: number | null;
     onSelect: () => void;
 };
