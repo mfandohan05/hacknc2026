@@ -1,8 +1,8 @@
 package hacknc2026.backend.model;
 
-enum TripStatus {
+public enum TripStatus {
     PLANNED,
     IN_PROGRESS,
-    COMPLETE,
+    COMPLETED,
     CANCELLED
 }

@@ -37,7 +37,13 @@ public class PointTransaction {
     @Column(nullable = false)
     private Integer points;
 
-    @Column(nullable = false, columnDefinition = "text")
+    @Column(name = "award_key", nullable = false, unique = true, length = 200)
+    private String awardKey;
+
+    @Column(name = "leaderboard_eligible", nullable = false)
+    private boolean leaderboardEligible;
+
+    @Column(nullable = false, length = 50)
     private String reason;
 
     @Column(name = "created_at", nullable = false, updatable = false)

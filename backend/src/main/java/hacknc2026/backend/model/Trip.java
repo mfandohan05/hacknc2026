@@ -47,7 +47,9 @@ public class Trip {
 
     @Column(name = "baseline_co2_kg", precision = 12, scale = 6)
     private BigDecimal baselineCo2Kg;
-    private Double co2SavedKg;
+    @Column(name = "co2_saved_kg", precision = 12, scale = 6,
+            insertable = false, updatable = false)
+    private BigDecimal co2SavedKg;
 
     @Column(name = "estimated_cost", precision = 12, scale = 2)
     private BigDecimal estimatedCost;
