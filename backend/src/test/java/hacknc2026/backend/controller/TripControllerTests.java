@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import hacknc2026.backend.dto.TripResponse;
+import hacknc2026.backend.dto.CreateTripRequest;
 import hacknc2026.backend.service.TripService;
 import java.security.Principal;
 import java.util.UUID;
@@ -26,17 +27,24 @@ class TripControllerTests {
   private final UUID userId = UUID.randomUUID();
   private final UUID tripId = UUID.randomUUID();
   private final Principal principal = () -> userId.toString();
+  private final CreateTripRequest createRequest = new CreateTripRequest(
+      35.0, -78.0, 35.1, -78.1, hacknc2026.backend.model.TripMode.WALKING,
+      1000.0, 600.0, java.math.BigDecimal.ZERO, java.math.BigDecimal.ONE, null);
+  private final String createRequestJson =
+      "{\"originLatitude\":35.0,\"originLongitude\":-78.0,\"destinationLatitude\":35.1,\"destinationLongitude\":-78.1,\"mode\":\"WALKING\",\"distanceMeters\":1000.0,\"durationSeconds\":600.0,\"estimatedCo2Kg\":0,\"baselineCo2Kg\":1}";
   private final TripResponse trip =
       new TripResponse(tripId, "WALKING", "IN_PROGRESS", 1000.0, 600.0, null, null, null, null);
 
   @Test
   void startsTripForAuthenticatedUser() throws Exception {
-    when(service.startTrip(userId, tripId)).thenReturn(trip);
-    mvc.perform(post("/api/v1/trips/" + tripId + "/start").principal(principal))
-        .andExpect(status().isOk())
+    when(service.startTrip(userId, createRequest)).thenReturn(trip);
+    mvc.perform(post("/api/v1/trips/start").principal(principal)
+            .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+            .content(createRequestJson))
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id").value(tripId.toString()))
         .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
-    verify(service).startTrip(userId, tripId);
+    verify(service).startTrip(userId, createRequest);
   }
 
   @Test
@@ -69,17 +77,17 @@ class TripControllerTests {
     mvc.perform(get("/api/v1/trips")).andExpect(status().isUnauthorized());
     mvc.perform(get("/api/v1/trips").principal(() -> "invalid"))
         .andExpect(status().isUnauthorized());
-    mvc.perform(post("/api/v1/trips/" + tripId + "/start"))
+    mvc.perform(post("/api/v1/trips/start").contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+            .content(createRequestJson))
         .andExpect(status().isUnauthorized());
-    mvc.perform(post("/api/v1/trips/" + tripId + "/start").principal(() -> "invalid"))
+    mvc.perform(post("/api/v1/trips/start").principal(() -> "invalid")
+            .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content(createRequestJson))
         .andExpect(status().isUnauthorized());
     verifyNoInteractions(service);
   }
 
   @Test
   void rejectsInvalidTripId() throws Exception {
-    mvc.perform(post("/api/v1/trips/invalid/start").principal(principal))
-        .andExpect(status().isBadRequest());
     mvc.perform(get("/api/v1/trips/invalid").principal(principal))
         .andExpect(status().isBadRequest());
     verifyNoInteractions(service);
@@ -98,13 +106,4 @@ class TripControllerTests {
   }
 
   @Test
-  void preservesStartOwnershipAndStatusErrors() throws Exception {
-    when(service.startTrip(userId, tripId))
-        .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found"))
-        .thenThrow(new ResponseStatusException(HttpStatus.CONFLICT, "Trip must be PLANNED"));
-    mvc.perform(post("/api/v1/trips/" + tripId + "/start").principal(principal))
-        .andExpect(status().isNotFound());
-    mvc.perform(post("/api/v1/trips/" + tripId + "/start").principal(principal))
-        .andExpect(status().isConflict());
-  }
 }

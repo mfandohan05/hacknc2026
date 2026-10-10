@@ -1,7 +1,9 @@
 package hacknc2026.backend.controller;
 
 import hacknc2026.backend.dto.TripResponse;
+import hacknc2026.backend.dto.CreateTripRequest;
 import hacknc2026.backend.service.TripService;
+import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -23,9 +27,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class TripController {
   private final TripService tripService;
 
-  @PostMapping("/{id}/start")
-  public TripResponse startTrip(Principal principal, @PathVariable UUID id) {
-    return tripService.startTrip(currentUserId(principal), id);
+  @PostMapping("/start")
+  @ResponseStatus(HttpStatus.CREATED)
+  public TripResponse startTrip(
+      Principal principal, @Valid @RequestBody CreateTripRequest request) {
+    return tripService.startTrip(currentUserId(principal), request);
   }
 
   @GetMapping

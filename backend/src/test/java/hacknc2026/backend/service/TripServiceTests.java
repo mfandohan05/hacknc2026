@@ -1,7 +1,11 @@
 package hacknc2026.backend.service;
 
+import hacknc2026.backend.dto.CreateTripRequest;
+import hacknc2026.backend.model.Profile;
+import hacknc2026.backend.model.TripMode;
 import hacknc2026.backend.model.Trip;
 import hacknc2026.backend.model.TripStatus;
+import hacknc2026.backend.repository.ProfileRepository;
 import hacknc2026.backend.repository.TripRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
@@ -21,34 +25,38 @@ import static org.mockito.Mockito.*;
 
 class TripServiceTests {
     private final TripRepository repository = mock(TripRepository.class);
+    private final ProfileRepository profiles = mock(ProfileRepository.class);
     private final PointTransactionService points = mock(PointTransactionService.class);
-    private final TripService service = new TripService(repository, points);
+    private final TripService service = new TripService(repository, profiles, points);
     private final UUID userId = UUID.randomUUID();
     private final UUID tripId = UUID.randomUUID();
+    private final CreateTripRequest request = new CreateTripRequest(
+            35.0, -78.0, 35.1, -78.1, TripMode.WALKING,
+            1000.0, 600.0, BigDecimal.ZERO, BigDecimal.ONE, null);
 
     @Test
-    void startsPlannedTripForCurrentUser() {
-        Trip trip = tripWithStatus(TripStatus.PLANNED);
+    void createsAndStartsTripForCurrentUser() {
+        Profile profile = new Profile();
+        profile.setId(userId);
+        when(profiles.findById(userId)).thenReturn(Optional.of(profile));
+        when(repository.save(any(Trip.class))).thenAnswer(invocation -> {
+            Trip created = invocation.getArgument(0);
+            created.setId(tripId);
+            return created;
+        });
 
-        var response = service.startTrip(userId, tripId);
+        var response = service.startTrip(userId, request);
 
-        assertEquals(TripStatus.IN_PROGRESS, trip.getStatus());
+        var trip = org.mockito.ArgumentCaptor.forClass(Trip.class);
+        verify(repository).save(trip.capture());
+        assertEquals(profile, trip.getValue().getProfile());
+        assertEquals(request.originLatitude(), trip.getValue().getOriginLatitude());
+        assertEquals(request.destinationLongitude(), trip.getValue().getDestinationLongitude());
+        assertEquals(request.mode(), trip.getValue().getMode());
+        assertEquals(TripStatus.IN_PROGRESS, trip.getValue().getStatus());
+        assertNotNull(trip.getValue().getCreatedAt());
         assertEquals(tripId, response.id());
         assertEquals("IN_PROGRESS", response.status());
-        assertNull(trip.getCompletedAt());
-        verify(repository).findForUpdate(tripId, userId);
-        verifyNoInteractions(points);
-    }
-
-    @Test
-    void startRetryKeepsTripInProgressWithoutAwardingPoints() {
-        Trip trip = tripWithStatus(TripStatus.IN_PROGRESS);
-
-        var response = service.startTrip(userId, tripId);
-
-        assertEquals(TripStatus.IN_PROGRESS, trip.getStatus());
-        assertEquals("IN_PROGRESS", response.status());
-        assertNull(trip.getCompletedAt());
         verifyNoInteractions(points);
     }
 
@@ -129,9 +137,8 @@ class TripServiceTests {
     }
 
     @Test
-    void cancelledTripCannotStartOrComplete() {
+    void cancelledTripCannotComplete() {
         Trip trip = tripWithStatus(TripStatus.CANCELLED);
-        assertThrows(ResponseStatusException.class, () -> service.startTrip(userId, tripId));
         assertThrows(ResponseStatusException.class, () -> service.completeTrip(userId, tripId));
         assertEquals(TripStatus.CANCELLED, trip.getStatus());
         assertNull(trip.getCompletedAt());
