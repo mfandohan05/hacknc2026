@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 
 function MapSearchBox() {
     return (
-        <div className="flex w-full max-w-md items-center gap-1 rounded-full bg-white mr-4 px-2 py-1.5 shadow-md transition-shadow focus-within:shadow-lg">
+        <div className="flex w-full max-w-md items-center gap-1 rounded-full bg-white px-2 py-1.5 shadow-md transition-shadow focus-within:shadow-lg">
             <Button variant="ghost" size="icon-lg" className="rounded-full" aria-label="Menu">
                 <Menu className="size-5 text-gray-600" />
             </Button>

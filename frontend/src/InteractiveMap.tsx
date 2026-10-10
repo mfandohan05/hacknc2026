@@ -1,5 +1,5 @@
 import mapboxgl from "mapbox-gl";
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_KEY;
 
 export default function InteractiveMap() {
@@ -22,6 +22,6 @@ export default function InteractiveMap() {
     }, [])
 
     return (
-        <div ref={mapContainer} id="map" className="w-100 h-500" />
+        <div ref={mapContainer} id="map" className="absolute inset-0 h-full w-full" />
     )
 }
