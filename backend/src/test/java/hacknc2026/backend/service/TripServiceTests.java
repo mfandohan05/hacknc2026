@@ -27,6 +27,32 @@ class TripServiceTests {
     private final UUID tripId = UUID.randomUUID();
 
     @Test
+    void startsPlannedTripForCurrentUser() {
+        Trip trip = tripWithStatus(TripStatus.PLANNED);
+
+        var response = service.startTrip(userId, tripId);
+
+        assertEquals(TripStatus.IN_PROGRESS, trip.getStatus());
+        assertEquals(tripId, response.id());
+        assertEquals("IN_PROGRESS", response.status());
+        assertNull(trip.getCompletedAt());
+        verify(repository).findForUpdate(tripId, userId);
+        verifyNoInteractions(points);
+    }
+
+    @Test
+    void startRetryKeepsTripInProgressWithoutAwardingPoints() {
+        Trip trip = tripWithStatus(TripStatus.IN_PROGRESS);
+
+        var response = service.startTrip(userId, tripId);
+
+        assertEquals(TripStatus.IN_PROGRESS, trip.getStatus());
+        assertEquals("IN_PROGRESS", response.status());
+        assertNull(trip.getCompletedAt());
+        verifyNoInteractions(points);
+    }
+
+    @Test
     void getTripsMapsResultsAndPreservesPagination() {
         var pageable = PageRequest.of(1, 2);
         Trip newer = new Trip();
