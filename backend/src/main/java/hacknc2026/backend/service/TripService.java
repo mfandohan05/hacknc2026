@@ -36,6 +36,7 @@ public class TripService {
 
         return TripResponse.from(trip);
     }
+
     @Transactional
     public TripResponse startTrip(UUID userId, UUID tripId) {
         Trip trip = findOwnedTripForUpdate(userId, tripId);

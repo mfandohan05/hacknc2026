@@ -13,7 +13,7 @@ public record TripResponse(
         Double distanceMeters,
         Double durationSeconds,
         BigDecimal estimatedCo2Kg,
-        BigDecimal co2SavedKg,
+        Double co2SavedKg,
         Instant createdAt,
         Instant completedAt
 ) {
