@@ -30,6 +30,8 @@ export default function InteractiveMap() {
         });
 
         mapRef.current = map;  
+        map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-right");
+        map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
         return () =>  {
             map.remove();
             mapRef.current = null;
