@@ -1,6 +1,6 @@
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_KEY;
 
@@ -84,13 +84,6 @@ export default function InteractiveMap() {
     return (
         <div className="relative h-screen w-full">
             <div ref={mapContainer} id="map" className="absolute inset-0 h-full w-full" />
-            {location && (
-                <div className="absolute bottom-4 left-4 z-10 rounded bg-white p-3 shadow">
-                    Lat: {location.latitude.toFixed(5)}
-                    <br />
-                    Lng: {location.longitude.toFixed(5)}
-                </div>
-            )}
         </div>
     );
 }
