@@ -17,8 +17,8 @@ public class Profile {
     private String username;
 
     private String displayName;
-    private Integer totalPoints;
-    private Integer Level;
+    private Long totalPoints;
+    private Long Level;
     private Boolean leaderboardOPtIn;
     private LocalDate createdAt;
 }
