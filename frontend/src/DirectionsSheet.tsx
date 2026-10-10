@@ -115,7 +115,7 @@ export default function DirectionsSheet({
                     className="aero-gel mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-full text-base font-semibold disabled:opacity-50"
                 >
                     <Route className="size-5" />
-                    {destinationLabel ? "Compare walk, bike & drive" : "Choose a destination first"}
+                    {destinationLabel ? "See routes" : "Choose a destination first"}
                 </button>
 
                 <div className="my-4 h-px bg-gradient-to-r from-transparent via-[#17334A]/25 to-transparent" />
