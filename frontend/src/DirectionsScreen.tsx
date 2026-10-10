@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowUpDown, Bike, Car, Footprints, Leaf, TrainFront, X } fr
 import type { LucideIcon } from "lucide-react";
 import PlaceSuggestionList from "@/components/PlaceSuggestionList";
 import { usePlaceSearch } from "@/hooks/usePlaceSearch";
-import type { SearchResult } from "@/hooks/usePlaceSearch";
+import type { SelectedPlace, Suggestion } from "@/services/searchService";
 import type { Mode } from "./DirectionsSheet";
 
 const YOUR_LOCATION = "Your location";
@@ -17,24 +17,26 @@ const tabs: { id: Mode; label: string; Icon: LucideIcon }[] = [
 
 type Endpoint = {
     text: string;
-    place: SearchResult | null;
+    place: SelectedPlace | null;
 };
 
 export type DirectionsResult = {
     // null origin means the user's current location
-    origin: SearchResult | null;
-    destination: SearchResult | null;
+    origin: SelectedPlace | null;
+    destination: SelectedPlace | null;
     mode: Mode;
 };
 
 type Props = {
     initialMode?: Mode;
-    origin?: SearchResult | null;
-    destination?: SearchResult | null;
+    origin?: SelectedPlace | null;
+    destination?: SelectedPlace | null;
     onDone: (result: DirectionsResult) => void;
+    // used to bias place suggestions toward the user
+    near?: { longitude: number; latitude: number } | null;
 };
 
-export default function DirectionsScreen({ initialMode = "drive", origin: initialOrigin, destination, onDone }: Props) {
+export default function DirectionsScreen({ initialMode = "drive", origin: initialOrigin, destination, onDone, near }: Props) {
     const [mode, setMode] = useState<Mode>(initialMode);
     const [origin, setOrigin] = useState<Endpoint>({
         text: initialOrigin?.name ?? YOUR_LOCATION,
@@ -45,7 +47,6 @@ export default function DirectionsScreen({ initialMode = "drive", origin: initia
         place: destination ?? null,
     });
     const [swapKey, setSwapKey] = useState(0);
-    // whether the user is mid-edit in each field, used to hide the empty-state card
     const [originTyping, setOriginTyping] = useState(false);
     const [destTyping, setDestTyping] = useState(false);
 
@@ -89,6 +90,7 @@ export default function DirectionsScreen({ initialMode = "drive", origin: initia
                             placeholder="Choose starting point"
                             value={origin}
                             onChange={setOrigin}
+                            near={near}
                             onTypingChange={setOriginTyping}
                             clearable
                         />
@@ -98,7 +100,9 @@ export default function DirectionsScreen({ initialMode = "drive", origin: initia
                             placeholder="Choose destination"
                             value={dest}
                             onChange={setDest}
+                            near={near}
                             onTypingChange={setDestTyping}
+                            onPicked={(place) => onDone({ origin: origin.place, destination: place, mode })}
                             autoFocus={!dest.place}
                         />
                     </div>
@@ -165,17 +169,18 @@ type FieldProps = {
     value: Endpoint;
     onChange: (value: Endpoint) => void;
     onTypingChange?: (typing: boolean) => void;
+    onPicked?: (place: SelectedPlace) => void;
+    near?: { longitude: number; latitude: number } | null;
     clearable?: boolean;
     autoFocus?: boolean;
 };
 
-function PlaceField({ label, placeholder, value, onChange, onTypingChange, clearable, autoFocus }: FieldProps) {
+function PlaceField({ label, placeholder, value, onChange, onTypingChange, onPicked, near, clearable, autoFocus }: FieldProps) {
     const [open, setOpen] = useState(false);
     const [active, setActive] = useState(-1);
-    const [dirty, setDirty] = useState(false);
     const rootRef = useRef<HTMLDivElement>(null);
     const listId = useId();
-    const { results, loading, error } = usePlaceSearch(value.text, dirty);
+    const { setQuery, clear, select, suggestions, loading, error, noResults, hasQuery } = usePlaceSearch(near);
 
     useEffect(() => {
         const onDown = (e: PointerEvent) => {
@@ -185,30 +190,32 @@ function PlaceField({ label, placeholder, value, onChange, onTypingChange, clear
         return () => document.removeEventListener("pointerdown", onDown);
     }, []);
 
-    const choose = (r: SearchResult) => {
-        setDirty(false);
+    const choose = async (suggestion: Suggestion) => {
+        const place = await select(suggestion);
+        if (!place) return;
         setOpen(false);
         onTypingChange?.(false);
-        onChange({ text: r.name, place: r });
+        onChange({ text: place.name, place });
+        onPicked?.(place);
     };
 
     const onKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "Escape") {
             setOpen(false);
-        } else if (e.key === "ArrowDown" && results.length) {
+        } else if (e.key === "ArrowDown" && suggestions.length) {
             e.preventDefault();
             setOpen(true);
-            setActive((i) => (i + 1) % results.length);
-        } else if (e.key === "ArrowUp" && results.length) {
+            setActive((i) => (i + 1) % suggestions.length);
+        } else if (e.key === "ArrowUp" && suggestions.length) {
             e.preventDefault();
-            setActive((i) => (i <= 0 ? results.length - 1 : i - 1));
-        } else if (e.key === "Enter" && open && results.length) {
+            setActive((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+        } else if (e.key === "Enter" && open && suggestions.length) {
             e.preventDefault();
-            choose(results[active >= 0 ? active : 0]);
+            void choose(suggestions[active >= 0 ? active : 0]);
         }
     };
 
-    const showDropdown = open && !loading && (results.length > 0 || error);
+    const showDropdown = open && hasQuery && (loading || error || noResults || suggestions.length > 0);
 
     return (
         <div ref={rootRef}>
@@ -226,7 +233,7 @@ function PlaceField({ label, placeholder, value, onChange, onTypingChange, clear
                     value={value.text}
                     placeholder={placeholder}
                     onChange={(e) => {
-                        setDirty(true);
+                        setQuery(e.target.value);
                         setActive(-1);
                         setOpen(true);
                         onTypingChange?.(e.target.value.length > 0);
@@ -234,7 +241,7 @@ function PlaceField({ label, placeholder, value, onChange, onTypingChange, clear
                     }}
                     onFocus={(e) => {
                         e.currentTarget.select();
-                        if (results.length) setOpen(true);
+                        if (suggestions.length) setOpen(true);
                     }}
                     onKeyDown={onKeyDown}
                     className="min-w-0 flex-1 bg-transparent text-base text-[#17334A] outline-none placeholder:text-[#17334A]/55"
@@ -244,7 +251,7 @@ function PlaceField({ label, placeholder, value, onChange, onTypingChange, clear
                         type="button"
                         aria-label={`Clear ${label.toLowerCase()}`}
                         onClick={() => {
-                            setDirty(false);
+                            clear();
                             setOpen(false);
                             onTypingChange?.(false);
                             onChange({ text: "", place: null });
@@ -259,12 +266,14 @@ function PlaceField({ label, placeholder, value, onChange, onTypingChange, clear
             {showDropdown && (
                 <PlaceSuggestionList
                     id={listId}
-                    results={results}
+                    suggestions={suggestions}
                     active={active}
+                    loading={loading}
                     error={error}
+                    noResults={noResults}
                     variant="screen"
                     onHover={setActive}
-                    onChoose={choose}
+                    onChoose={(sug) => void choose(sug)}
                 />
             )}
         </div>
