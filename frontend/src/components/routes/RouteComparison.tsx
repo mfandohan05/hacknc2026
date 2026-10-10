@@ -10,10 +10,14 @@ type Props = {
 
 function RouteComparison({ routes, recommendedRouteId, selectedRouteId, onSelect }: Props) {
     const car = routes.find((r) => r.mode === "CAR");
+    // recommended route first, the rest keep their order
+    const ordered = [...routes].sort(
+        (a, b) => Number(b.routeId === recommendedRouteId) - Number(a.routeId === recommendedRouteId),
+    );
 
     return (
         <div className="flex flex-col gap-3">
-            {routes.map((route) => {
+            {ordered.map((route) => {
                 const carCo2 = car?.estimatedCo2Kg ?? null;
                 const co2 = route.estimatedCo2Kg;
                 const savingsKg = route.mode !== "CAR" && carCo2 !== null && co2 !== null ? carCo2 - co2 : null;

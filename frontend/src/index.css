@@ -221,3 +221,39 @@
   box-shadow: 0 4px 12px rgba(32, 138, 93, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -2px 4px rgba(10, 70, 45, 0.3);
   color: #fff;
 }
+
+/* glossy primary-blue tile (maneuver icons) */
+.aero-blue {
+  background: linear-gradient(180deg, #8bdcf8 0%, #4fb8e6 48%, #2b8fc0 52%, #39a9db 100%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 3px 8px rgba(43, 143, 192, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: #fff;
+}
+
+/* glossy destructive button */
+.aero-red {
+  background: linear-gradient(180deg, #ff9a8f 0%, #f0564a 48%, #c93a30 52%, #e8483d 100%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 12px rgba(201, 58, 48, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: #fff;
+}
+
+/* while turn-by-turn navigation is active: our own arrow replaces the geolocate dot, and
+   the bottom map controls move above the trip panel */
+.mapboxgl-map.nav-active .mapboxgl-user-location-dot,
+.mapboxgl-map.nav-active .mapboxgl-user-location-accuracy-circle,
+.mapboxgl-map.nav-active .mapboxgl-user-location-heading {
+  display: none;
+}
+
+.mapboxgl-map.nav-active .mapboxgl-ctrl-bottom-right,
+.mapboxgl-map.nav-active .mapboxgl-ctrl-bottom-left {
+  bottom: calc(14rem + env(safe-area-inset-bottom));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aero-orb,
+  .aero-input {
+    transition: none;
+  }
+}
