@@ -1,5 +1,7 @@
 import mapboxgl from "mapbox-gl";
-import { useState, useEffect, useRef } from 'react';
+import "mapbox-gl/dist/mapbox-gl.css";
+import { useEffect, useRef } from "react";
+
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_KEY;
 
 type Location = {
@@ -19,10 +21,12 @@ export default function InteractiveMap() {
         if (!mapContainer.current) return;
 
         const map = new mapboxgl.Map({
-            container: 'map', // container ID
-            style: 'mapbox://styles/mapbox/streets-v12', // style URL
-            center: [-74.5, 40], // starting position [lng, lat]
-            zoom: 9 // starting zoom
+            container: mapContainer.current,
+            style: "mapbox://styles/mapbox/streets-v12",
+            center: [-74.5, 40],
+            zoom: 9,
+            attributionControl: false,
+            logoPosition: "bottom-right",
         });
 
         mapRef.current = map;  
@@ -79,7 +83,7 @@ export default function InteractiveMap() {
 
     return (
         <div className="relative h-screen w-full">
-            <div ref={mapContainer} id="map" className="h-full w-full" />
+            <div ref={mapContainer} id="map" className="absolute inset-0 h-full w-full" />
             {location && (
                 <div className="absolute bottom-4 left-4 z-10 rounded bg-white p-3 shadow">
                     Lat: {location.latitude.toFixed(5)}
