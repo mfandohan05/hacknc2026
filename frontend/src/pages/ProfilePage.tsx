@@ -1,4 +1,5 @@
 import { MapPin, Route, Star, User } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type ProfileData = {
     name: string;
@@ -24,7 +25,15 @@ function ProfilePage() {
                 <div className="aero-glass rounded-3xl p-6 text-[#17334A]">
                     <div className="flex items-center gap-4">
                         <div className="aero-gel flex size-16 shrink-0 items-center justify-center rounded-full">
-                            <User className="size-8" />
+                            <Avatar>
+                                <AvatarImage 
+                                    src="../image_assets/dsuiext_4099.ico"
+                                    alt="Profile"
+                                />
+                                <AvatarFallback className="bg-transparent">
+                                    <User className="size-8 text-[#17334A]" />
+                                </AvatarFallback>
+                            </Avatar>
                         </div>
                         <div>
                             <h1 className="text-2xl font-semibold">{profile.name}</h1>

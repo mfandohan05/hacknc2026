@@ -1,5 +1,5 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { User } from "lucide-react"; 
 import { useNavigate } from "react-router-dom";
 
@@ -17,6 +17,10 @@ function NavigationBar() {
                 onClick={() => navigate("/profile")}
             >
                 <Avatar>
+                    <AvatarImage 
+                        src="../image_assets/dsuiext_4099.ico"
+                        alt="Profile"
+                    />
                     <AvatarFallback className="bg-transparent">
                         <User className="size-5 text-[#17334A]" />
                     </AvatarFallback>
