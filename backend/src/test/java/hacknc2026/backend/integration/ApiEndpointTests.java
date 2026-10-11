@@ -167,6 +167,8 @@ class ApiEndpointTests {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.totalPoints").value(0));
         call("GET", "/api/v1/leaderboards", "", token)
                 .andExpect(status().isOk()).andExpect(jsonPath("$[0].profileId").value(userId.toString()))
+                .andExpect(jsonPath("$[0].displayName").value("Test User"))
+                .andExpect(jsonPath("$[0].username").doesNotExist())
                 .andExpect(jsonPath("$[0].totalPoints").value(50)).andExpect(jsonPath("$[0].rank").value(1));
         call("POST", "/api/v1/trips/" + tripId + "/cancel", "", token)
                 .andExpect(status().isConflict());
@@ -188,12 +190,18 @@ class ApiEndpointTests {
         assertEquals(0, points.count());
     }
 
-    @Test
-    void cancelledTripsAreInaccessible() throws Exception {
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = {false, true})
+    void cancelledTripsAreDeleted(boolean started) throws Exception {
         createProfile(token, "cancel");
-        String id = startTrip(token);
+        String id = started ? startTrip(token) : json.readTree(
+                call("POST", "/api/v1/trips", TRIP, token)
+                        .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString())
+                .get("id").asText();
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM public.trips", Integer.class));
         call("POST", "/api/v1/trips/" + id + "/cancel", "", token)
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("CANCELLED"));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM public.trips", Integer.class));
         for (String action : List.of("start", "complete", "cancel")) {
             call("POST", "/api/v1/trips/" + id + "/" + action, "", token).andExpect(status().isNotFound());
         }

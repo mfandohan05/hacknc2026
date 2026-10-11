@@ -172,26 +172,56 @@ html[data-vt="theme"]::view-transition-new(*) {
 .app-theme[data-theme] ::-webkit-scrollbar-thumb:hover { background-color: var(--theme-mid); border-color: var(--theme-accent); }
 .app-theme[data-theme] ::-webkit-scrollbar-button:single-button:hover { background-color: var(--theme-mid); }
 
-/* Give route choices a clear, theme-colored highlight without shifting layout. */
+/* Route choices: no movement and no heavy ring. Hover and selection use the theme's own gradient. */
 .app-theme[data-theme] .route-choice {
-  transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
 .app-theme[data-theme] button.route-choice { cursor: pointer; }
+
+/* resting Vista items and controls take the theme's tints */
+.app-theme[data-theme] .vista-item {
+  border-color: color-mix(in srgb, var(--theme-deep) 55%, transparent);
+  background: linear-gradient(white, color-mix(in srgb, var(--theme-light) 55%, white) 46%, var(--theme-light) 54%, color-mix(in srgb, var(--theme-light) 60%, white));
+}
 .app-theme[data-theme] .route-choice:has(:focus-visible),
 .app-theme[data-theme] .route-choice:focus-visible {
-  border-color: var(--theme-accent);
-  background-color: var(--theme-light);
-  box-shadow: inset 0 1px 0 white, 0 0 0 3px var(--theme-accent), 0 8px 24px color-mix(in srgb, var(--theme-accent) 35%, transparent);
+  outline: 2px solid var(--theme-accent);
+  outline-offset: 1px;
 }
 @media (hover: hover) {
   .app-theme[data-theme] .route-choice:hover {
-    transform: translateY(-3px);
+    /* the background fades in via the ::before overlay in index.css */
     border-color: var(--theme-accent);
-    background-color: var(--theme-light);
-    box-shadow: inset 0 1px 0 white, 0 0 0 3px var(--theme-accent), 0 8px 24px color-mix(in srgb, var(--theme-accent) 35%, transparent);
+    box-shadow: inset 0 0 0 1px #ffffffcc, 0 0 8px color-mix(in srgb, var(--theme-accent) 35%, transparent);
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .app-theme[data-theme] .route-choice { transition: none; }
-  .app-theme[data-theme] .route-choice:hover { transform: none; }
+/* declared after :hover so a selected item keeps its selected look under the cursor */
+.app-theme[data-theme] .vista-item[aria-pressed="true"] {
+  border-color: var(--theme-accent);
+  background: linear-gradient(color-mix(in srgb, var(--theme-light) 70%, white), var(--theme-mid) 46%, color-mix(in srgb, var(--theme-mid) 80%, var(--theme-accent)) 54%, var(--theme-mid));
+  box-shadow: inset 0 0 0 1px #ffffffcc, 0 0 8px color-mix(in srgb, var(--theme-accent) 45%, transparent);
 }
+
+.app-theme[data-theme] .vista-tile {
+  border-color: var(--theme-deep);
+  background: linear-gradient(white, var(--theme-mid) 46%, var(--theme-accent) 54%, var(--theme-mid));
+}
+.app-theme[data-theme] .vista-tile-green {
+  background: linear-gradient(var(--theme-bright), var(--theme-accent) 46%, var(--theme-deep) 54%, var(--theme-accent));
+}
+.app-theme[data-theme] .vista-button:hover:not(:disabled) {
+  border-color: var(--theme-accent);
+  background: var(--theme-hover);
+  box-shadow: inset 0 0 0 1px #ffffffcc, 0 0 8px color-mix(in srgb, var(--theme-accent) 40%, transparent);
+}
+.app-theme[data-theme] .vista-button-primary {
+  border-color: var(--theme-deep);
+  background: linear-gradient(var(--theme-bright), var(--theme-accent) 48%, var(--theme-deep) 52%, var(--theme-accent));
+  color: white;
+}
+.app-theme[data-theme] .vista-button-primary:hover:not(:disabled) {
+  border-color: var(--theme-deep);
+  background: linear-gradient(white, var(--theme-bright) 48%, var(--theme-accent) 52%, var(--theme-bright));
+  box-shadow: inset 0 0 0 1px #ffffffaa, 0 0 10px color-mix(in srgb, var(--theme-bright) 70%, transparent);
+}
+.app-theme[data-theme] .vista-range:focus-visible { outline-color: var(--theme-accent); }

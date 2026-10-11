@@ -5,14 +5,13 @@ import { apiJson } from "@/services/api";
 
 type LeaderboardEntry = {
     id: string;
-    username: string;
+    displayName: string;
     points: number;
     rank: number;
 };
 
 type LeaderboardApiEntry = {
     profileId: string;
-    username?: string;
     displayName?: string;
     totalPoints: number;
     rank: number;
@@ -42,12 +41,11 @@ function LeaderboardPage() {
                 const entries = Array.isArray(data) ? data : (data as { leaderboard?: unknown }).leaderboard;
                 if (!Array.isArray(entries)) throw new Error("The leaderboard response was not a list.");
 
-                // Prefer the API username. Keep displayName as a fallback for older responses.
                 // The API already returns this list sorted, so keep its order unchanged.
                 setLeaderboard(
                     (entries as LeaderboardApiEntry[]).map((entry) => ({
                         id: entry.profileId,
-                        username: entry.username ?? entry.displayName ?? "Unknown user",
+                        displayName: entry.displayName?.trim() || "Unknown user",
                         points: entry.totalPoints,
                         rank: entry.rank,
                     })),
@@ -159,7 +157,7 @@ function LeaderboardPage() {
                                             </span>
                                         </span>
                                         <span role="cell" className="truncate px-3 font-medium">
-                                            {entry.username}
+                                            {entry.displayName}
                                         </span>
                                         <span role="cell" className="px-3 text-right font-semibold tabular-nums">
                                             {entry.points.toLocaleString()}

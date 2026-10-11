@@ -137,6 +137,7 @@ class TripServiceTests {
                 () -> service.cancelTrip(userId, tripId));
         assertEquals(HttpStatus.CONFLICT, error.getStatusCode());
         assertEquals(TripStatus.COMPLETED, trip.getStatus());
+        verify(repository, never()).delete(any(Trip.class));
     }
 
     @Test
@@ -156,6 +157,7 @@ class TripServiceTests {
             assertNull(trip.getCompletedAt());
             assertThrows(ResponseStatusException.class, () -> service.completeTrip(userId, tripId));
         }
+        verify(repository, times(2)).delete(any(Trip.class));
         verifyNoInteractions(points);
     }
 

@@ -26,19 +26,17 @@ function RouteCard({ route, selected, recommended, savingsKg, onSelect }: Props)
             type="button"
             onClick={onSelect}
             aria-pressed={selected}
-            className={`route-choice w-full rounded-2xl border bg-white/75 p-3 text-left text-[#17334A] shadow-[0_4px_14px_rgba(23,51,74,0.12),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-md transition ${
-                selected ? "border-[#208A5D] ring-2 ring-[#208A5D]/60" : "border-white/80"
-            }`}
+            className="route-choice vista-item w-full cursor-pointer p-3 text-left text-[#17334A]"
         >
             <div className="flex items-center gap-3">
-                <span className={`flex size-11 shrink-0 items-center justify-center rounded-full ${selected ? "aero-gel" : "aero-orb"}`}>
+                <span className={`vista-tile flex size-11 shrink-0 items-center justify-center ${selected ? "vista-tile-green" : ""}`}>
                     <Icon className="size-5" />
                 </span>
                 <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                         <span className="text-base font-semibold">{label}</span>
                         {recommended && (
-                            <span className="aero-gel inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold">
+                            <span className="vista-tile vista-tile-green inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-semibold">
                                 <Star className="size-3" />
                                 Recommended
                             </span>
@@ -55,7 +53,7 @@ function RouteCard({ route, selected, recommended, savingsKg, onSelect }: Props)
             </dl>
 
             <div
-                className="aero-progress-track mt-2 h-2.5 overflow-hidden rounded-full"
+                className="aero-progress-track mt-2 h-3 overflow-hidden rounded-[3px]"
                 role="meter"
                 aria-label="Emissions savings score"
                 aria-valuemin={0}
@@ -63,7 +61,7 @@ function RouteCard({ route, selected, recommended, savingsKg, onSelect }: Props)
                         aria-valuenow={Math.min(100, route.ecoScore)}
             >
                 <div
-                    className="aero-progress-fill h-full rounded-full"
+                    className="aero-progress-fill h-full rounded-[2px]"
                     style={{ width: `${Math.min(100, route.ecoScore)}%` }}
                 />
             </div>
@@ -79,7 +77,7 @@ function RouteCard({ route, selected, recommended, savingsKg, onSelect }: Props)
 
 function Stat({ label, value }: { label: string; value: string }) {
     return (
-        <div className="rounded-xl bg-white/70 px-1 py-1.5">
+        <div className="vista-field px-1 py-1.5">
             <dt className="text-[11px] text-[#17334A]/75">{label}</dt>
             <dd className="text-sm font-semibold">{value}</dd>
         </div>

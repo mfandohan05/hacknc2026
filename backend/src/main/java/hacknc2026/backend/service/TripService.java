@@ -115,7 +115,10 @@ public class TripService {
                     "Only planned or active trips can be cancelled");
         }
         trip.setStatus(TripStatus.CANCELLED);
-        return TripResponse.from(trip);
+        TripResponse response = TripResponse.from(trip);
+        // Keep the cancellation response contract, but do not retain abandoned trips.
+        tripRepository.delete(trip);
+        return response;
     }
 
     private Trip findOwnedTripForUpdate(UUID userId, UUID tripId) {

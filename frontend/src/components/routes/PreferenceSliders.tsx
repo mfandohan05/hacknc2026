@@ -19,7 +19,7 @@ function PreferenceSliders({ value, onChange }: Props) {
     return (
         <section
             aria-label="Route priorities"
-            className="rounded-2xl border border-white/80 bg-white/75 p-3 text-[#17334A] shadow-[0_4px_14px_rgba(23,51,74,0.12),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-md"
+            className="vista-item p-3 text-[#17334A]"
         >
             <h3 className="text-sm font-semibold">What matters most?</h3>
             <div className="mt-2 flex flex-col gap-2">
@@ -33,7 +33,7 @@ function PreferenceSliders({ value, onChange }: Props) {
                             step={5}
                             value={value[key]}
                             onChange={(e) => onChange({ ...value, [key]: Number(e.target.value) })}
-                            className="h-2 min-w-0 flex-1 accent-[#208A5D]"
+                            className="vista-range min-w-0 flex-1"
                         />
                         <span className="w-10 shrink-0 text-right font-semibold tabular-nums">
                             {Math.round(shares[key] * 100)}%

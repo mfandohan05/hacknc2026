@@ -66,7 +66,7 @@ function RouteOptionsScreen({
             </div>
 
             {transit.loading && (
-                <div className="h-24 animate-pulse rounded-2xl bg-white/60" aria-busy="true" aria-label="Loading public transport" />
+                <div className="h-24 animate-pulse rounded-[4px] border border-[#0c263c]/20 bg-white/60" aria-busy="true" aria-label="Loading public transport" />
             )}
             {!transit.loading && transit.error && <Note>{transit.error}</Note>}
             {!transit.loading && !transit.error && transit.routes.length === 0 && (
@@ -116,7 +116,7 @@ function RouteOptionsScreen({
                     {loading && (
                         <div className="flex flex-col gap-3" aria-busy="true" aria-label="Loading routes">
                             {[0, 1, 2].map((i) => (
-                                <div key={i} className="h-32 animate-pulse rounded-2xl bg-white/60" />
+                                <div key={i} className="h-32 animate-pulse rounded-[4px] border border-[#0c263c]/20 bg-white/60" />
                             ))}
                         </div>
                     )}
@@ -147,7 +147,7 @@ function RouteOptionsScreen({
                                 type="button"
                                 disabled={!selectedRoute || loading || !!error}
                                 onClick={() => selectedRoute && onStartTrip(selectedRoute)}
-                                className="aero-gel h-12 w-full rounded-full text-base font-semibold disabled:opacity-50"
+                                className="vista-button vista-button-primary h-11 w-full text-base font-semibold disabled:opacity-50"
                             >
                                 Start trip
                             </button>
@@ -164,8 +164,8 @@ function RouteOptionsScreen({
 
 function Note({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-white/80 bg-white/70 px-4 py-5 text-center text-sm font-medium">
-            <span className="aero-gel flex size-10 items-center justify-center rounded-full">
+        <div className="flex flex-col items-center gap-2 vista-item px-4 py-5 text-center text-sm font-medium">
+            <span className="vista-tile vista-tile-green flex size-10 items-center justify-center">
                 <Leaf className="size-5" />
             </span>
             {children}
