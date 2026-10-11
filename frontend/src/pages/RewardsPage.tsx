@@ -1,30 +1,31 @@
 import "./RewardsPage.css";
+import { useAppTheme } from "@/context/ThemeContext";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, Gift, Leaf, LockKeyhole, RefreshCw, ScrollText, Sparkles, Trophy } from "lucide-react";
 import AeroWindow from "@/components/layout/AeroWindow";
 import CosmeticBadge from "@/components/rewards/CosmeticBadge";
 import { useAuth } from "@/hooks/useAuth";
-import { getRewards, getLedger, readCosmetic, saveCosmetic } from "@/services/rewardsService";
+import { getRewards, getLedger } from "@/services/rewardsService";
 import type { Rewards, Ledger } from "@/services/rewardsService";
 
-function AccountRewards({ userId }: { userId: string }) {
+function AccountRewards() {
     const [data, setData] = useState<Rewards | null>(null);
     const [ledger, setLedger] = useState<Ledger | null>(null);
     const [page, setPage] = useState(0);
     const [retry, setRetry] = useState(0);
     const [error, setError] = useState<string | null>(null);
     const [ledgerError, setLedgerError] = useState<string | null>(null);
-    const [selected, setSelected] = useState(() => readCosmetic(userId));
+    const { theme: active, equip, updateCosmetics } = useAppTheme();
     const [notice, setNotice] = useState("");
 
     useEffect(() => {
         const abort = new AbortController();
         void getRewards(abort.signal).then((result) => {
-            if (!abort.signal.aborted) { setData(result); setError(null); }
+            if (!abort.signal.aborted) { setData(result); updateCosmetics(result.cosmetics); setError(null); }
         }).catch(() => { if (!abort.signal.aborted) setError("Couldn't load your rewards. Please try again."); });
         return () => abort.abort();
-    }, [retry]);
+    }, [retry, updateCosmetics]);
     useEffect(() => {
         const abort = new AbortController();
         void getLedger(page, abort.signal).then((result) => {
@@ -32,10 +33,9 @@ function AccountRewards({ userId }: { userId: string }) {
         }).catch(() => { if (!abort.signal.aborted) setLedgerError("Couldn't load your EcoPoints ledger."); });
         return () => abort.abort();
     }, [page, retry]);
-    const active = data?.cosmetics.find((c) => c.id === selected && c.unlocked)?.id ?? "sprout";
     const refresh = () => { setError(null); setLedgerError(null); setData(null); setLedger(null); setRetry((r) => r + 1); };
 
-    return <>
+    return <div className="contents" data-rewards-theme={active}>
         <AeroWindow title="EcoQuest • Rewards center" Icon={Gift} as="h1" className="rewards-hero">
             <div className="flex items-center justify-between gap-3">
                 <p className="text-sm text-slate-600">A little greener. A little further.</p>
@@ -64,14 +64,13 @@ function AccountRewards({ userId }: { userId: string }) {
                 </article>)}</div>
             </AeroWindow>
             <AeroWindow title="Your collection • Cosmetic unlocks" Icon={Sparkles}>
-                <p className="mb-4 text-sm text-slate-600">Choose a badge for your rewards and profile pages. Free to equip; your selection is saved on this browser.</p>
+                <p className="mb-4 text-sm text-slate-600">Equip a theme to change colors across the app, plus your profile badge. Free to equip; saved on this browser.</p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{data.cosmetics.map((c) => <article key={c.id} className={`rewards-cosmetic ${active === c.id ? "is-equipped" : ""} ${!c.unlocked ? "is-locked" : ""}`}>
                     <div className="rewards-badge-plinth"><CosmeticBadge id={c.id} large /></div><h2 className="font-semibold">{c.name}</h2><p className="text-xs text-slate-600">{c.description}</p>
                     <button disabled={!c.unlocked || active === c.id} className="aero-orb mt-auto flex min-h-10 items-center justify-center gap-1 rounded-full px-3 text-xs font-semibold disabled:opacity-65" onClick={() => {
-                        setSelected(c.id);
-                        setNotice(saveCosmetic(userId, c.id) ? `${c.name} equipped.` : `${c.name} equipped for this visit. Browser storage is unavailable.`);
+                        setNotice(equip(c.id) ? "" : "Browser storage is unavailable. Your selection is saved for this visit only.");
                     }}>{active === c.id ? <><Check size={14} />Equipped</> : c.unlocked ? "Equip" : `Level ${c.requiredLevel}`}</button>
-                </article>)}</div><p role="status" className="mt-3 text-sm">{notice}</p>
+                </article>)}</div>{notice && <p role="status" className="mt-3 text-sm">{notice}</p>}
             </AeroWindow>
         </>}
         <AeroWindow title="EcoPoints ledger" Icon={ScrollText}>
@@ -86,7 +85,7 @@ function AccountRewards({ userId }: { userId: string }) {
                     <div className="mt-4 flex items-center justify-between gap-3 text-sm"><button disabled={page === 0} className="aero-orb rounded-full px-4 py-2 disabled:opacity-40" onClick={() => { setLedger(null); setPage((p) => p - 1); }}>Previous</button><span>Page {ledger.page + 1} · {ledger.totalElements} entries</span><button disabled={!ledger.hasNext} className="aero-orb rounded-full px-4 py-2 disabled:opacity-40" onClick={() => { setLedger(null); setPage((p) => p + 1); }}>Next</button></div>
                 </>}
         </AeroWindow>
-    </>;
+    </div>;
 }
 
 export default function RewardsPage() {
@@ -95,7 +94,7 @@ export default function RewardsPage() {
         <div className="rewards-scenery" aria-hidden="true"><span className="rewards-sun" /><span className="rewards-cloud rewards-cloud-one" /><span className="rewards-cloud rewards-cloud-two" /><span className="rewards-hill" /><span className="rewards-water" />
             <span className="aero-bubble rewards-bubble-one" /><span className="aero-bubble rewards-bubble-two" /><span className="aero-bubble rewards-bubble-three" /></div>
         <div className="relative mx-auto flex max-w-4xl flex-col gap-6">
-            {loading ? <p role="status">Loading…</p> : user ? <AccountRewards key={user.id} userId={user.id} /> : <AeroWindow title="EcoQuest • Rewards center" Icon={Gift} as="h1" className="rewards-hero"><div className="rewards-welcome py-8 text-center"><div className="rewards-orbit mx-auto"><CosmeticBadge id="sprout" large /></div><h2 className="mt-5 text-2xl font-semibold">Make every journey count</h2><p className="mx-auto mt-3 max-w-md text-slate-600">Sign in to earn EcoPoints, track your achievements, level up, and unlock new badges.</p><Link to="/signin" state={{ from: "/rewards" }} className="aero-gel mt-6 inline-block rounded-full px-6 py-3">Sign in to see rewards</Link><p className="mt-3 text-xs text-slate-600">Guest journeys do not earn account rewards.</p></div></AeroWindow>}
+            {loading ? <p role="status">Loading…</p> : user ? <AccountRewards key={user.id} /> : <AeroWindow title="EcoQuest • Rewards center" Icon={Gift} as="h1" className="rewards-hero"><div className="rewards-welcome py-8 text-center"><div className="rewards-orbit mx-auto"><CosmeticBadge id="sprout" large /></div><h2 className="mt-5 text-2xl font-semibold">Make every journey count</h2><p className="mx-auto mt-3 max-w-md text-slate-600">Sign in to earn EcoPoints, track your achievements, level up, and unlock new badges.</p><Link to="/signin" state={{ from: "/rewards" }} className="aero-gel mt-6 inline-block rounded-full px-6 py-3">Sign in to see rewards</Link><p className="mt-3 text-xs text-slate-600">Guest journeys do not earn account rewards.</p></div></AeroWindow>}
         </div>
     </main>;
 }

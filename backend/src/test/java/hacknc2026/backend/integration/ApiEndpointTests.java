@@ -367,6 +367,10 @@ class ApiEndpointTests {
         jdbc.update("UPDATE public.profiles SET total_points = 375 WHERE id = ?", userId);
         call("GET", "/api/v1/rewards", "", token).andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalPoints").value(375))
+                .andExpect(jsonPath("$.achievements[3].unlocked").value(true))
+                .andExpect(jsonPath("$.achievements[3].progress").value(100))
+                .andExpect(jsonPath("$.achievements[4].progress").value(375))
+                .andExpect(jsonPath("$.achievements[4].unlocked").value(false))
                 .andExpect(jsonPath("$.pointsIntoLevel").value(125))
                 .andExpect(jsonPath("$.level").value(2))
                 .andExpect(jsonPath("$.lifetimePoints").value(0));

@@ -38,9 +38,9 @@ public class RewardsService {
             achievement("first-trip", "First steps", "Complete your first trip.", completed, 1),
             achievement("five-trips", "Finding your rhythm", "Complete 5 trips.", completed, 5),
             achievement("twenty-trips", "Everyday explorer", "Complete 20 trips.", completed, 20),
-            achievement("first-points", "A greener start", "Earn 100 EcoPoints.", earned, 100),
-            achievement("five-hundred", "Making a difference", "Earn 500 EcoPoints.", earned, 500),
-            achievement("thousand", "Eco champion", "Earn 1,000 EcoPoints.", earned, 1000)),
+            achievement("first-points", "A greener start", "Reach a balance of 100 EcoPoints.", progressionPoints, 100),
+            achievement("five-hundred", "Making a difference", "Reach a balance of 500 EcoPoints.", progressionPoints, 500),
+            achievement("thousand", "Eco champion", "Reach a balance of 1,000 EcoPoints.", progressionPoints, 1000)),
         List.of(
             cosmetic("sprout", "Sprouty", "Your little green companion for every journey.", 1, level),
             cosmetic("ocean", "Ocean", "A cool blue badge for your next adventure.", 2, level),

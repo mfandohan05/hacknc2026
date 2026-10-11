@@ -103,3 +103,78 @@
   .rewards-balance .rewards-orbit { width: 94px; height: 94px; }
   .rewards-page .aero-caption { display: none; }
 }
+
+/* Theme scope is derived from the validated equipped badge, never the document body. */
+.rewards-page {
+  --reward-accent: #237849;
+  --reward-soft: #def6df;
+  --reward-mid: #a9ddb5;
+  --reward-fill-start: #5be67d;
+  --reward-fill-end: #1fa83f;
+}
+.rewards-page:has([data-rewards-theme="ocean"]) {
+  --reward-accent: #075b9e;
+  --reward-soft: #dff6ff;
+  --reward-mid: #95d2f2;
+  --reward-fill-start: #55d8ff;
+  --reward-fill-end: #0874df;
+  background: #199ad8 url('/image_assets/ocean-background.png') center top / cover no-repeat;
+  background-attachment: fixed;
+}
+.rewards-page:has([data-rewards-theme="sunset"]) {
+  --reward-accent: #954411;
+  --reward-soft: #fff0d8;
+  --reward-mid: #efc486;
+  --reward-fill-start: #ffd16b;
+  --reward-fill-end: #df7614;
+  background: #e89462 url('/image_assets/sunset-asadal.jpg') center center / cover no-repeat;
+  background-attachment: fixed;
+}
+.rewards-page:has([data-rewards-theme="aurora"]) {
+  --reward-accent: #983c45;
+  --reward-soft: #ffebec;
+  --reward-mid: #ebaeb5;
+  --reward-fill-start: #ff969a;
+  --reward-fill-end: #c5374b;
+  background: #a4c68b url("/image_assets/fauna-leaves.jpg") center / cover no-repeat;
+  background-attachment: fixed;
+}
+.rewards-page:has([data-rewards-theme="sprout"], [data-rewards-theme="ocean"], [data-rewards-theme="sunset"], [data-rewards-theme="aurora"]) .rewards-scenery { display: none; }
+.rewards-page:has([data-rewards-theme]) .aero-titlebar {
+  background: linear-gradient(#ffffffdd, var(--reward-soft) 48%, var(--reward-mid) 52%, var(--reward-soft));
+}
+.rewards-page:has([data-rewards-theme]) .rewards-hero {
+  background: radial-gradient(ellipse at 95% 15%, #ffffffde, transparent 55%), linear-gradient(140deg, #f3fbffeb, var(--reward-soft));
+}
+.rewards-page:has([data-rewards-theme]) .aero-window:not(.rewards-hero) {
+  background: linear-gradient(115deg, #ffffffba, #ffffff80 42%, #ffffff20 42.2%), linear-gradient(#ffffffdb, var(--reward-soft));
+}
+.rewards-page:has([data-rewards-theme]) .rewards-points { color: var(--reward-accent); }
+.rewards-page:has([data-rewards-theme]) .rewards-level {
+  color: var(--reward-accent); border-color: var(--reward-accent);
+  background: linear-gradient(white, var(--reward-soft) 49%, var(--reward-mid) 50%, var(--reward-soft));
+}
+.rewards-page:has([data-rewards-theme]) .rewards-orbit {
+  background: radial-gradient(circle at 35% 20%, white, var(--reward-soft) 55%, var(--reward-mid));
+}
+.rewards-page:has([data-rewards-theme]) .rewards-achievement.is-unlocked,
+.rewards-page:has([data-rewards-theme]) .rewards-cosmetic.is-equipped {
+  border-color: var(--reward-accent);
+  background: linear-gradient(#ffffffed, var(--reward-soft));
+  box-shadow: inset 0 0 0 1px #ffffffcc, 0 0 8px #ffffff55;
+}
+.rewards-page .rewards-progress::-webkit-progress-value {
+  background: linear-gradient(#ffffff99 0, #ffffff22 48%, #00000010 50%, #ffffff30 100%), linear-gradient(90deg, var(--reward-fill-start), var(--reward-fill-end));
+  box-shadow: inset 0 0 0 1px #ffffff66;
+}
+.rewards-page .rewards-progress::-moz-progress-bar {
+  background: linear-gradient(#ffffff99 0, #ffffff22 48%, #00000010 50%, #ffffff30 100%), linear-gradient(90deg, var(--reward-fill-start), var(--reward-fill-end));
+}
+.rewards-page:has([data-rewards-theme]) .aero-orb:hover:not(:disabled),
+.rewards-page:has([data-rewards-theme]) .aero-gel {
+  border-color: var(--reward-accent);
+  background: linear-gradient(white, var(--reward-soft) 49%, var(--reward-mid) 50%, var(--reward-soft));
+}
+@media (max-width: 640px) {
+  .rewards-page:has([data-rewards-theme="sprout"], [data-rewards-theme="ocean"], [data-rewards-theme="sunset"], [data-rewards-theme="aurora"]) { background-attachment: scroll; background-size: auto 100vh; background-repeat: repeat-y; }
+}

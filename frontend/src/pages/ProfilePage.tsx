@@ -74,7 +74,7 @@ function ProfilePage() {
                 <AeroWindow title="Profile" Icon={User} as="h1" bodyClassName="p-5">
                     <div className="flex items-center gap-4">
                         <div className="aero-gel flex size-16 shrink-0 items-center justify-center rounded-full">
-                            {user && <ProfileCosmetic key={user.id} userId={user.id} />}
+                            {user && <ProfileCosmetic />}
                         </div>
                         <div className="min-w-0 flex-1">
                             <p className="truncate text-2xl font-semibold">{username}</p>

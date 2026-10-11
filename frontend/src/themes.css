@@ -1,0 +1,159 @@
+/* Shared palette for all app routes. Error and destructive-action colors remain semantic. */
+.app-theme {
+  --theme-accent: #237849;
+  --theme-light: #e4f6e5;
+  --theme-mid: #a9ddb5;
+  --theme-bright: #5be67d;
+  --theme-deep: #174c37;
+  --theme-wallpaper: url("/image_assets/sprouty-background.jpg");
+  --primary: #237849;
+  --primary-foreground: #ffffff;
+  --ring: #237849;
+}
+.app-theme[data-theme="ocean"] {
+  --theme-accent: #075b9e;
+  --theme-light: #dff6ff;
+  --theme-mid: #95d2f2;
+  --theme-bright: #55d8ff;
+  --theme-deep: #093759;
+  --theme-wallpaper: url("/image_assets/ocean-background.png");
+  --primary: #075b9e; --ring: #075b9e;
+}
+.app-theme[data-theme="sunset"] {
+  --theme-accent: #954411;
+  --theme-light: #fff0d8;
+  --theme-mid: #efc486;
+  --theme-bright: #ffd16b;
+  --theme-deep: #50311d;
+  --theme-wallpaper: url("/image_assets/sunset-asadal.jpg");
+  --primary: #954411; --ring: #954411;
+}
+.app-theme[data-theme="aurora"] {
+  --theme-accent: #983c45;
+  --theme-light: #ffebec;
+  --theme-mid: #ebaeb5;
+  --theme-bright: #ff969a;
+  --theme-deep: #512931;
+  --theme-wallpaper: url("/image_assets/fauna-leaves.jpg");
+  --primary: #983c45; --ring: #983c45;
+}
+.app-theme[data-theme] .aero-glass {
+  background: linear-gradient(115deg, #ffffff80, #ffffff80 42%, transparent 42.2%), linear-gradient(#ffffffce, color-mix(in srgb, var(--theme-mid) 65%, transparent));
+}
+.app-theme[data-theme] .aero-titlebar {
+  background: linear-gradient(#ffffffdd, var(--theme-light) 48%, var(--theme-mid) 52%, var(--theme-light));
+}
+.app-theme[data-theme] .aero-orb,
+.app-theme[data-theme] .aero-blue {
+  color: var(--theme-deep);
+  border-color: color-mix(in srgb, var(--theme-accent) 45%, white);
+  background: linear-gradient(white, var(--theme-light) 49%, var(--theme-mid) 51%, var(--theme-light));
+}
+.app-theme[data-theme] .aero-gel {
+  background: linear-gradient(var(--theme-mid), var(--theme-accent) 49%, var(--theme-deep) 51%, var(--theme-accent));
+  color: white;
+  box-shadow: inset 0 1px 0 #ffffffbb, 0 4px 12px color-mix(in srgb, var(--theme-accent) 35%, transparent);
+}
+.app-theme[data-theme] .aero-taskbar {
+  background: linear-gradient(color-mix(in srgb, var(--theme-mid) 45%, #273e50), var(--theme-deep) 49%, #0b1720 51%, var(--theme-deep));
+}
+.app-theme[data-theme] .aero-taskbtn-active,
+.app-theme[data-theme] .aero-taskbtn-current {
+  background: linear-gradient(#ffffff55, color-mix(in srgb, var(--theme-mid) 55%, transparent));
+}
+.app-theme[data-theme] .aero-start-orb,
+.app-theme[data-theme] .aero-progress-fill {
+  background: linear-gradient(#ffffff99, #ffffff22 48%, #00000010 50%, #ffffff30), linear-gradient(90deg, var(--theme-bright), var(--theme-accent));
+  box-shadow: inset 0 1px 0 white, 0 0 10px color-mix(in srgb, var(--theme-accent) 45%, transparent);
+}
+.app-theme[data-theme] .aero-input:focus-within {
+  border-color: var(--theme-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-mid) 60%, transparent);
+}
+.app-theme[data-theme] .mapboxgl-user-location-dot,
+.app-theme[data-theme] .mapboxgl-user-location-dot::before { background-color: var(--theme-accent); }
+.app-theme[data-theme] :is(.text-emerald-700, .text-emerald-800, .text-green-700, [class~="text-[#208A5D]"]) { color: var(--theme-accent); }
+.app-theme[data-theme] :is([class~="bg-[#e8f6fc]"], .bg-emerald-50) { background-color: var(--theme-light); }
+.app-theme[data-theme] :is(button, a, input, select):focus-visible { outline-color: var(--theme-accent); }
+
+/* Theme changes crossfade the captured page, wallpaper, and taskbar together. */
+html[data-vt="theme"]::view-transition-group(*) {
+  animation-duration: 400ms;
+  animation-timing-function: ease-in-out;
+}
+html[data-vt="theme"]::view-transition-old(*) {
+  animation: theme-fade-out 400ms ease-in-out both;
+}
+html[data-vt="theme"]::view-transition-new(*) {
+  animation: theme-fade-in 400ms ease-in-out both;
+}
+@keyframes theme-fade-out { to { opacity: 0; } }
+@keyframes theme-fade-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  html[data-vt="theme"]::view-transition-group(*),
+  html[data-vt="theme"]::view-transition-old(*),
+  html[data-vt="theme"]::view-transition-new(*) { animation: none; }
+}
+
+/* Theme wallpaper follows the account across pages; the live map remains interactive. */
+.app-theme[data-theme] .aero-bg {
+  background-color: var(--theme-mid);
+  background-image: var(--theme-wallpaper);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+@media (max-width: 640px) {
+  .app-theme[data-theme] .aero-bg {
+    background-attachment: scroll;
+    background-size: auto 100vh;
+    background-repeat: repeat-y;
+  }
+}
+
+/* Shared hover colors follow the equipped theme. */
+.app-theme[data-theme] {
+  --theme-hover: linear-gradient(white, var(--theme-light) 48%, var(--theme-mid) 52%, var(--theme-light));
+  --muted: var(--theme-light);
+  --secondary: var(--theme-light);
+}
+.app-theme[data-theme] .aero-orb:hover:not(:disabled),
+.app-theme[data-theme] .aero-blue:hover:not(:disabled),
+.app-theme[data-theme] .rewards-page .aero-orb:hover:not(:disabled) {
+  color: var(--theme-deep);
+  border-color: var(--theme-accent);
+  background: var(--theme-hover);
+  box-shadow: inset 0 0 0 1px #ffffffcc, 0 0 10px color-mix(in srgb, var(--theme-accent) 40%, transparent);
+  filter: none;
+}
+.app-theme[data-theme] .aero-gel:hover:not(:disabled),
+.app-theme[data-theme] .rewards-page .aero-gel:hover:not(:disabled) {
+  color: white;
+  background: linear-gradient(var(--theme-bright), var(--theme-accent) 49%, var(--theme-deep) 51%, var(--theme-accent));
+  border-color: var(--theme-mid);
+  box-shadow: inset 0 1px 0 white, 0 0 12px color-mix(in srgb, var(--theme-accent) 55%, transparent);
+}
+.app-theme[data-theme] .aero-taskbtn::before {
+  background: linear-gradient(#ffffff80, color-mix(in srgb, var(--theme-mid) 65%, transparent) 50%, color-mix(in srgb, var(--theme-accent) 50%, transparent));
+  box-shadow: inset 0 0 0 1px #ffffff80, 0 0 10px color-mix(in srgb, var(--theme-bright) 60%, transparent);
+}
+.app-theme[data-theme] .aero-start-orb:hover {
+  box-shadow: inset 0 1px 0 white, 0 0 22px var(--theme-bright), 0 3px 8px #0006;
+}
+.app-theme[data-theme] .rewards-page :is(.rewards-achievement, .rewards-cosmetic):hover,
+.app-theme[data-theme] .rewards-ledger-row:hover,
+.app-theme[data-theme] [class*="hover:bg-gradient-to-b"]:hover:not(:disabled) {
+  border-color: var(--theme-accent);
+  background: linear-gradient(white, var(--theme-light));
+}
+.app-theme[data-theme] :is([class~="hover:bg-white/60"], [class~="hover:bg-white/90"]):hover:not(:disabled) {
+  background-color: var(--theme-light);
+}
+.app-theme[data-theme] .aero-cap-btn:not(.aero-cap-close):hover {
+  background: var(--theme-hover);
+  box-shadow: inset 0 0 0 1px white, 0 0 10px var(--theme-bright);
+}
+.app-theme[data-theme] .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { background: var(--theme-hover); }
+.app-theme[data-theme] ::-webkit-scrollbar-thumb:hover { background-color: var(--theme-mid); border-color: var(--theme-accent); }
+.app-theme[data-theme] ::-webkit-scrollbar-button:single-button:hover { background-color: var(--theme-mid); }
