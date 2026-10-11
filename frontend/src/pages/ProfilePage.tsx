@@ -21,6 +21,14 @@ function formatDate(iso: string | null) {
     return new Date(iso).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
 }
 
+function earnedPointsLabel(trip: TripResponse) {
+    if (trip.status !== "COMPLETED") return "No points earned yet";
+    const points = trip.mode === "WALKING" ? trip.points?.walking
+        : trip.mode === "CYCLING" ? trip.points?.cycling
+        : trip.mode === "DRIVING" ? trip.points?.driving : null;
+    return points == null ? "EcoPoints unavailable" : `+${points.toLocaleString()} EcoPoints`;
+}
+
 function ProfilePage() {
     const { user } = useAuth();
     const [trips, setTrips] = useState<TripsState>({ status: "loading" });
@@ -60,9 +68,9 @@ function ProfilePage() {
     const email = user?.email ?? "";
     const username = (user?.user_metadata?.username as string | undefined)?.trim() || email.split("@")[0] || "Explorer";
 
-    const list: TripResponse[] = trips.status === "ready" ? trips.page.content : [];
-    const completed = list.filter((t) => t.status === "COMPLETED");
-    const co2Saved = completed.reduce((sum, t) => sum + (t.co2SavedKg ?? 0), 0);
+    const list: TripResponse[] = trips.status === "ready"
+        ? trips.page.content.filter((trip) => trip.status === "COMPLETED") : [];
+    const co2Saved = list.reduce((sum, t) => sum + (t.co2SavedKg ?? 0), 0);
 
     return (
         <main className="aero-bg relative min-h-full px-4 pt-16 pb-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+1.5rem)] md:px-6 md:pb-6">
@@ -111,7 +119,7 @@ function ProfilePage() {
                                 Trips completed
                             </div>
                             <p className="mt-2 text-3xl font-bold tabular-nums">
-                                {trips.status === "ready" ? completed.length : "—"}
+                                {trips.status === "ready" ? list.length : "—"}
                             </p>
                         </div>
                     </div>
@@ -119,7 +127,7 @@ function ProfilePage() {
 
                 <AeroWindow title="Previous trips" Icon={Route} bodyClassName="p-5">
                     <div className="flex items-center justify-between">
-                        <p className="text-sm text-[#17334A]/75">Your most recent trips.</p>
+                        <p className="text-sm text-[#17334A]/75">Your most recent completed trips.</p>
                         <MapPin className="size-5 text-[#208A5D]" />
                     </div>
 
@@ -139,8 +147,8 @@ function ProfilePage() {
 
                     {trips.status === "ready" && list.length === 0 && (
                         <div className="mt-5 rounded-2xl border border-dashed border-[#17334A]/30 bg-white/40 px-4 py-8 text-center">
-                            <p className="font-medium">No trips yet</p>
-                            <p className="mt-1 text-sm text-[#17334A]/70">Start a trip from Explore to see it here.</p>
+                            <p className="font-medium">No completed trips yet</p>
+                            <p className="mt-1 text-sm text-[#17334A]/70">Complete a trip from Explore to see it here.</p>
                         </div>
                     )}
 
@@ -149,7 +157,7 @@ function ProfilePage() {
                             {list.map((trip) => (
                                 <li
                                     key={trip.id}
-                                    className="flex items-center gap-3 rounded-2xl bg-white/60 px-4 py-3"
+                                    className="flex flex-wrap items-center gap-3 rounded-2xl bg-white/60 px-4 py-3"
                                 >
                                     <span className="aero-orb flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-bold">
                                         {MODE_LABEL[trip.mode ?? ""] ?? "Trip"}
@@ -167,11 +175,16 @@ function ProfilePage() {
                                             {(trip.status ?? "").replace("_", " ").toLowerCase()}
                                         </p>
                                     </div>
-                                    {trip.co2SavedKg !== null && trip.co2SavedKg > 0 && (
-                                        <span className="shrink-0 text-xs font-semibold text-[#208A5D]">
-                                            {trip.co2SavedKg.toFixed(1)} kg saved
+                                    <div className="ml-auto flex flex-col gap-1 text-right text-xs">
+                                        <span className={trip.status === "COMPLETED" ? "font-semibold text-[#208A5D]" : "text-[#17334A]/70"}>
+                                            {earnedPointsLabel(trip)}
                                         </span>
-                                    )}
+                                        {trip.co2SavedKg !== null && trip.co2SavedKg > 0 && (
+                                            <span className="font-semibold text-[#208A5D]">
+                                                {trip.co2SavedKg.toFixed(1)} kg saved
+                                            </span>
+                                        )}
+                                    </div>
                                 </li>
                             ))}
                         </ul>
