@@ -13,7 +13,6 @@ type LeaderboardEntry = {
 type LeaderboardApiEntry = {
     profileId: string;
     username?: string;
-    displayName?: string;
     totalPoints: number;
     rank: number;
 };
@@ -42,12 +41,11 @@ function LeaderboardPage() {
                 const entries = Array.isArray(data) ? data : (data as { leaderboard?: unknown }).leaderboard;
                 if (!Array.isArray(entries)) throw new Error("The leaderboard response was not a list.");
 
-                // Prefer the API username. Keep displayName as a fallback for older responses.
                 // The API already returns this list sorted, so keep its order unchanged.
                 setLeaderboard(
                     (entries as LeaderboardApiEntry[]).map((entry) => ({
                         id: entry.profileId,
-                        username: entry.username ?? entry.displayName ?? "Unknown user",
+                        username: entry.username?.trim() || "Unknown user",
                         points: entry.totalPoints,
                         rank: entry.rank,
                     })),

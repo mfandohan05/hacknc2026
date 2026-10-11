@@ -27,7 +27,7 @@ public class LeaderboardService {
     for (int i = 0; i < Math.min(100, profiles.size()); i++) {
       Profile profile = profiles.get(i);
       leaderboard.add(new LeaderboardEntry(
-          profile.getId(), profile.getDisplayName(), pointsOrZero(profile), i + 1));
+          profile.getId(), profile.getUsername(), pointsOrZero(profile), i + 1));
     }
 
     return leaderboard;
