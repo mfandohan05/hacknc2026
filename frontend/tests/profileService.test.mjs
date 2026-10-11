@@ -72,3 +72,19 @@ test("uses a bounded metadata display name when provided", async () => {
     await ensureProfile({ ...session, user: { ...session.user, user_metadata: { full_name: " Alex " } } });
     assert.equal(JSON.parse(calls[1].body).displayName, "Alex");
 });
+
+test("sends the signup username and full name to the backend after confirmation", async () => {
+    const calls = mockResponses([404, 201]);
+    await ensureProfile({ ...session, user: { ...session.user, user_metadata: {
+        username: " alex_travels ", full_name: " Alex Smith ",
+    } } });
+    assert.deepEqual(JSON.parse(calls[1].body), { username: "alex_travels", displayName: "Alex Smith" });
+});
+
+test("does not overwrite an existing profile from signup metadata", async () => {
+    const calls = mockResponses([200]);
+    await ensureProfile({ ...session, user: { ...session.user, user_metadata: {
+        username: "changed", full_name: "Changed Name",
+    } } });
+    assert.equal(calls.length, 1);
+});

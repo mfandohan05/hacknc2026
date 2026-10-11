@@ -63,6 +63,7 @@ class ApiEndpointTests {
     @Autowired ObjectMapper json;
     @Autowired PointTransactionRepository points;
     @MockitoBean MapboxDirectionsClient mapbox;
+    @MockitoBean GoogleTransitClient transit;
     private MockMvc mvc;
     private UUID userId;
     private String token;
@@ -265,6 +266,51 @@ class ApiEndpointTests {
     private void createProfile(String bearer, String name) throws Exception {
         call("POST", "/api/v1/profiles", "{\"username\":\"" + name + "\",\"displayName\":\"Test User\"}", bearer)
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void profileCreationWorksFromVitesFallbackPort() throws Exception {
+        mvc.perform(options("/api/v1/profiles")
+                        .header("Origin", "http://localhost:5174")
+                        .header("Access-Control-Request-Method", "POST")
+                        .header("Access-Control-Request-Headers", "authorization,content-type"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5174"));
+        mvc.perform(post("/api/v1/profiles")
+                        .header("Origin", "http://localhost:5174")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType("application/json")
+                        .content("{\"username\":\"newuser\",\"displayName\":\"New User\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(userId.toString()));
+    }
+
+    @Test
+    void unknownOriginsRemainBlocked() throws Exception {
+        mvc.perform(options("/api/v1/profiles")
+                        .header("Origin", "https://untrusted.example")
+                        .header("Access-Control-Request-Method", "POST"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void guestCanFindTransitWithoutSavingTripsOrPoints() throws Exception {
+        when(transit.findRoutes(any())).thenReturn(new hacknc2026.backend.dto.TransitResponse(List.of(), "Google Maps"));
+        mvc.perform(post("/api/v1/transit/routes").contentType("application/json").content(COORDINATES))
+                .andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.routes.length()").value(0));
+        assertEquals(0L, jdbc.queryForObject("SELECT COUNT(*) FROM public.trips", Long.class));
+        assertEquals(0, points.count());
+    }
+
+    @Test
+    void transitValidatesGuestRequestsBeforeCallingGoogle() throws Exception {
+        for (String body : List.of("{}", COORDINATES.replace("35.0", "1000"),
+                COORDINATES.strip().replace("}}", "},\"preference\":\"INVALID\"}"))) {
+            mvc.perform(post("/api/v1/transit/routes").contentType("application/json").content(body))
+                    .andExpect(status().isBadRequest());
+        }
+        verifyNoInteractions(transit);
     }
 
     private String startTrip(String bearer) throws Exception {

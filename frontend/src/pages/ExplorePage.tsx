@@ -7,6 +7,8 @@ import DirectionsSheet from "../DirectionsSheet";
 import DirectionsScreen from "../DirectionsScreen";
 import type { DirectionsResult } from "../DirectionsScreen";
 import RouteOptionsScreen from "@/components/routes/RouteOptionsScreen";
+import TransitScreen from "@/components/routes/TransitScreen";
+import type { TransitPreference } from "@/services/transitService";
 import DirectionsPreviewPanel from "@/components/navigation/DirectionsPreviewPanel";
 import NavBanner from "@/components/navigation/NavBanner";
 import TripPanel from "@/components/navigation/TripPanel";
@@ -52,6 +54,7 @@ const PEEK_FIT_BOTTOM_PADDING = 290;
 const NO_ROUTES: RouteOption[] = [];
 
 function ExplorePage() {
+    const [transitPreference, setTransitPreference] = useState<TransitPreference | null>(null);
     const [sheetOpen, setSheetOpen] = useState(false);
     const [destination, setDestination] = useState<SelectedPlace | null>(null);
     const [originPlace, setOriginPlace] = useState<SelectedPlace | null>(null);
@@ -133,6 +136,9 @@ function ExplorePage() {
         });
         if (result.destination) mapRef.current?.showPlace(result.destination);
         else mapRef.current?.clearPlace();
+        if (["all", "bus", "metro", "train"].includes(result.mode)) {
+            setTransitPreference(result.mode === "bus" ? "BUS" : result.mode === "metro" ? "SUBWAY" : result.mode === "train" ? "TRAIN" : "ALL");
+        }
     };
 
     const handleStartTrip = async (route: RouteOption) => {
@@ -215,6 +221,10 @@ function ExplorePage() {
                     onEditRoute={() => runViewTransition(() => setScreenOpen(true))}
                     editing={screenOpen}
                     onViewRoutes={() => setOptionsOpen(true)}
+                    onSelectMode={(mode) => {
+                        setOptionsOpen(false);
+                        setTransitPreference(mode === "bus" ? "BUS" : mode === "metro" ? "SUBWAY" : mode === "train" ? "TRAIN" : "ALL");
+                    }}
                     preview={
                         showPreview && nav.route ? (
                             <DirectionsPreviewPanel
@@ -318,6 +328,7 @@ function ExplorePage() {
                     onSelectRoute={(id) => setSelectedMode(routes.find((r) => r.routeId === id)?.mode ?? null)}
                     onStartTrip={(route) => void handleStartTrip(route)}
                     onBack={() => setOptionsOpen(false)}
+                    onTransit={() => { setOptionsOpen(false); setTransitPreference("ALL"); }}
                 />
             )}
             {!navActive && screenOpen && (
@@ -329,6 +340,17 @@ function ExplorePage() {
                     near={userLocation}
                 />
             )}
+            {!navActive && transitPreference && <TransitScreen
+                origin={origin}
+                destination={destinationPoint}
+                destinationName={destination?.name ?? ""}
+                initialPreference={transitPreference}
+                onBack={() => setTransitPreference(null)}
+                onEditRoute={() => {
+                    setScreenMode(transitPreference === "BUS" ? "bus" : transitPreference === "SUBWAY" ? "metro" : transitPreference === "TRAIN" ? "train" : "all");
+                    setTransitPreference(null); setScreenOpen(true);
+                }}
+            />}
         </div>
     );
 }
