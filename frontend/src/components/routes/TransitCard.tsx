@@ -25,10 +25,10 @@ function TransitCard({ itinerary, onSelect, onNavigate }: Props) {
             : "Fare unavailable";
 
     return (
-        <div className="route-choice rounded-2xl border border-white/80 bg-white/75 text-[#17334A] shadow-[0_4px_14px_rgba(23,51,74,0.12),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-md">
-            <button type="button" onClick={onSelect} className="w-full cursor-pointer rounded-2xl p-3 text-left transition">
+        <div className="route-choice vista-item text-[#17334A]">
+            <button type="button" onClick={onSelect} className="w-full cursor-pointer rounded-[4px] p-3 text-left transition">
                 <div className="flex items-center gap-3">
-                    <span className="aero-blue flex size-11 shrink-0 items-center justify-center rounded-full">
+                    <span className="vista-tile flex size-11 shrink-0 items-center justify-center">
                         <Bus className="size-5" aria-hidden="true" />
                     </span>
                     <div className="min-w-0 flex-1">
@@ -44,11 +44,11 @@ function TransitCard({ itinerary, onSelect, onNavigate }: Props) {
 
                 <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs">
                     {lines.slice(0, 4).map((line) => (
-                        <span key={line} className="aero-blue rounded-full px-2 py-0.5 font-semibold">
+                        <span key={line} className="vista-tile px-1.5 py-0.5 font-semibold">
                             {line}
                         </span>
                     ))}
-                    <span className="ml-auto rounded-xl bg-white/70 px-2 py-1 font-semibold">{fare}</span>
+                    <span className="vista-field ml-auto px-2 py-1 font-semibold">{fare}</span>
                 </div>
             </button>
 
@@ -58,7 +58,7 @@ function TransitCard({ itinerary, onSelect, onNavigate }: Props) {
                     <button
                         type="button"
                         onClick={onNavigate}
-                        className="aero-gel flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold"
+                        className="vista-button vista-button-primary flex h-10 w-full items-center justify-center gap-2 text-sm font-semibold"
                     >
                         <Navigation className="size-4" aria-hidden="true" />
                         Navigate this route
