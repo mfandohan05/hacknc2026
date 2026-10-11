@@ -147,6 +147,7 @@ function ExplorePage() {
     const handleStartNavigation = (demo: boolean) => {
         nav.start({ demo });
         setTripError(null);
+        tripIdRef.current = null;
         if (demo || !user || !previewOption || !nav.route || !origin || !destinationPoint) return;
         tripIdRef.current = startTrip(origin, destinationPoint, previewOption, nav.route)
             .then((trip) => trip.id)

@@ -88,10 +88,9 @@ class ApiEndpointTests {
         "GET,/api/v1/trips/00000000-0000-0000-0000-000000000001",
         "POST,/api/v1/trips/00000000-0000-0000-0000-000000000001/complete",
         "POST,/api/v1/trips/00000000-0000-0000-0000-000000000001/cancel",
-        "POST,/api/v1/routes/compare", "POST,/api/v1/emissions/estimate",
         "GET,/api/v1/leaderboards"
     })
-    void everyEndpointRejectsMissingAndInvalidTokens(String method, String path) throws Exception {
+    void privateEndpointsRejectMissingAndInvalidTokens(String method, String path) throws Exception {
         mvc.perform(request(HttpMethod.valueOf(method), path).contentType("application/json").content("{}"))
                 .andExpect(status().isUnauthorized());
         call(method, path, "{}", "invalid-token").andExpect(status().isUnauthorized());
@@ -177,6 +176,28 @@ class ApiEndpointTests {
         call("POST", "/api/v1/emissions/estimate", body, token)
                 .andExpect(status().isOk()).andExpect(jsonPath("$.estimatedCo2Kg").value(0.192));
         verify(mapbox, times(2)).fetchRoute("driving", 35.0, -78.0, 35.1, -78.1);
+    }
+
+    @Test
+    void guestCanCompareRoutesAndEstimateEmissionsWithoutSavingAccountData() throws Exception {
+        mvc.perform(post("/api/v1/routes/compare").contentType("application/json").content(COORDINATES))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.routes.length()").value(3));
+        String body = COORDINATES.strip().replace("}}", "},\"mode\":\"DRIVING\"}");
+        mvc.perform(post("/api/v1/emissions/estimate").contentType("application/json").content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.estimatedCo2Kg").value(0.192));
+        assertEquals(0L, jdbc.queryForObject("SELECT COUNT(*) FROM public.profiles", Long.class));
+        assertEquals(0L, jdbc.queryForObject("SELECT COUNT(*) FROM public.trips", Long.class));
+        assertEquals(0, points.count());
+    }
+
+    @Test
+    void guestRequestsStillValidateInputAndRejectInvalidBearerTokens() throws Exception {
+        for (String path : List.of("/api/v1/routes/compare", "/api/v1/emissions/estimate")) {
+            mvc.perform(post(path).contentType("application/json").content("{}"))
+                    .andExpect(status().isBadRequest());
+            call("POST", path, "{}", "invalid-token").andExpect(status().isUnauthorized());
+        }
+        verifyNoInteractions(mapbox);
     }
 
     @ParameterizedTest
