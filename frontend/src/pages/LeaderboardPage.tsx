@@ -1,23 +1,14 @@
-import { Crown, Medal, Trophy } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Crown, Medal, RefreshCw, Trophy } from "lucide-react";
 
 type LeaderboardEntry = {
-    id: string;
+    id: string | number;
     username: string;
     points: number;
+    rank: number;
 };
 
-const leaderboard: LeaderboardEntry[] = [
-    { id: "1", username: "GreenRunner", points: 1240 },
-    { id: "2", username: "EcoExplorer", points: 1115 },
-    { id: "3", username: "LeafWalker", points: 980 },
-    { id: "4", username: "CleanCommute", points: 865 },
-    { id: "5", username: "TrailBlazer", points: 742 },
-    { id: "6", username: "BikeBuddy", points: 690 },
-    { id: "7", username: "FreshAir", points: 612 },
-    { id: "8", username: "ParkKeeper", points: 548 },
-    { id: "9", username: "SolarSteps", points: 490 },
-    { id: "10", username: "EarthFriend", points: 421 },
-];
+const LEADERBOARD_URL = "https://elf-extras-paternity.ngrok-free.dev/api/v1/leaderboard";
 
 const rankStyles = [
     "bg-amber-100 text-amber-700",
@@ -26,6 +17,47 @@ const rankStyles = [
 ];
 
 function LeaderboardPage() {
+    const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const loadLeaderboard = useCallback(async (signal?: AbortSignal) => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch(LEADERBOARD_URL, { signal });
+
+            if (!response.ok) {
+                throw new Error(`Leaderboard request failed (${response.status})`);
+            }
+
+            const data: unknown = await response.json();
+            const entries = Array.isArray(data)
+                ? data
+                : (data as { leaderboard?: unknown }).leaderboard;
+
+            if (!Array.isArray(entries)) {
+                throw new Error("The leaderboard response was not a list.");
+            }
+
+            // The API already returns this list sorted, so keep its order unchanged.
+            setLeaderboard(entries as LeaderboardEntry[]);
+        } catch (requestError) {
+            if (requestError instanceof DOMException && requestError.name === "AbortError") return;
+            setError(requestError instanceof Error ? requestError.message : "Unable to load leaderboard.");
+        } finally {
+            if (!signal?.aborted) setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        void loadLeaderboard(controller.signal);
+
+        return () => controller.abort();
+    }, [loadLeaderboard]);
+
     return (
         <main className="aero-bg relative flex h-[calc(100svh-var(--bottom-nav-h)-env(safe-area-inset-bottom))] flex-col overflow-hidden px-4 pt-16 pb-6 md:h-screen md:px-6">
             <span aria-hidden className="aero-bubble -right-10 top-24 size-36" />
@@ -49,11 +81,33 @@ function LeaderboardPage() {
                     </div>
 
                     <div
-                        className="min-h-0 flex-1 overflow-y-auto p-2 [scrollbar-color:#5aaed4_transparent] [scrollbar-width:auto] [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar]:bg-transparent [&::-webkit-scrollbar-track]:my-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:border [&::-webkit-scrollbar-track]:border-white/60 [&::-webkit-scrollbar-track]:bg-white/25 [&::-webkit-scrollbar-track]:shadow-[inset_0_1px_3px_rgba(23,51,74,0.12)] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white/60 [&::-webkit-scrollbar-thumb]:bg-gradient-to-b [&::-webkit-scrollbar-thumb]:from-white/90 [&::-webkit-scrollbar-thumb]:via-[#7fcdf5]/75 [&::-webkit-scrollbar-thumb]:to-[#208A5D]/75 [&::-webkit-scrollbar-thumb]:shadow-[inset_1px_1px_0_rgba(255,255,255,0.95),inset_-1px_-1px_0_rgba(23,51,74,0.25),0_0_6px_rgba(47,182,232,0.35)] hover:[&::-webkit-scrollbar-thumb]:from-white hover:[&::-webkit-scrollbar-thumb]:via-[#9edfff] hover:[&::-webkit-scrollbar-thumb]:to-[#34b57f]"
+                        className="min-h-0 flex-1 overflow-y-auto p-2 [scrollbar-color:auto] [scrollbar-width:auto] [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar]:bg-transparent [&::-webkit-scrollbar-track]:my-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:border [&::-webkit-scrollbar-track]:border-white/60 [&::-webkit-scrollbar-track]:bg-white/25 [&::-webkit-scrollbar-track]:shadow-[inset_0_1px_3px_rgba(23,51,74,0.12)] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white/60 [&::-webkit-scrollbar-thumb]:bg-gradient-to-b [&::-webkit-scrollbar-thumb]:from-white/90 [&::-webkit-scrollbar-thumb]:via-[#7fcdf5]/75 [&::-webkit-scrollbar-thumb]:to-[#208A5D]/75 [&::-webkit-scrollbar-thumb]:shadow-[inset_1px_1px_0_rgba(255,255,255,0.95),inset_-1px_-1px_0_rgba(23,51,74,0.25),0_0_6px_rgba(47,182,232,0.35)] hover:[&::-webkit-scrollbar-thumb]:from-white hover:[&::-webkit-scrollbar-thumb]:via-[#9edfff] hover:[&::-webkit-scrollbar-thumb]:to-[#34b57f]"
                     >
-                        {leaderboard.length > 0 ? (
+                        {loading ? (
+                            <div className="space-y-2 p-2" aria-label="Loading leaderboard" role="status">
+                                {Array.from({ length: 6 }, (_, index) => (
+                                    <div key={index} className="grid grid-cols-[3rem_1fr_auto] items-center gap-3 rounded-xl px-2 py-3">
+                                        <span className="size-8 animate-pulse rounded-full bg-white/60" />
+                                        <span className="h-4 animate-pulse rounded-full bg-white/60" />
+                                        <span className="h-4 w-12 animate-pulse rounded-full bg-white/60" />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : error ? (
+                            <div className="flex flex-col items-center gap-3 px-4 py-10 text-center text-sm text-[#17334A]/70">
+                                <p>{error}</p>
+                                <button
+                                    type="button"
+                                    onClick={() => void loadLeaderboard()}
+                                    className="aero-orb inline-flex items-center gap-2 rounded-full px-4 py-2 font-medium text-[#17334A]"
+                                >
+                                    <RefreshCw className="size-4" />
+                                    Try again
+                                </button>
+                            </div>
+                        ) : leaderboard.length > 0 ? (
                             leaderboard.map((entry, index) => {
-                                const rank = index + 1;
+                                const rank = entry.rank ?? index + 1;
 
                                 return (
                                     <div
