@@ -84,8 +84,10 @@ class ApiEndpointTests {
     @ParameterizedTest
     @CsvSource({
         "GET,/api/v1/profiles/me", "POST,/api/v1/profiles",
-        "GET,/api/v1/trips", "POST,/api/v1/trips/start",
+        "GET,/api/v1/trips", "POST,/api/v1/trips",
         "GET,/api/v1/trips/00000000-0000-0000-0000-000000000001",
+        "GET,/api/v1/trips/00000000-0000-0000-0000-000000000001/points",
+        "POST,/api/v1/trips/00000000-0000-0000-0000-000000000001/start",
         "POST,/api/v1/trips/00000000-0000-0000-0000-000000000001/complete",
         "POST,/api/v1/trips/00000000-0000-0000-0000-000000000001/cancel",
         "POST,/api/v1/routes/compare", "POST,/api/v1/emissions/estimate",
@@ -147,7 +149,7 @@ class ApiEndpointTests {
         call("GET", "/api/v1/trips", "", other)
                 .andExpect(status().isOk()).andExpect(jsonPath("$.content.length()").value(0));
         call("GET", "/api/v1/trips/" + tripId, "", other).andExpect(status().isNotFound());
-        for (String action : List.of("complete", "cancel")) {
+        for (String action : List.of("start", "complete", "cancel")) {
             call("POST", "/api/v1/trips/" + tripId + "/" + action, "", other)
                     .andExpect(status().isNotFound());
         }
@@ -155,14 +157,18 @@ class ApiEndpointTests {
     }
 
     @Test
-    void cancellationCanBeRetriedButCannotBeCompleted() throws Exception {
+    void cancelledTripsAreInaccessible() throws Exception {
         createProfile(token, "cancel");
         String id = startTrip(token);
-        for (int i = 0; i < 2; i++) {
-            call("POST", "/api/v1/trips/" + id + "/cancel", "", token)
-                    .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("CANCELLED"));
+        call("POST", "/api/v1/trips/" + id + "/cancel", "", token)
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("CANCELLED"));
+        for (String action : List.of("start", "complete", "cancel")) {
+            call("POST", "/api/v1/trips/" + id + "/" + action, "", token).andExpect(status().isNotFound());
         }
-        call("POST", "/api/v1/trips/" + id + "/complete", "", token).andExpect(status().isConflict());
+        call("GET", "/api/v1/trips/" + id, "", token).andExpect(status().isNotFound());
+        call("GET", "/api/v1/trips/" + id + "/points", "", token).andExpect(status().isNotFound());
+        call("GET", "/api/v1/trips?size=1", "", token)
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(0));
         assertEquals(0, points.count());
     }
 
@@ -180,7 +186,7 @@ class ApiEndpointTests {
     }
 
     @ParameterizedTest
-    @CsvSource({"/api/v1/profiles", "/api/v1/trips/start", "/api/v1/routes/compare", "/api/v1/emissions/estimate"})
+    @CsvSource({"/api/v1/profiles", "/api/v1/trips", "/api/v1/routes/compare", "/api/v1/emissions/estimate"})
     void rejectsEmptyAndMalformedBodies(String path) throws Exception {
         call("POST", path, "{}", token).andExpect(status().isBadRequest());
         call("POST", path, "{broken", token).andExpect(status().isBadRequest());
@@ -189,12 +195,12 @@ class ApiEndpointTests {
 
     @Test
     void rejectsConflictingProfilesMissingProfileAndMalformedTripId() throws Exception {
-        call("POST", "/api/v1/trips/start", TRIP, token).andExpect(status().isNotFound());
+        call("POST", "/api/v1/trips", TRIP, token).andExpect(status().isNotFound());
         createProfile(token, "duplicate");
         call("POST", "/api/v1/profiles", "{\"username\":\"duplicate\",\"displayName\":\"Other\"}", token)
                 .andExpect(status().isConflict());
         call("GET", "/api/v1/trips/not-a-uuid", "", token).andExpect(status().isBadRequest());
-        call("POST", "/api/v1/trips/start", TRIP.replace("1000", "-1"), token)
+        call("POST", "/api/v1/trips", TRIP.replace("1000", "-1"), token)
                 .andExpect(status().isBadRequest());
     }
 
@@ -241,10 +247,17 @@ class ApiEndpointTests {
     }
 
     private String startTrip(String bearer) throws Exception {
-        String response = call("POST", "/api/v1/trips/start", TRIP, bearer)
-                .andExpect(status().isCreated()).andExpect(jsonPath("$.status").value("IN_PROGRESS"))
+        String response = call("POST", "/api/v1/trips", TRIP, bearer)
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.status").value("PLANNED"))
                 .andReturn().getResponse().getContentAsString();
-        return json.readTree(response).get("id").asText();
+        String id = json.readTree(response).get("id").asText();
+        call("GET", "/api/v1/trips/" + id + "/points", "", bearer)
+                .andExpect(status().isOk()).andExpect(jsonPath("$.walking").value(50))
+                .andExpect(jsonPath("$.cycling").value(50)).andExpect(jsonPath("$.driving").value(0));
+        call("POST", "/api/v1/trips/" + id + "/complete", "", bearer).andExpect(status().isConflict());
+        call("POST", "/api/v1/trips/" + id + "/start", "", bearer)
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("IN_PROGRESS"));
+        return id;
     }
 
     private ResultActions call(String method, String path, String body, String bearer) throws Exception {

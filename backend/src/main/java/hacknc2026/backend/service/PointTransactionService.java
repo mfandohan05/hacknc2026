@@ -49,7 +49,10 @@ public class PointTransactionService {
     if (existing.isPresent()) {
       return existing.get().getPoints();
     }
-    int points = calculator.calculatePoints(trip.getBaselineCo2Kg(), trip.getEstimatedCo2Kg());
+    Integer storedPoints = trip.getMode() == null ? null
+        : hacknc2026.backend.dto.TripPointsResponse.from(trip).forMode(trip.getMode());
+    int points = storedPoints == null
+        ? calculator.calculatePoints(trip.getBaselineCo2Kg(), trip.getEstimatedCo2Kg()) : storedPoints;
     if (points == 0) {
       return 0;
     }

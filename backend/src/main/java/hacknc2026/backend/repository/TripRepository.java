@@ -1,6 +1,7 @@
 package hacknc2026.backend.repository;
 
 import hacknc2026.backend.model.Trip;
+import hacknc2026.backend.model.TripStatus;
 import jakarta.persistence.LockModeType;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TripRepository extends JpaRepository<Trip, UUID> {
-  Page<Trip> findByProfile_IdOrderByCreatedAtDesc(UUID profileId, Pageable pageable);
+  Page<Trip> findByProfile_IdAndStatusNotOrderByCreatedAtDesc(UUID profileId, TripStatus status, Pageable pageable);
 
   Optional<Trip> findByIdAndProfile_Id(UUID tripId, UUID profileId);
 

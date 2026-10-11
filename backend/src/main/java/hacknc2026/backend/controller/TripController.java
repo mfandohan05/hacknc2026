@@ -25,11 +25,21 @@ import org.springframework.web.server.ResponseStatusException;
 public class TripController {
   private final TripService tripService;
 
-  @PostMapping("/start")
+  @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public TripResponse startTrip(
+  public TripResponse createTrip(
       Principal principal, @Valid @RequestBody CreateTripRequest request) {
-    return tripService.startTrip(currentUserId(principal), request);
+    return tripService.createTrip(currentUserId(principal), request);
+  }
+
+  @PostMapping("/{id}/start")
+  public TripResponse startTrip(Principal principal, @PathVariable UUID id) {
+    return tripService.startTrip(currentUserId(principal), id);
+  }
+
+  @GetMapping("/{id}/points")
+  public hacknc2026.backend.dto.TripPointsResponse getTripPoints(Principal principal, @PathVariable UUID id) {
+    return tripService.getTripPoints(currentUserId(principal), id);
   }
 
   @GetMapping
