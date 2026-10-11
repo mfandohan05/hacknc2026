@@ -84,7 +84,7 @@ class ApiEndpointTests {
 
     @ParameterizedTest
     @CsvSource({
-        "GET,/api/v1/profiles/me", "POST,/api/v1/profiles",
+        "GET,/api/v1/profiles/me", "GET,/api/v1/profiles/me/points", "POST,/api/v1/profiles",
         "GET,/api/v1/trips", "POST,/api/v1/trips",
         "GET,/api/v1/trips/00000000-0000-0000-0000-000000000001",
         "GET,/api/v1/trips/00000000-0000-0000-0000-000000000001/points",
@@ -113,8 +113,11 @@ class ApiEndpointTests {
 
     @Test
     void profileTripCompletionAndLeaderboardWorkTogether() throws Exception {
+        call("GET", "/api/v1/profiles/me/points", "", token).andExpect(status().isNotFound());
         call("GET", "/api/v1/profiles/me", "", token).andExpect(status().isNotFound());
         createProfile(token, "alice");
+        call("GET", "/api/v1/profiles/me/points", "", token)
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalPoints").value(0));
         call("GET", "/api/v1/profiles/me", "", token)
                 .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(userId.toString()));
         call("GET", "/api/v1/trips", "", token)
@@ -133,6 +136,12 @@ class ApiEndpointTests {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.completedAt").value(completedAt));
         assertEquals(1, points.count());
         assertEquals(50, points.totalPointsForUser(userId));
+        call("GET", "/api/v1/profiles/me/points", "", token)
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalPoints").value(50));
+        String otherUserToken = token(UUID.randomUUID(), ISSUER, "authenticated", Instant.now().plusSeconds(300), KEYS);
+        createProfile(otherUserToken, "points-other");
+        call("GET", "/api/v1/profiles/me/points?userId=" + userId, "", otherUserToken)
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalPoints").value(0));
         call("GET", "/api/v1/leaderboards", "", token)
                 .andExpect(status().isOk()).andExpect(jsonPath("$[0].profileId").value(userId.toString()))
                 .andExpect(jsonPath("$[0].totalPoints").value(50)).andExpect(jsonPath("$[0].rank").value(1));

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Bus, ExternalLink, Footprints, Loader2 } from "lucide-react";
+import { ArrowLeft, Bus, Footprints, Loader2 } from "lucide-react";
 import { ApiError } from "@/services/api";
 import { getTransitRoutes } from "@/services/transitService";
 import type { TransitPreference, TransitResponse } from "@/services/transitService";
@@ -53,9 +53,6 @@ export default function TransitScreen({ origin, destination, destinationName, in
     const embedKey = import.meta.env.VITE_GOOGLE_MAPS_EMBED_KEY;
     const embedUrl = mapParams && embedKey
         ? `https://www.google.com/maps/embed/v1/directions?${mapParams}&key=${encodeURIComponent(embedKey)}` : null;
-    const externalUrl = ready ? `https://www.google.com/maps/dir/?${new URLSearchParams({
-        api: "1", origin: `${origin.lat},${origin.lng}`, destination: `${destination.lat},${destination.lng}`, travelmode: "transit",
-    })}` : null;
 
     return (
         <section className="fixed inset-0 z-[80] overflow-y-auto bg-[#e8f6fc] text-[#17334A]" aria-label="Public transport">
@@ -121,7 +118,6 @@ export default function TransitScreen({ origin, destination, destinationName, in
                 <div className="space-y-3 md:sticky md:top-24 md:self-start">
                     {embedUrl && <iframe title="Google Maps transit directions" src={embedUrl} className="h-[450px] w-full rounded-2xl border-0" loading="lazy" allowFullScreen referrerPolicy="no-referrer-when-downgrade" />}
                     {embedUrl && <p className="text-xs">The map shows current Google transit directions. Scheduled options above may differ.</p>}
-                    {externalUrl && <a className="aero-gel inline-flex items-center gap-2 rounded-full px-5 py-3" href={externalUrl} target="_blank" rel="noreferrer">Open in Google Maps <ExternalLink size={16} /></a>}
                 </div>
             </div>
         </section>
