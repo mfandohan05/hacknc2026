@@ -334,7 +334,8 @@ class ApiEndpointTests {
         call("GET", "/api/v1/rewards", "", token).andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalPoints").value(490))
                 .andExpect(jsonPath("$.lifetimePoints").value(500))
-                .andExpect(jsonPath("$.level").value(3))
+                .andExpect(jsonPath("$.level").value(2))
+                .andExpect(jsonPath("$.pointsIntoLevel").value(240))
                 .andExpect(jsonPath("$.completedTrips").value(0))
                 .andExpect(jsonPath("$.achievements[0].unlocked").value(false));
         call("GET", "/api/v1/rewards/ledger", "", token).andExpect(status().isOk())
@@ -353,6 +354,23 @@ class ApiEndpointTests {
                 .andExpect(jsonPath("$.totalPoints").value(0)).andExpect(jsonPath("$.level").value(1));
         call("GET", "/api/v1/rewards/ledger?userId=" + userId, "", other).andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(0));
+    }
+
+    @Test
+    void rewardsProgressReflectsDirectProfileBalanceChangesWithoutLedgerEntries() throws Exception {
+        createProfile(token, "adjusted-points");
+        jdbc.update("UPDATE public.profiles SET total_points = 125 WHERE id = ?", userId);
+        call("GET", "/api/v1/rewards", "", token).andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalPoints").value(125))
+                .andExpect(jsonPath("$.pointsIntoLevel").value(125))
+                .andExpect(jsonPath("$.level").value(1));
+        jdbc.update("UPDATE public.profiles SET total_points = 375 WHERE id = ?", userId);
+        call("GET", "/api/v1/rewards", "", token).andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalPoints").value(375))
+                .andExpect(jsonPath("$.pointsIntoLevel").value(125))
+                .andExpect(jsonPath("$.level").value(2))
+                .andExpect(jsonPath("$.lifetimePoints").value(0));
+        assertEquals(0, points.count());
     }
 
     private String startTrip(String bearer) throws Exception {

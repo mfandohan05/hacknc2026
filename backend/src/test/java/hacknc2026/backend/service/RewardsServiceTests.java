@@ -20,15 +20,16 @@ class RewardsServiceTests {
   private final UUID user = UUID.randomUUID();
 
   @ParameterizedTest
-  @CsvSource({"0,1,0,1", "249,1,249,1", "250,2,0,2", "500,3,0,3", "1000,5,0,4"})
-  void levelsAndCosmeticsUseLifetimeEarnings(long earned, long level, long progress, long unlocked) {
+  @CsvSource({"-10,1,0,1", "0,1,0,1", "125,1,125,1", "249,1,249,1", "250,2,0,2", "500,3,0,3", "1000,5,0,4"})
+  void levelsAndCosmeticsUseDisplayedBalance(long balance, long level, long progress, long unlocked) {
     Profile profile = new Profile();
-    profile.setTotalPoints(25L);
+    profile.setTotalPoints(balance);
     when(profiles.findById(user)).thenReturn(Optional.of(profile));
-    when(points.earnedPointsForUser(user)).thenReturn(earned);
+    when(points.earnedPointsForUser(user)).thenReturn(0L);
     when(trips.countByProfile_IdAndStatus(user, TripStatus.COMPLETED)).thenReturn(5L);
     var result = service.getRewards(user);
-    assertEquals(25, result.totalPoints());
+    assertEquals(balance, result.totalPoints());
+    assertEquals(0, result.lifetimePoints());
     assertEquals(level, result.level());
     assertEquals(progress, result.pointsIntoLevel());
     assertEquals(unlocked, result.cosmetics().stream().filter(c -> c.unlocked()).count());
