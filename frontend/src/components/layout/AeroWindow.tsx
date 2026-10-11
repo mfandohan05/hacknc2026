@@ -28,7 +28,7 @@ function CaptionButtons() {
                     <rect x="2" y="2" width="8" height="2.4" fill="currentColor" />
                 </svg>
             </span>
-            <span className="aero-cap-btn aero-cap-close -ml-px rounded-br-md">
+            <span className="aero-cap-btn aero-cap-close -ml-px rounded-br-md rounded-tr-[7px]">
                 <svg viewBox="0 0 12 12" className="size-3.5">
                     <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
@@ -46,7 +46,10 @@ function AeroWindow({ title, Icon, as: Heading = "h2", className = "", bodyClass
                 <Heading className="min-w-0 truncate text-sm">{title}</Heading>
                 {controls && <CaptionButtons />}
             </header>
-            <div className={bodyClassName}>{children}</div>
+            {/* Windows 7 style: a glass frame around an inset client pane, all inside rounded outer corners */}
+            <div className="aero-window-frame">
+                <div className={`aero-window-pane ${bodyClassName}`}>{children}</div>
+            </div>
         </section>
     );
 }
