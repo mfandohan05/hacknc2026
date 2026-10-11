@@ -10,7 +10,10 @@ export class TripSession {
     plan(origin: LngLat, destination: LngLat, option: RouteOption) {
         let pending = this.trips.get(option.routeId);
         if (!pending) {
-            pending = createTrip(origin, destination, option);
+            pending = createTrip(origin, destination, option).catch((error: unknown) => {
+                if (this.trips.get(option.routeId) === pending) this.trips.delete(option.routeId);
+                throw error;
+            });
             this.trips.set(option.routeId, pending);
         }
         return pending;
@@ -60,7 +63,7 @@ export class TripSession {
                     if (!(error instanceof ApiError) || error.status !== 404) throw error;
                 }
             }
-            this.trips.delete(key);
+            if (this.trips.get(key) === pending) this.trips.delete(key);
         }));
         const failure = results.find((result) => result.status === "rejected");
         if (failure?.status === "rejected") throw failure.reason;
