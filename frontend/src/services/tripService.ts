@@ -35,21 +35,10 @@ const MODE_MAP: Record<RouteMode, TripMode> = {
 
 // A planned trip has estimates only; no balance is credited until completion.
 export function createTrip(origin: LngLat, destination: LngLat, option: RouteOption) {
+    const distanceKm = option.distanceKm;
     return apiJson<TripResponse>("/api/v1/trips", {
         method: "POST",
-        body: JSON.stringify(tripRequest(origin, destination, option)),
-    });
-}
-
-export function estimateTripPoints(origin: LngLat, destination: LngLat, option: RouteOption) {
-    return apiJson<TripPoints>("/api/v1/trips/points", {
-        method: "POST",
-        body: JSON.stringify(tripRequest(origin, destination, option)),
-    });
-}
-
-function tripRequest(origin: LngLat, destination: LngLat, option: RouteOption) {
-    return {
+        body: JSON.stringify({
             originLatitude: origin.lat,
             originLongitude: origin.lng,
             destinationLatitude: destination.lat,
@@ -59,9 +48,10 @@ function tripRequest(origin: LngLat, destination: LngLat, option: RouteOption) {
             durationSeconds: option.durationMinutes * 60,
             estimatedCo2Kg: option.estimatedCo2Kg ?? 0,
             // what the same distance would emit by car
-            baselineCo2Kg: option.distanceKm * CAR_KG_CO2E_PER_KM,
+            baselineCo2Kg: distanceKm * CAR_KG_CO2E_PER_KM,
             estimatedCost: option.estimatedCost,
-    };
+        }),
+    });
 }
 
 export const completeTrip = (id: string) =>

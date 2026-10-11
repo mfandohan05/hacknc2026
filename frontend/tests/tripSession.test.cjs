@@ -16,8 +16,7 @@ function load(file, dependencies) {
 function setup(overrides = {}) {
     const calls = [];
     const api = {
-        createTrip: async (_from, _to, route) => { calls.push(['create', route.routeId]); return { id: route.routeId }; },
-        estimateTripPoints: async (_from, _to, route) => { calls.push(['estimate', route.routeId]); return { walking: 20, cycling: 20, driving: 0 }; },
+        createTrip: async (_from, _to, route) => ({ id: route.routeId }),
         getTripPoints: async (id) => { calls.push(['points', id]); return { walking: 20, cycling: 20, driving: 0 }; },
         startTrip: async (id) => { calls.push(['start', id]); },
         cancelTrip: async (id) => { calls.push(['cancel', id]); },
@@ -29,15 +28,13 @@ function setup(overrides = {}) {
     return { session: new TripSession(), calls };
 }
 
-test('repeated points previews save no trips and starting creates only the selected trip', async () => {
+test('viewing options plans trips, fetches points, and starts only the selected trip', async () => {
     const { session, calls } = setup();
     await session.plan({}, {}, { routeId: 'walk' });
     await session.plan({}, {}, { routeId: 'bike' });
     await session.points('walk');
-    await session.points('walk');
-    assert.deepEqual(calls, [['estimate', 'walk'], ['estimate', 'walk']]);
     assert.equal(await session.start('walk'), 'walk');
-    assert.deepEqual(calls.slice(2), [['create', 'walk'], ['start', 'walk']]);
+    assert.deepEqual(calls, [['points', 'walk'], ['cancel', 'bike'], ['start', 'walk']]);
     await session.cancelExcept();
     assert.deepEqual(calls.at(-1), ['cancel', 'walk']);
 });
@@ -45,11 +42,10 @@ test('repeated points previews save no trips and starting creates only the selec
 test('canceling before CREATE returns still cancels the created trip', async () => {
     let resolve;
     const { session, calls } = setup({ createTrip: () => new Promise((done) => { resolve = done; }) });
-    session.plan({}, {}, { routeId: 'walk' });
-    const pending = session.start('walk');
+    const pending = session.plan({}, {}, { routeId: 'walk' });
     const cancellation = session.cancelExcept();
     resolve({ id: 'created-later' });
-    await assert.rejects(pending, /canceled/);
+    await pending;
     await cancellation;
     assert.deepEqual(calls, [['cancel', 'created-later']]);
 });
@@ -58,7 +54,6 @@ test('failed cancellation retains the trip for retry', async () => {
     let attempts = 0;
     const { session } = setup({ cancelTrip: async () => { if (++attempts === 1) throw new Error('offline'); } });
     await session.plan({}, {}, { routeId: 'walk' });
-    await session.start('walk');
     await assert.rejects(session.cancelExcept(), /offline/);
     await session.cancelExcept();
     assert.equal(attempts, 2);
@@ -70,40 +65,7 @@ test('a completed trip is never canceled during cleanup', async () => {
     await session.start('walk');
     session.complete('walk');
     await session.cancelExcept();
-    assert.deepEqual(calls, [['create', 'walk'], ['start', 'walk']]);
-});
-
-test('concurrent and repeated starts create a single trip', async () => {
-    const { session, calls } = setup();
-    session.plan({}, {}, { routeId: 'walk' });
-    assert.deepEqual(await Promise.all([session.start('walk'), session.start('walk')]), ['walk', 'walk']);
-    assert.equal(await session.start('walk'), 'walk');
-    assert.deepEqual(calls, [['create', 'walk'], ['start', 'walk']]);
-});
-
-test('discarding previews makes no creation or cancellation calls', async () => {
-    const { session, calls } = setup();
-    session.plan({}, {}, { routeId: 'walk' });
-    await session.cancelExcept();
-    assert.deepEqual(calls, []);
-});
-
-test('a failed creation can be retried, and a failed start reuses its saved trip', async () => {
-    let creations = 0;
-    let starts = 0;
-    const { session } = setup({
-        createTrip: async () => {
-            if (++creations === 1) throw new Error('offline');
-            return { id: 'walk' };
-        },
-        startTrip: async () => { if (++starts === 1) throw new Error('offline'); },
-    });
-    session.plan({}, {}, { routeId: 'walk' });
-    await assert.rejects(session.start('walk'), /offline/);
-    await assert.rejects(session.start('walk'), /offline/);
-    assert.equal(await session.start('walk'), 'walk');
-    assert.equal(creations, 2);
-    assert.equal(starts, 2);
+    assert.deepEqual(calls, [['start', 'walk']]);
 });
 
 test('API uses CREATE, per-ID START, points, completion, and cancellation endpoints', async () => {
@@ -117,16 +79,11 @@ test('API uses CREATE, per-ID START, points, completion, and cancellation endpoi
     });
     assert.equal(calls[0][0], '/api/v1/trips');
     assert.equal(JSON.parse(calls[0][1].body).mode, 'CYCLING');
-    await service.estimateTripPoints({ lat: 1, lng: 2 }, { lat: 3, lng: 4 }, {
-        mode: 'BIKE', distanceKm: 2, durationMinutes: 10, estimatedCo2Kg: 0, estimatedCost: 0,
-    });
-    assert.equal(calls[1][0], '/api/v1/trips/points');
-    assert.equal(calls[1][1].body, calls[0][1].body);
     await service.startTrip('id');
     await service.getTripPoints('id');
     await service.completeTrip('id');
     await service.cancelTrip('id');
-    assert.deepEqual(calls.slice(2).map(([url]) => url), [
+    assert.deepEqual(calls.slice(1).map(([url]) => url), [
         '/api/v1/trips/id/start', '/api/v1/trips/id/points', '/api/v1/trips/id/complete', '/api/v1/trips/id/cancel',
     ]);
 });

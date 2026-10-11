@@ -37,13 +37,6 @@ public class TripController {
     return tripService.startTrip(currentUserId(principal), id);
   }
 
-  @PostMapping("/points")
-  public hacknc2026.backend.dto.TripPointsResponse estimateTripPoints(
-      Principal principal, @Valid @RequestBody CreateTripRequest request) {
-    currentUserId(principal);
-    return tripService.estimateTripPoints(request);
-  }
-
   @GetMapping("/{id}/points")
   public hacknc2026.backend.dto.TripPointsResponse getTripPoints(Principal principal, @PathVariable UUID id) {
     return tripService.getTripPoints(currentUserId(principal), id);

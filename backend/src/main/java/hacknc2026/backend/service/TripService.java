@@ -69,7 +69,8 @@ public class TripService {
             trip.setCurrency(DEFAULT_CURRENCY);
         }
         trip.setEmissionsMethodologyVersion(EMISSIONS_METHODOLOGY_VERSION);
-        TripPointsResponse points = estimateTripPoints(request);
+        TripPointsResponse points = pointCalculationService.calculateAllModes(
+                request.baselineCo2Kg(), request.estimatedCo2Kg(), request.mode());
         trip.setWalkingPoints(points.walking());
         trip.setCyclingPoints(points.cycling());
         trip.setDrivingPoints(points.driving());
@@ -77,11 +78,6 @@ public class TripService {
         trip.setCreatedAt(Instant.now());
 
         return TripResponse.from(tripRepository.save(trip));
-    }
-
-    public TripPointsResponse estimateTripPoints(CreateTripRequest request) {
-        return pointCalculationService.calculateAllModes(
-                request.baselineCo2Kg(), request.estimatedCo2Kg(), request.mode());
     }
 
     public TripPointsResponse getTripPoints(UUID userId, UUID tripId) {

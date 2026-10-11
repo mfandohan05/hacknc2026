@@ -85,7 +85,7 @@ class ApiEndpointTests {
     @ParameterizedTest
     @CsvSource({
         "GET,/api/v1/rewards", "GET,/api/v1/rewards/ledger", "GET,/api/v1/profiles/me", "GET,/api/v1/profiles/me/points", "POST,/api/v1/profiles",
-        "GET,/api/v1/trips", "POST,/api/v1/trips", "POST,/api/v1/trips/points",
+        "GET,/api/v1/trips", "POST,/api/v1/trips",
         "GET,/api/v1/trips/00000000-0000-0000-0000-000000000001",
         "GET,/api/v1/trips/00000000-0000-0000-0000-000000000001/points",
         "POST,/api/v1/trips/00000000-0000-0000-0000-000000000001/start",
@@ -109,31 +109,6 @@ class ApiEndpointTests {
                 token(userId, ISSUER, "authenticated", Instant.now().plusSeconds(300), keys()))) {
             call("GET", "/api/v1/profiles/me", "", invalid).andExpect(status().isUnauthorized());
         }
-    }
-
-    @Test
-    void pointsPreviewsAndLookupsNeverCreateEntities() throws Exception {
-        // Estimates don't need a persisted profile or trip.
-        for (int i = 0; i < 3; i++) {
-            call("POST", "/api/v1/trips/points", TRIP, token)
-                    .andExpect(status().isOk()).andExpect(jsonPath("$.walking").value(50));
-        }
-        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM public.trips", Integer.class));
-        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM public.profiles", Integer.class));
-        assertEquals(0, points.count());
-        call("POST", "/api/v1/trips/points", TRIP.replace("1000", "-1"), token)
-                .andExpect(status().isBadRequest());
-
-        createProfile(token, "preview-user");
-        String tripId = startTrip(token);
-        for (int i = 0; i < 3; i++) {
-            call("GET", "/api/v1/trips/" + tripId + "/points", "", token)
-                    .andExpect(status().isOk()).andExpect(jsonPath("$.walking").value(50));
-            call("GET", "/api/v1/profiles/me/points", "", token)
-                    .andExpect(status().isOk()).andExpect(jsonPath("$.totalPoints").value(0));
-        }
-        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM public.trips", Integer.class));
-        assertEquals(0, points.count());
     }
 
     @Test

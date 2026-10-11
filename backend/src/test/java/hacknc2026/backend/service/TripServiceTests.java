@@ -35,13 +35,6 @@ class TripServiceTests {
             1000.0, 600.0, BigDecimal.ZERO, BigDecimal.ONE, null);
 
     @Test
-    void estimatesPointsWithoutCreatingEntities() {
-        assertEquals(20, service.estimateTripPoints(request).walking());
-        assertEquals(20, service.estimateTripPoints(request).cycling());
-        verifyNoInteractions(repository, profiles, points);
-    }
-
-    @Test
     void createsPlannedTripForCurrentUser() {
         Profile profile = new Profile();
         profile.setId(userId);
