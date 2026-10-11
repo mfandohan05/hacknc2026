@@ -4,6 +4,7 @@ import { useEffect, useImperativeHandle, useRef } from "react";
 import type { RouteOption } from "@/types/route";
 import type { Coordinate } from "@/types/navigation";
 import { syncNavRoute, removeNavRoute } from "@/lib/navRouteLayer";
+import { applyAeroStyle, themeAccent } from "@/lib/mapAeroStyle";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_KEY;
 
@@ -34,6 +35,7 @@ type Props = {
 
 const ROUTES_SOURCE = "routes";
 const ROUTES_LAYER = "routes-line";
+const ROUTES_CASING = "routes-casing";
 const FIT_PADDING = { top: 140, bottom: 380, left: 40, right: 40 };
 const DESKTOP_FIT_PADDING = { top: 60, bottom: 60, left: 440, right: 60 };
 
@@ -42,10 +44,13 @@ function fitPadding(bottomOverride?: number) {
   return { ...FIT_PADDING, bottom: bottomOverride ?? FIT_PADDING.bottom };
 }
 
-function createMarkerElement() {
+function createMarkerElement(color = "#54C571") {
   const el = document.createElement("div");
+  // a glossy Aero orb: bright highlight top-left, white rim, soft coloured glow
   el.style.cssText =
-    "width:22px;height:22px;border-radius:9999px;background:#54C571;border:3px solid #fff;box-shadow:0 2px 6px rgba(23,51,74,0.35);";
+    `width:24px;height:24px;border-radius:9999px;border:2px solid #fff;` +
+    `background:radial-gradient(circle at 32% 28%,#fff 0,rgba(255,255,255,0.75) 14%,${color} 52%,${color} 100%);` +
+    `box-shadow:0 0 10px ${color}99,0 2px 6px rgba(23,51,74,0.4),inset 0 -3px 5px rgba(0,0,0,0.18);`;
   return el;
 }
 
@@ -82,13 +87,26 @@ export default function InteractiveMap({ ref, onMapClick, onUserLocation, initia
       return;
     }
     map.addSource(ROUTES_SOURCE, { type: "geojson", data });
+    const accent = themeAccent();
+    map.addLayer({
+      id: ROUTES_CASING,
+      type: "line",
+      source: ROUTES_SOURCE,
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-color": "#ffffff",
+        "line-opacity": ["case", ["get", "selected"], 0.9, 0.5],
+        "line-width": ["case", ["get", "selected"], 11, 7],
+        "line-blur": 1,
+      },
+    });
     map.addLayer({
       id: ROUTES_LAYER,
       type: "line",
       source: ROUTES_SOURCE,
       layout: { "line-cap": "round", "line-join": "round" },
       paint: {
-        "line-color": ["case", ["get", "selected"], "#208A5D", "#17334A"],
+        "line-color": ["case", ["get", "selected"], accent, "#2b6f9c"],
         "line-opacity": ["case", ["get", "selected"], 0.95, 0.35],
         "line-width": ["case", ["get", "selected"], 7, 4],
       },
@@ -156,6 +174,7 @@ export default function InteractiveMap({ ref, onMapClick, onUserLocation, initia
       fitBoundsOptions: { maxZoom: 14 },
     });
 
+    map.on("style.load", () => applyAeroStyle(map));
     map.on("click", () => onMapClickRef.current?.());
     geolocate.on("geolocate", (e: GeolocationPosition) => {
       const { heading } = e.coords;

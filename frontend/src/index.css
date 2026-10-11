@@ -444,6 +444,203 @@
 }
 
 
+/* ---- Vista-style controls for the route options: small radii, hard-split gloss, blue selection ---- */
+
+/* a list item / command row: pale gloss with a dark outer and white inner border */
+.vista-item {
+  border: 1px solid rgba(12, 38, 60, 0.5);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ffffff 0%, #f3f8fd 46%, #e2ecf7 54%, #eef5fb 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9), 0 1px 2px rgba(10, 30, 50, 0.22);
+  transition: border-color 150ms ease-out, box-shadow 150ms ease-out, background-color 150ms ease-out;
+}
+
+button.vista-item:hover,
+.vista-item:has(button:hover) {
+  border-color: #3d7bad;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.95), 0 0 6px rgba(80, 170, 230, 0.55);
+}
+
+/* Hover animation for route choices: a hover tint fades in and a soft gloss sweeps across.
+   Gradients can't be transitioned, so both are overlays; the card itself never changes size. */
+.route-choice.vista-item {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.route-choice.vista-item::before,
+.route-choice.vista-item::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.route-choice.vista-item::before {
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 220ms ease-out;
+  background: var(--theme-hover, linear-gradient(180deg, #fdfeff 0%, #e8f5fd 46%, #cfe9f9 54%, #e3f3fc 100%));
+}
+
+.route-choice.vista-item::after {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 45%;
+  transform: translateX(-120%) skewX(-18deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+}
+
+@media (hover: hover) {
+  .route-choice.vista-item:hover::before,
+  .route-choice.vista-item:has(button:hover)::before {
+    opacity: 1;
+  }
+
+  .route-choice.vista-item:hover::after,
+  .route-choice.vista-item:has(button:hover)::after {
+    animation: vista-sheen 650ms ease-out;
+  }
+}
+
+/* the selected card already has its own fill */
+.route-choice.vista-item[aria-pressed="true"]::before {
+  opacity: 0;
+}
+
+@keyframes vista-sheen {
+  from { transform: translateX(-120%) skewX(-18deg); }
+  to { transform: translateX(330%) skewX(-18deg); }
+}
+
+/* the selected item gets the classic blue selection glass */
+.vista-item[aria-pressed="true"] {
+  border-color: #2c628b;
+  background: linear-gradient(180deg, #eaf6fe 0%, #c9e6f8 46%, #a9d5f2 54%, #c4e3f7 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.85), 0 0 8px rgba(60, 150, 220, 0.6);
+}
+
+/* a small square glossy icon tile */
+.vista-tile {
+  border: 1px solid rgba(12, 38, 60, 0.6);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #c9e8fa 0%, #7cc4ec 46%, #2a86c4 54%, #5db4e6 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  color: #fff;
+}
+
+.vista-tile svg {
+  filter: drop-shadow(0 0 1px rgba(5, 25, 45, 0.9));
+}
+
+.vista-tile-green {
+  background: linear-gradient(180deg, #c9f3d7 0%, #6fd49a 46%, #1f9a5a 54%, #4cc481 100%);
+}
+
+/* a standard push button: grey gloss, blue on hover, green for the primary action */
+.vista-button {
+  border: 1px solid #5b6b78;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #fbfbfb 0%, #eeeeee 48%, #dcdcdc 52%, #c9d0d6 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.85);
+  color: #17334a;
+  transition: box-shadow 150ms ease-out, border-color 150ms ease-out;
+}
+
+.vista-button:hover:not(:disabled) {
+  border-color: #2c628b;
+  background: linear-gradient(180deg, #f2fafe 0%, #dff2fc 48%, #bfe3f6 52%, #d3edfb 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9), 0 0 6px rgba(80, 170, 230, 0.6);
+}
+
+.vista-button:active:not(:disabled) {
+  background: linear-gradient(180deg, #cfe6f4 0%, #b3d8ee 48%, #8fc6e6 52%, #a6d3ee 100%);
+}
+
+.vista-button-primary {
+  border-color: #1b5e3b;
+  background: linear-gradient(180deg, #b6efc9 0%, #5fcf8d 48%, #1f9a5a 52%, #43bd78 100%);
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(5, 50, 25, 0.6);
+}
+
+.vista-button-primary:hover:not(:disabled) {
+  border-color: #1b5e3b;
+  background: linear-gradient(180deg, #c8f5d8 0%, #76dba0 48%, #26ad66 52%, #55cd88 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), 0 0 8px rgba(60, 220, 120, 0.7);
+}
+
+/* an inset value field (like a read-only text box) */
+.vista-field {
+  border: 1px solid rgba(12, 38, 60, 0.4);
+  border-radius: 3px;
+  background: linear-gradient(180deg, #e9eff5 0%, #ffffff 35%);
+  box-shadow: inset 0 1px 2px rgba(12, 38, 60, 0.25);
+}
+
+/* Vista trackbar slider */
+.vista-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.vista-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border: 1px solid rgba(12, 38, 60, 0.55);
+  border-radius: 3px;
+  background: linear-gradient(180deg, #c9d3dc 0%, #f4f8fb 100%);
+  box-shadow: inset 0 1px 2px rgba(12, 38, 60, 0.35);
+}
+
+.vista-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 20px;
+  margin-top: -8px;
+  border: 1px solid #3a5a74;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #ffffff 0%, #e8f3fb 48%, #bcd9ee 52%, #dcecf8 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9), 0 1px 2px rgba(10, 30, 50, 0.35);
+}
+
+.vista-range::-moz-range-track {
+  height: 6px;
+  border: 1px solid rgba(12, 38, 60, 0.55);
+  border-radius: 3px;
+  background: linear-gradient(180deg, #c9d3dc 0%, #f4f8fb 100%);
+}
+
+.vista-range::-moz-range-thumb {
+  width: 10px;
+  height: 18px;
+  border: 1px solid #3a5a74;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #ffffff 0%, #e8f3fb 48%, #bcd9ee 52%, #dcecf8 100%);
+}
+
+.vista-range:focus-visible {
+  outline: 2px solid #3d9be0;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vista-item,
+  .vista-button,
+  .route-choice.vista-item::before {
+    transition: none;
+  }
+
+  .route-choice.vista-item::after {
+    animation: none !important;
+  }
+}
+
+
 /* Page changes use the View Transitions API (react-router's viewTransition): the outgoing page
    closes like an Aero window (shrinks and fades) and the incoming one opens (grows in, with a
    small overshoot). The taskbar has its own transition name so it stays put. */
