@@ -1,46 +1,103 @@
+/* Rewards page: Windows Vista / Windows 7 Aero. Selectors and structure are unchanged; only the look. */
 .rewards-page {
   isolation: isolate;
-  background: linear-gradient(180deg, #70c6ef 0, #c2edff 400px, #c5f0e9 900px, #98d7e4 100%);
-  color: #173e54;
+  /* Aero wallpaper: deep blue sky into aqua and green, with soft light rays */
+  background:
+    linear-gradient(118deg, transparent 38%, #ffffff30 46%, transparent 54%),
+    radial-gradient(ellipse at 12% 6%, #ffffff99, transparent 45%),
+    radial-gradient(ellipse at 92% 92%, #c8ffe18c, transparent 42%),
+    linear-gradient(160deg, #1c7ec0 0, #35aadf 34%, #6fd0c9 66%, #8fe3a6 100%);
+  color: #0f2f45;
 }
 .rewards-scenery { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: -1; }
-.rewards-sun { position: absolute; top: -150px; right: -100px; width: 650px; height: 650px; border-radius: 50%; background: radial-gradient(circle, #fffde4 0, #ffffffb0 15%, #ffffff30 40%, transparent 68%); }
-.rewards-cloud { position: absolute; width: 450px; height: 100px; border-radius: 50%; background: radial-gradient(ellipse, #fffffff0, #ffffff80 40%, transparent 70%); filter: blur(12px); }
+.rewards-sun { position: absolute; top: -150px; right: -100px; width: 650px; height: 650px; border-radius: 50%; background: radial-gradient(circle, #ffffffc0 0, #ffffff60 18%, #ffffff1c 42%, transparent 68%); }
+.rewards-cloud { position: absolute; width: 450px; height: 100px; border-radius: 50%; background: radial-gradient(ellipse, #ffffff70, #ffffff30 40%, transparent 70%); filter: blur(14px); }
 .rewards-cloud-one { top: 130px; left: -120px; transform: rotate(-8deg); }
 .rewards-cloud-two { top: 300px; right: -160px; }
-.rewards-hill { position: absolute; top: 570px; left: -30%; width: 160%; height: 550px; border-radius: 50%; transform: rotate(-9deg); background: linear-gradient(175deg, #b9e66c80, #68cb8e35 40%, transparent 70%); border-top: 2px solid #e3ffbb80; }
-.rewards-water { position: absolute; top: 710px; left: -30%; width: 170%; height: 450px; border-radius: 50%; transform: rotate(12deg); background: linear-gradient(170deg, #ffffff90, #67d3e34d 8%, transparent 60%); border-top: 1px solid white; }
+.rewards-hill { position: absolute; top: 570px; left: -30%; width: 160%; height: 550px; border-radius: 50%; transform: rotate(-9deg); background: linear-gradient(175deg, #b9e66c55, #68cb8e22 40%, transparent 70%); border-top: 2px solid #e3ffbb50; }
+.rewards-water { position: absolute; top: 710px; left: -30%; width: 170%; height: 450px; border-radius: 50%; transform: rotate(12deg); background: linear-gradient(170deg, #ffffff60, #67d3e330 8%, transparent 60%); border-top: 1px solid #ffffff90; }
 .rewards-bubble-one { width: 100px; height: 100px; right: 3%; top: 410px; }
 .rewards-bubble-two { width: 48px; height: 48px; left: 3%; top: 200px; }
 .rewards-bubble-three { width: 72px; height: 72px; left: 7%; top: 1100px; }
-.rewards-page .aero-window { border: 1px solid #ffffffed; border-radius: 18px; background: linear-gradient(135deg, #ffffffb8, #effaff88 50%, #c5eeff9e); box-shadow: inset 0 1px 0 white, 0 12px 30px #12658022, 0 2px 4px #1265801a; backdrop-filter: blur(18px); }
-.rewards-page .aero-titlebar { border-radius: 17px 17px 0 0; border-bottom: 1px solid #85c5d6; background: linear-gradient(#f3fcffe6, #d5f1ffb3 48%, #9bd1e6b3 49%, #cceeffd9); color: #21516b; text-shadow: 0 1px 1px white; }
-.rewards-page .rewards-hero { background: radial-gradient(ellipse at 95% 15%, #fff 0, transparent 55%), linear-gradient(140deg, #eafcffd9, #c3f3fac9 45%, #d5f7c9c9); }
+
+/* window frame: dark outer border, white inner border, glass body with a diagonal reflection */
+.rewards-page .aero-window {
+  border: 1px solid #0c263c8c;
+  border-radius: 8px;
+  background:
+    linear-gradient(115deg, #ffffff52 0, #ffffff52 42%, #ffffff00 42.2%),
+    linear-gradient(180deg, #ffffffc7 0, #d6eefc99 55%, #bee4f88c 100%);
+  box-shadow: inset 0 0 0 1px #ffffffb3, inset 0 1px 0 #fff, 0 10px 30px #0a1e324d;
+  backdrop-filter: blur(18px) saturate(180%);
+}
+.rewards-page .aero-titlebar {
+  border-radius: 7px 7px 0 0;
+  border-bottom: 1px solid #0c263c66;
+  background: linear-gradient(#ffffffcc 0, #b4e0f799 48%, #78c4ee9e 52%, #bee8fcb3 100%);
+  color: #0b2438;
+  text-shadow: 0 0 8px #fff, 0 0 3px #fff;
+}
+.rewards-page .rewards-hero { background: radial-gradient(ellipse at 95% 15%, #ffffffd9 0, transparent 55%), linear-gradient(140deg, #f3fbffd9, #cdeefaa6 50%, #dbf6d4a6); }
+
+/* hero: balance */
 .rewards-balance { display: flex; align-items: center; gap: 28px; padding: 28px 8px; }
-.rewards-orbit { position: relative; display: grid; place-items: center; width: 132px; height: 132px; flex-shrink: 0; border: 1px solid #fff; border-radius: 50%; background: radial-gradient(circle at 35% 20%, #fff, #ddfff570 55%, #53cba74d); box-shadow: inset 0 0 20px #fff, 0 8px 22px #278a8833; }
+.rewards-orbit { position: relative; display: grid; place-items: center; width: 132px; height: 132px; flex-shrink: 0; border: 1px solid #0c263c66; border-radius: 50%; background: radial-gradient(circle at 35% 20%, #fff, #d8f1ffa6 55%, #5fb6e866); box-shadow: inset 0 0 0 2px #ffffffb3, inset 0 -10px 18px #2a7fb633, 0 8px 22px #0a1e3238; }
 .rewards-orbit::before { content: ''; position: absolute; inset: -8px; border: 1px solid #ffffffc9; border-radius: 50%; }
-.rewards-orbit::after { content: ''; position: absolute; width: 17px; height: 17px; right: 7px; top: 0; border-radius: 50%; background: radial-gradient(circle at 30% 25%, white, #a6eef5 40%, #268caa); box-shadow: 0 1px 4px #166a8066; }
-.rewards-level { display: inline-block; border-radius: 20px; border: 1px solid #fff; padding: 4px 12px; background: linear-gradient(#fff, #d4f5d1 50%, #abe7aa 51%, #e5ffe0); box-shadow: 0 2px 4px #236f3726; font-size: 11px; font-weight: 800; letter-spacing: .12em; color: #216339; }
-.rewards-points { font-size: clamp(2.5rem, 7vw, 4.5rem); font-weight: 750; line-height: 1.2; letter-spacing: -.045em; color: #136780; text-shadow: 0 2px 0 white, 0 5px 15px #43adb233; overflow-wrap: anywhere; }
-.rewards-progress { display: block; appearance: none; width: 100%; height: 9px; border: 1px solid #85afb5; border-radius: 20px; overflow: hidden; background: #c3dce4; box-shadow: inset 0 2px 4px #22566930, 0 1px 0 white; }
-.rewards-progress-large { height: 18px; }
-.rewards-progress::-webkit-progress-bar { background: linear-gradient(#a9cbd4, #e0f2f6); border-radius: 20px; }
-.rewards-progress::-webkit-progress-value { border-radius: 20px; background: linear-gradient(#d5ffac, #8ed75f 45%, #42ab42 49%, #70d456 80%, #baff93); box-shadow: inset 0 1px 2px #fff; }
-.rewards-progress::-moz-progress-bar { border-radius: 20px; background: linear-gradient(#d5ffac, #8ed75f 45%, #42ab42 49%, #70d456 80%, #baff93); }
-.rewards-achievement { padding: 16px; border: 1px solid #fffffff0; border-radius: 13px; background: linear-gradient(150deg, #fff9, #dff5fc80); box-shadow: inset 0 1px 0 #fff, 0 3px 8px #407b8d14; }
-.rewards-achievement.is-unlocked { background: linear-gradient(145deg, #faffebef, #e6f7c8a6 55%, #c7eddca6); border-color: #afcf87; }
-.rewards-medallion { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; border: 1px solid white; color: #517585; background: linear-gradient(#fff, #e3f3f8 45%, #b6d2df 50%, #e7f4f7); box-shadow: inset 0 0 0 3px #ffffff70, 0 2px 4px #18495d25; }
-.is-unlocked .rewards-medallion { color: #886110; background: linear-gradient(#fffce0, #ffdf6d 45%, #e9b635 50%, #fff0a4); }
-.rewards-cosmetic { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; border: 1px solid #fff; border-radius: 14px; padding: 18px 12px 14px; text-align: center; background: linear-gradient(#ffffffb3, #e1f4f899); box-shadow: inset 0 1px 0 white, 0 4px 12px #29778919; }
-.rewards-cosmetic.is-equipped { border-color: #71bca8; background: linear-gradient(#f8fff6, #d4f6caa6); box-shadow: inset 0 0 0 2px #fff9, 0 4px 12px #268c6326; }
+.rewards-orbit::after { content: ''; position: absolute; width: 17px; height: 17px; right: 7px; top: 0; border-radius: 50%; background: radial-gradient(circle at 30% 25%, white, #a6dcf5 40%, #1f78b4); box-shadow: 0 1px 4px #0a3a5a66; }
+.rewards-level { display: inline-block; border-radius: 3px; border: 1px solid #3c7fb1; padding: 3px 10px; background: linear-gradient(#f6fbff, #d9f0fc 49%, #bee6fd 50%, #e4f6ff); box-shadow: inset 0 0 0 1px #ffffffcc; font-size: 11px; font-weight: 700; letter-spacing: .12em; color: #0b3a5c; }
+.rewards-points { font-size: clamp(2.5rem, 7vw, 4.5rem); font-weight: 300; line-height: 1.2; letter-spacing: -.03em; color: #0b3a5c; text-shadow: 0 0 12px #fff, 0 1px 0 #ffffffcc; overflow-wrap: anywhere; }
+
+/* progress: Windows 7 green bar with a glossy sheen */
+.rewards-progress { display: block; appearance: none; width: 100%; height: 14px; border: 1px solid #7f8f9c; border-radius: 3px; overflow: hidden; background: #e6e6e6; box-shadow: inset 0 1px 3px #0a1e3238, 0 1px 0 #ffffffcc; }
+.rewards-progress-large { height: 20px; }
+.rewards-progress::-webkit-progress-bar { background: linear-gradient(#cfd6dc, #f1f4f6); border-radius: 2px; }
+.rewards-progress::-webkit-progress-value { border-radius: 2px; background: linear-gradient(#ffffff99 0, #ffffff22 48%, #00000010 50%, #ffffff30 100%), linear-gradient(90deg, #5be67d, #1fa83f); box-shadow: inset 0 0 0 1px #ffffff66, 0 0 6px #3cdc6e99; }
+.rewards-progress::-moz-progress-bar { border-radius: 2px; background: linear-gradient(#ffffff99 0, #ffffff22 48%, #00000010 50%, #ffffff30 100%), linear-gradient(90deg, #5be67d, #1fa83f); }
+
+/* achievements: Explorer-style items on a white pane; unlocked ones are highlighted */
+.rewards-achievement { padding: 14px; border: 1px solid #c3d4e2; border-radius: 3px; background: linear-gradient(#ffffff, #f4f8fb); box-shadow: inset 0 0 0 1px #ffffffcc; transition: background .2s, border-color .2s; }
+.rewards-achievement:hover { border-color: #70c0e7; background: linear-gradient(#f4fbff, #dbeffa); }
+.rewards-achievement.is-unlocked { background: linear-gradient(#f4fce9, #d9f1bf); border-color: #8fc86a; }
+.rewards-medallion { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; border: 1px solid #0c263c66; color: #3f6075; background: linear-gradient(#fff, #e6f1f8 48%, #b9d3e2 52%, #e9f4fa); box-shadow: inset 0 0 0 2px #ffffff99, 0 2px 4px #0a1e3233; }
+.is-unlocked .rewards-medallion { color: #7a5200; background: linear-gradient(#fffbe0, #ffdc66 48%, #e4ac2c 52%, #ffefa0); border-color: #9a7418; }
+
+/* cosmetics: icon tiles; the equipped one uses the Windows 7 selection blue */
+.rewards-cosmetic { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; border: 1px solid #c3d4e2; border-radius: 3px; padding: 18px 12px 14px; text-align: center; background: linear-gradient(#ffffff, #f2f7fb); box-shadow: inset 0 0 0 1px #ffffffcc; transition: background .2s, border-color .2s; }
+.rewards-cosmetic:hover { border-color: #70c0e7; background: linear-gradient(#f4fbff, #dbeffa); }
+.rewards-cosmetic.is-equipped { border-color: #26a0da; background: linear-gradient(#e8f6fe, #c4e5f6); box-shadow: inset 0 0 0 1px #ffffffcc, 0 0 8px #26a0da55; }
 .rewards-cosmetic.is-locked .rewards-badge-plinth { filter: saturate(.4); }
 .rewards-badge-plinth { position: relative; padding-bottom: 9px; }
-.rewards-badge-plinth::after { content: ''; position: absolute; bottom: 0; left: -7px; right: -7px; height: 15px; border: 1px solid #ffffffb3; border-radius: 50%; background: radial-gradient(ellipse, #548f9c40, #ffffff80 65%); z-index: -1; }
-.rewards-ledger { border: 1px solid #ffffffd9; border-radius: 12px; overflow: hidden; box-shadow: inset 0 1px 3px #477d8719; }
-.rewards-ledger-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px; background: #f7fdffb3; border-bottom: 1px solid #badce066; }
-.rewards-ledger-row:nth-child(even) { background: #dff3f980; }
+.rewards-badge-plinth::after { content: ''; position: absolute; bottom: 0; left: -7px; right: -7px; height: 15px; border: 1px solid #ffffffb3; border-radius: 50%; background: radial-gradient(ellipse, #3a77a040, #ffffff80 65%); z-index: -1; }
+
+/* ledger: a details-view list */
+.rewards-ledger { border: 1px solid #c3d4e2; border-radius: 3px; overflow: hidden; background: #fff; box-shadow: inset 0 1px 3px #0a1e3214; }
+.rewards-ledger-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; background: #ffffff; border-bottom: 1px solid #e3ecf3; transition: background .2s; }
+.rewards-ledger-row:nth-child(even) { background: #f6fafd; }
+.rewards-ledger-row:hover { background: linear-gradient(#f4fbff, #e1f1fa); }
 .rewards-ledger-row:last-child { border-bottom: 0; }
-.rewards-page button:focus-visible, .rewards-page a:focus-visible { outline: 3px solid #087499; outline-offset: 4px; }
+
+/* buttons inside the page: Windows 7 push buttons (grey, turning blue on hover) */
+.rewards-page .aero-orb,
+.rewards-page .aero-gel {
+  border: 1px solid #707070;
+  border-radius: 3px;
+  color: #111;
+  background: linear-gradient(#f2f2f2 0, #ebebeb 49%, #ddd 50%, #cfcfcf 100%);
+  box-shadow: inset 0 0 0 1px #ffffffcc;
+  transition: background .15s, border-color .15s, box-shadow .15s;
+}
+.rewards-page .aero-gel { border-color: #3c7fb1; box-shadow: inset 0 0 0 1px #ffffffcc, 0 0 6px #3c9fe055; }
+.rewards-page .aero-orb:hover:not(:disabled),
+.rewards-page .aero-gel:hover:not(:disabled) {
+  border-color: #3c7fb1;
+  background: linear-gradient(#eaf6fd 0, #d9f0fc 49%, #bee6fd 50%, #a7d9f5 100%);
+  box-shadow: inset 0 0 0 1px #ffffffcc, 0 0 8px #5cb8f088;
+  filter: none;
+}
+.rewards-page .aero-orb:active:not(:disabled),
+.rewards-page .aero-gel:active:not(:disabled) { background: linear-gradient(#c4e5f6, #98d1ef 49%, #68b3db 50%, #7fc2e6 100%); border-color: #2c628b; transform: none; }
+
+.rewards-page button:focus-visible, .rewards-page a:focus-visible { outline: 2px solid #3d7bad; outline-offset: 2px; }
 @media (max-width: 480px) {
   .rewards-balance { gap: 18px; padding: 24px 0; }
   .rewards-balance .rewards-orbit { width: 94px; height: 94px; }
