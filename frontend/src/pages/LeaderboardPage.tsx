@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { RefreshCw, Trophy } from "lucide-react";
+import { Crown, Medal, RefreshCw, Trophy } from "lucide-react";
 import AeroWindow from "@/components/layout/AeroWindow";
 import { apiJson } from "@/services/api";
 
@@ -12,10 +12,17 @@ type LeaderboardEntry = {
 
 type LeaderboardApiEntry = {
     profileId: string;
-    displayName: string;
+    username?: string;
+    displayName?: string;
     totalPoints: number;
     rank: number;
 };
+
+const rankStyles = [
+    "bg-amber-100 text-amber-700",
+    "bg-slate-200 text-slate-700",
+    "bg-orange-100 text-orange-700",
+];
 
 function LeaderboardPage() {
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -35,14 +42,14 @@ function LeaderboardPage() {
                 const entries = Array.isArray(data) ? data : (data as { leaderboard?: unknown }).leaderboard;
                 if (!Array.isArray(entries)) throw new Error("The leaderboard response was not a list.");
 
-                // Map the API field names to the fields used by the UI. The API already
-                // returns this list sorted, so keep its order unchanged.
+                // Prefer the API username. Keep displayName as a fallback for older responses.
+                // The API already returns this list sorted, so keep its order unchanged.
                 setLeaderboard(
-                    (entries as LeaderboardApiEntry[]).map(({ profileId, displayName, totalPoints, rank }) => ({
-                        id: profileId,
-                        username: displayName,
-                        points: totalPoints,
-                        rank,
+                    (entries as LeaderboardApiEntry[]).map((entry) => ({
+                        id: entry.profileId,
+                        username: entry.username ?? entry.displayName ?? "Unknown user",
+                        points: entry.totalPoints,
+                        rank: entry.rank,
                     })),
                 );
             })
@@ -64,6 +71,7 @@ function LeaderboardPage() {
         setReloadKey((key) => key + 1);
     };
 
+    const columns = "grid-cols-[4rem_minmax(0,1fr)_7rem]";
     const columnHeader =
         "border-r border-[#d5dfe8] bg-gradient-to-b from-white via-[#f2f6fa] to-[#e1e9f0] px-3 py-1.5 text-xs font-normal text-[#1e395b] last:border-r-0";
 
@@ -94,9 +102,15 @@ function LeaderboardPage() {
 
                 {/* details view */}
                 <div className="flex min-h-0 flex-1 flex-col bg-white text-[#0f2f45]" role="table" aria-label="Global leaderboard">
-                    <div role="row" className="grid grid-cols-1 border-b border-[#d5dfe8]">
+                    <div role="row" className={`grid ${columns} border-b border-[#d5dfe8]`}>
+                        <span role="columnheader" className={columnHeader}>
+                            Rank
+                        </span>
                         <span role="columnheader" className={columnHeader}>
                             User
+                        </span>
+                        <span role="columnheader" className={`${columnHeader} text-right`}>
+                            Points
                         </span>
                     </div>
 
@@ -104,8 +118,10 @@ function LeaderboardPage() {
                         {loading ? (
                             <div aria-label="Loading leaderboard" role="status">
                                 {Array.from({ length: 8 }, (_, index) => (
-                                    <div key={index} className="grid grid-cols-1 items-center border-b border-[#eef3f7] py-2.5">
+                                    <div key={index} className={`grid ${columns} items-center border-b border-[#eef3f7] py-2.5`}>
+                                        <span className="mx-3 h-4 w-6 animate-pulse rounded-sm bg-[#e3ecf3]" />
                                         <span className="mx-3 h-4 animate-pulse rounded-sm bg-[#e3ecf3]" />
+                                        <span className="mx-3 ml-auto h-4 w-12 animate-pulse rounded-sm bg-[#e3ecf3]" />
                                     </div>
                                 ))}
                             </div>
@@ -122,15 +138,31 @@ function LeaderboardPage() {
                                 </button>
                             </div>
                         ) : leaderboard.length > 0 ? (
-                            leaderboard.map((entry) => {
+                            leaderboard.map((entry, index) => {
+                                const rank = entry.rank ?? index + 1;
+
                                 return (
                                     <div
                                         key={entry.id}
                                         role="row"
-                                        className="grid grid-cols-1 items-center border-b border-[#eef3f7] py-2 transition-colors hover:bg-gradient-to-b hover:from-[#f4fbff] hover:to-[#dbeffa]"
+                                        className={`grid ${columns} items-center border-b border-[#eef3f7] py-2 transition-colors hover:bg-gradient-to-b hover:from-[#f4fbff] hover:to-[#dbeffa]`}
                                     >
+                                        <span role="cell" className="px-3">
+                                            <span
+                                                className={`flex size-7 items-center justify-center rounded-full border border-[#0c263c]/30 text-xs font-bold ${rankStyles[rank - 1] ?? "bg-[#eef3f7] text-[#1e395b]"}`}
+                                            >
+                                                {rank <= 3 ? (
+                                                    rank === 1 ? <Crown className="size-4" /> : <Medal className="size-4" />
+                                                ) : (
+                                                    rank
+                                                )}
+                                            </span>
+                                        </span>
                                         <span role="cell" className="truncate px-3 font-medium">
                                             {entry.username}
+                                        </span>
+                                        <span role="cell" className="px-3 text-right font-semibold tabular-nums">
+                                            {entry.points.toLocaleString()}
                                         </span>
                                     </div>
                                 );
