@@ -9,7 +9,6 @@ export type Suggestion = {
 export type SelectedPlace = {
     mapboxId: string;
     name: string;
-    // human-readable locality / full address, empty when the provider has none
     address: string;
     longitude: number;
     latitude: number;

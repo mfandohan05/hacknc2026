@@ -25,7 +25,6 @@ type Props = {
     destinationLabel: string | null;
     onEditRoute: () => void;
     onViewRoutes: () => void;
-    // the search screen is open, so the summary row hands its transition name over to that screen's header
     editing?: boolean;
     preview?: ReactNode;
 };

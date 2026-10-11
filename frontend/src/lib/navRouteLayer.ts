@@ -14,8 +14,6 @@ function toData(coords: Coordinate[] | null): Parameters<GeoJSONSource["setData"
     };
 }
 
-// Adds the route source and its two layers if they are missing, otherwise updates the data.
-// Safe to call repeatedly, including after a style reload wiped the map's sources.
 export function syncNavRoute(map: MapboxMap, coords: Coordinate[] | null) {
     const source = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
     if (source) {

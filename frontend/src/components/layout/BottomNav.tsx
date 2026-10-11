@@ -10,8 +10,6 @@ const tabs: { to: string; label: string; icon: LucideIcon }[] = [
     { to: "/profile", label: "Profile", icon: User },
 ];
 
-// Mobile: a four-tab bar. Desktop (md+): a Windows-style taskbar with the logo as the start button,
-// task buttons beside it and a notification area (status icons and clock) on the right.
 function BottomNav() {
     return (
         <nav

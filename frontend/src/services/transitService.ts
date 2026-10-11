@@ -14,7 +14,6 @@ export type TransitStep = {
     departureTime: string | null;
     arrivalTime: string | null;
     agencies: string[];
-    // the leg's path as [longitude, latitude] pairs; empty or missing on older backends
     geometry?: [number, number][];
 };
 export type TransitItinerary = {

@@ -9,7 +9,6 @@ type Props = {
     error?: boolean;
     noResults?: boolean;
     className?: string;
-    // "screen" sits below the nearest positioned ancestor, inset with margins, and grows with its content up to the bottom of the viewport
     variant?: "dropdown" | "screen";
     onHover: (index: number) => void;
     onChoose: (suggestion: Suggestion) => void;

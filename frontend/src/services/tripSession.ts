@@ -2,7 +2,6 @@ import { ApiError, apiJson } from "./api";
 import { cancelTrip, createTrip, getTripPoints, startTrip } from "./tripService";
 import type { LngLat, RouteOption } from "@/types/route";
 
-// Keep every created ID until cancellation succeeds, including requests still in flight.
 export class TripSession {
     private trips = new Map<string, ReturnType<typeof createTrip>>();
     private started = new Set<string>();
@@ -31,7 +30,6 @@ export class TripSession {
             try {
                 await startTrip(trip.id);
             } catch (error) {
-                // A lost response may leave the server already started; confirm before retrying.
                 if (!(error instanceof ApiError) || error.status !== 409) throw error;
                 const current = await apiJson<{ status: string }>(`/api/v1/trips/${trip.id}`);
                 if (current.status !== "IN_PROGRESS") throw error;
@@ -41,8 +39,6 @@ export class TripSession {
         return trip.id;
     }
 
-    // Registers a trip that was already started in an earlier page load, so it can still be
-    // completed or cancelled. Returns the key to pass to cancelExcept to keep it.
     adopt(id: string) {
         const key = `restored:${id}`;
         if (!this.trips.has(key)) {

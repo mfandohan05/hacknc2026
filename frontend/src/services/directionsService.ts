@@ -15,8 +15,6 @@ export class DirectionsError extends Error {
     }
 }
 
-// Fetches a single route with turn-by-turn steps, banner and voice instructions.
-// Swap the body of this function when the Spring backend takes over routing.
 export async function getRoute(
     profile: NavProfile,
     from: LngLat,
@@ -39,7 +37,6 @@ export async function getRoute(
         res = await fetch(url, { signal });
     } catch (e) {
         if ((e as Error).name === "AbortError") throw e;
-        // the URL carries the token, so it is deliberately left out of the message
         throw new DirectionsError("network", "Couldn't reach the directions service.");
     }
 

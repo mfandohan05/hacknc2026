@@ -10,10 +10,8 @@ export class ApiError extends Error {
     }
 }
 
-// Origin of the Spring backend (e.g. http://localhost:8080 or the Railway URL); empty for same-origin.
 export const API_ORIGIN = import.meta.env.VITE_API_BASE_URL ?? "";
 
-// Calls the Spring backend directly (CORS-enabled) with the Supabase access token attached.
 export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
     const token = await getAccessToken();
     const headers = new Headers(init.headers);
@@ -30,7 +28,6 @@ export async function apiJson<T>(path: string, init: RequestInit = {}): Promise<
             const body = (await res.json()) as { message?: string; error?: string };
             detail = body.message ?? body.error ?? "";
         } catch {
-            // not a JSON error body
         }
         throw new ApiError(res.status, detail || `Request failed (${res.status})`);
     }

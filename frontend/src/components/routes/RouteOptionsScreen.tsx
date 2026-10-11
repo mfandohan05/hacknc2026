@@ -22,14 +22,11 @@ type Props = {
     onSelectRoute: (routeId: string) => void;
     onStartTrip: (route: RouteOption) => void;
     onBack: () => void;
-    // opens the public transport screen (full itineraries, preferences, departure time)
     onTransit: () => void;
-    // starts turn-by-turn navigation along one of the public transport itineraries
     onNavigateTransit: (itinerary: TransitItinerary) => void;
     transit: { routes: TransitItinerary[]; loading: boolean; error: string | null };
 };
 
-// how many public transport itineraries are previewed in the options list
 const TRANSIT_PREVIEW_COUNT = 2;
 
 function RouteOptionsScreen({

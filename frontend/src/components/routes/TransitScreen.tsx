@@ -14,7 +14,6 @@ type Props = {
     initialPreference: TransitPreference;
     onBack: () => void;
     onEditRoute: () => void;
-    // starts turn-by-turn navigation along an itinerary
     onNavigate: (itinerary: TransitItinerary) => void;
 };
 

@@ -7,9 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { signIn, signUp } from "@/services/authService";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-// Supabase's default minimum password length
 const MIN_PASSWORD_LENGTH = 6;
-// 3-20 letters, numbers or underscores
 const USERNAME_PATTERN = /^[A-Za-z0-9_]{3,20}$/;
 
 type FieldErrors = {
@@ -37,8 +35,6 @@ function SignInPage() {
     const [formError, setFormError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
-    // Already signed in when arriving here. While a submit is in flight the handler navigates
-    // itself, so the page change keeps its transition.
     useEffect(() => {
         if (user && !submitting) navigate(destination, { replace: true, viewTransition: true });
     }, [user, submitting, destination, navigate]);

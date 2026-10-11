@@ -64,7 +64,6 @@ export default function InteractiveMap({ ref, onMapClick, onUserLocation, initia
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
     const { routes, selectedRouteId } = routesRef.current;
-    // selected route last so it renders on top
     const ordered = [...routes].sort(
       (a, b) => Number(a.routeId === selectedRouteId) - Number(b.routeId === selectedRouteId),
     );
@@ -108,7 +107,6 @@ export default function InteractiveMap({ ref, onMapClick, onUserLocation, initia
       markerRef.current = new mapboxgl.Marker({ element: createMarkerElement() })
         .setLngLat([longitude, latitude])
         .addTo(map);
-      // clear any padding left over from fitting a route so the place lands mid-screen
       map.flyTo({ center: [longitude, latitude], zoom: 15, padding: { top: 0, bottom: 0, left: 0, right: 0 } });
     },
     clearPlace: () => {
@@ -165,7 +163,6 @@ export default function InteractiveMap({ ref, onMapClick, onUserLocation, initia
         heading: heading !== null && Number.isFinite(heading) ? heading : null,
       });
     });
-    // sources and layers are lost when the style reloads, so draw them again
     map.on("style.load", () => {
       if (!loadedRef.current) return;
       drawRoutes();
@@ -191,7 +188,6 @@ export default function InteractiveMap({ ref, onMapClick, onUserLocation, initia
     };
   }, []);
 
-  // redraw when routes or the selection change
   useEffect(() => {
     routesRef.current = { routes, selectedRouteId };
     drawRoutes();
@@ -203,7 +199,6 @@ export default function InteractiveMap({ ref, onMapClick, onUserLocation, initia
     if (map && loadedRef.current) syncNavRoute(map, navRoute);
   }, [navRoute]);
 
-  // frame all routes whenever a new set arrives
   useEffect(() => {
     const map = mapRef.current;
     if (!map || routes.length === 0) return;

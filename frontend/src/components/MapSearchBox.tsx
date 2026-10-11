@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Loader2, Menu, X } from "lucide-react";
+import { Loader2, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PlaceSuggestionList from "@/components/PlaceSuggestionList";
@@ -8,7 +8,6 @@ import type { SelectedPlace, Suggestion } from "@/services/searchService";
 
 type Props = {
     onSelectPlace?: (place: SelectedPlace) => void;
-    // used to bias suggestions toward the user
     userLocation?: { longitude: number; latitude: number } | null;
 };
 
@@ -19,8 +18,6 @@ function MapSearchBox({ onSelectPlace, userLocation }: Props) {
     const listId = useId();
     const { query, setQuery, clear, select, suggestions, loading, selecting, error, noResults, hasQuery } =
         usePlaceSearch(userLocation);
-
-    // Close when clicking outside
     useEffect(() => {
         const onDown = (e: PointerEvent) => {
             if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
@@ -37,6 +34,14 @@ function MapSearchBox({ onSelectPlace, userLocation }: Props) {
         onSelectPlace?.(place);
     };
 
+    const submit = () => {
+        if (suggestions.length) {
+            void choose(suggestions[active >= 0 ? active : 0]);
+        } else if (hasQuery) {
+            setOpen(true);
+        }
+    };
+
     const onKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "Escape") {
             setOpen(false);
@@ -49,7 +54,7 @@ function MapSearchBox({ onSelectPlace, userLocation }: Props) {
             setActive((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
         } else if (e.key === "Enter" && open && suggestions.length) {
             e.preventDefault();
-            void choose(suggestions[active >= 0 ? active : 0]);
+            submit();
         }
     };
 
@@ -59,8 +64,14 @@ function MapSearchBox({ onSelectPlace, userLocation }: Props) {
     return (
         <div ref={rootRef} className="relative w-full max-w-md">
             <div className="aero-glass aero-input flex w-full items-center gap-1 rounded-full px-2 py-1.5">
-                <Button variant="ghost" size="icon-lg" className="aero-orb rounded-full hover:bg-transparent" aria-label="Menu">
-                    <Menu className="size-5 text-[#17334A]" />
+                <Button
+                    variant="ghost"
+                    size="icon-lg"
+                    className="aero-orb rounded-full hover:bg-transparent"
+                    aria-label="Search"
+                    onClick={submit}
+                >
+                    <Search className="size-5 text-[#17334A]" />
                 </Button>
                 <Input
                     type="text"
