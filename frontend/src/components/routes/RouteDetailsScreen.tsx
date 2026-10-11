@@ -1,5 +1,5 @@
 import { ArrowLeft, ChevronRight, MapPin, Navigation } from "lucide-react";
-import { formatCo2, formatCost, formatDistance, formatDuration, formatStepDuration } from "@/lib/formatRoute";
+import { formatCo2, formatDistance, formatDuration, formatStepDuration } from "@/lib/formatRoute";
 import type { RouteMode, RouteOption } from "@/types/route";
 
 const MODE_LABEL: Record<RouteMode, string> = {
@@ -51,8 +51,7 @@ function RouteDetailsScreen({ route, originLabel, destinationName, destinationAd
                         {recommended ? MODE_LABEL[route.mode].toLowerCase() : MODE_LABEL[route.mode]}
                     </p>
                     <p className="mt-3 text-xs text-[#17334A]/75">
-                        Est. cost {formatCost(route.estimatedCost)} · Est. CO₂e {formatCo2(route.estimatedCo2Kg)} · Eco
-                        score {route.ecoScore}
+                        Est. CO₂e {formatCo2(route.estimatedCo2Kg)} · Eco points {route.ecoScore}
                     </p>
                 </section>
 

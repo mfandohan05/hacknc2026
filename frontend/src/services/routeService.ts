@@ -7,6 +7,8 @@ export const WALK_KG_CO2E_PER_KM = 0;
 export const BIKE_KG_CO2E_PER_KM = 0;
 export const CAR_KM_PER_LITER = 10;
 export const FUEL_PRICE_PER_LITER = 1.0;
+const KM_TO_MILES = 0.621371;
+const ECO_POINTS_PER_TENTH_MILE = 1;
 
 const PROFILES: { mode: RouteMode; profile: "walking" | "cycling" | "driving" }[] = [
     { mode: "WALK", profile: "walking" },
@@ -19,6 +21,13 @@ const CO2_PER_KM: Record<RouteMode, number> = {
     WALK: WALK_KG_CO2E_PER_KM,
     BIKE: BIKE_KG_CO2E_PER_KM,
 };
+
+export function calculateEcoScore(mode: RouteMode, distanceKm: number): number {
+    if (mode === "CAR") return 0;
+
+    const miles = distanceKm * KM_TO_MILES;
+    return Math.floor((miles / 0.1) * ECO_POINTS_PER_TENTH_MILE);
+}
 
 type DirectionsResponse = {
     routes?: {
@@ -87,17 +96,13 @@ export async function compareRoutes(
     const base = settled.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
     if (base.length === 0) throw new Error("No routes found between these places.");
 
-    // eco score is relative to driving the longest returned route
-    const baselineKm = Math.max(...base.map((r) => r.distanceKm));
-    const baselineCo2 = baselineKm * CAR_KG_CO2E_PER_KM;
-
     const routes: RouteOption[] = base.map((r) => {
         const co2 = r.distanceKm * CO2_PER_KM[r.mode];
         return {
             ...r,
             estimatedCo2Kg: co2,
             estimatedCost: r.mode === "CAR" ? (r.distanceKm / CAR_KM_PER_LITER) * FUEL_PRICE_PER_LITER : 0,
-            ecoScore: baselineCo2 > 0 ? Math.round(Math.min(100, Math.max(0, (1 - co2 / baselineCo2) * 100))) : 100,
+            ecoScore: calculateEcoScore(r.mode, r.distanceKm),
         };
     });
 

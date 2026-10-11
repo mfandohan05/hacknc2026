@@ -19,7 +19,7 @@ export type RouteOption = {
     // estimates; null means unknown and must never be displayed as free / zero
     estimatedCost: number | null;
     estimatedCo2Kg: number | null;
-    // 0-100, higher is greener
+    // Points earned: 0 for driving, one point per 0.1 miles for walking/biking
     ecoScore: number;
     // short "via" description of the main roads, when the provider supplies one
     via: string | null;

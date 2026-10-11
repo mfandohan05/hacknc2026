@@ -100,7 +100,7 @@ function RouteOptionsScreen({
                                 Start trip
                             </button>
                             <p className="text-center text-xs text-[#17334A]/75">
-                                Cost, emissions and eco score are estimates. Cost covers fuel only.
+                                Eco points are earned for walking and biking, based on distance traveled.
                             </p>
                         </>
                     )}
