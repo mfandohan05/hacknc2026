@@ -22,8 +22,6 @@ public class LeaderboardService {
     List<Profile> profiles =
         profileRepository.findAll(); // Get all because who cares about optimization ;)
 
-    // Profile.totalPoints is a stale, never-updated cache column; the point ledger
-    // (PointTransaction) is the source of truth, same as PointTransactionService.getTotalPoints.
     List<RankedProfile> ranked = profiles.stream()
         .map(p -> new RankedProfile(p, pointTransactionService.getTotalPoints(p.getId())))
         .sorted(Comparator.comparingLong(RankedProfile::totalPoints).reversed())

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import hacknc2026.backend.dto.CreateProfileRequest;
 import hacknc2026.backend.repository.ProfileRepository;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -16,12 +17,13 @@ class ProfilePersistenceTests {
   @Autowired private ProfileRepository repository;
 
   @Test
-  void storesNewUserWithGeneratedIdAndInitialValues() {
-    var response = service.createProfile(new CreateProfileRequest("alex", "Alex"));
+  void storesNewUserWithAuthenticatedUsersIdAndInitialValues() {
+    UUID userId = UUID.randomUUID();
+    var response = service.createProfile(userId, new CreateProfileRequest("alex", "Alex"));
 
-    assertNotNull(response.id());
+    assertEquals(userId, response.id());
     var saved = repository.findByUsername("alex").orElseThrow();
-    assertEquals(response.id(), saved.getId());
+    assertEquals(userId, saved.getId());
     assertEquals("Alex", saved.getDisplayName());
     assertEquals(0L, saved.getTotalPoints());
     assertEquals(1L, saved.getLevel());

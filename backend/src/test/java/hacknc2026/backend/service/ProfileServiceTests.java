@@ -16,21 +16,21 @@ import org.springframework.web.server.ResponseStatusException;
 class ProfileServiceTests {
   private final ProfileRepository repository = mock(ProfileRepository.class);
   private final ProfileService service = new ProfileService(repository);
+  private final UUID userId = UUID.randomUUID();
 
   @Test
-  void initializesProfileAndReturnsPersistedValues() {
-    UUID id = UUID.randomUUID();
+  void initializesProfileWithAuthenticatedUsersId() {
     when(repository.saveAndFlush(any(Profile.class))).thenAnswer(invocation -> {
       Profile profile = invocation.getArgument(0);
+      assertEquals(userId, profile.getId());
       assertEquals("alex", profile.getUsername());
       assertEquals("Alex", profile.getDisplayName());
       assertEquals(0L, profile.getTotalPoints());
       assertEquals(1L, profile.getLevel());
       assertEquals(LocalDate.now(), profile.getCreatedAt());
-      profile.setId(id);
       return profile;
     });
-    assertEquals(id, service.createProfile(new CreateProfileRequest(" alex ", " Alex ")).id());
+    assertEquals(userId, service.createProfile(userId, new CreateProfileRequest(" alex ", " Alex ")).id());
     verify(repository).existsByUsername("alex");
   }
 
@@ -38,7 +38,7 @@ class ProfileServiceTests {
   void rejectsDuplicateWithoutSaving() {
     when(repository.existsByUsername("alex")).thenReturn(true);
     var exception = assertThrows(ResponseStatusException.class,
-        () -> service.createProfile(new CreateProfileRequest("alex", "Alex")));
+        () -> service.createProfile(userId, new CreateProfileRequest("alex", "Alex")));
     assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
     verify(repository, never()).saveAndFlush(any());
   }
@@ -48,7 +48,7 @@ class ProfileServiceTests {
     when(repository.saveAndFlush(any(Profile.class)))
         .thenThrow(new DataIntegrityViolationException("duplicate username"));
     var exception = assertThrows(ResponseStatusException.class,
-        () -> service.createProfile(new CreateProfileRequest("alex", "Alex")));
+        () -> service.createProfile(userId, new CreateProfileRequest("alex", "Alex")));
     assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
   }
 }

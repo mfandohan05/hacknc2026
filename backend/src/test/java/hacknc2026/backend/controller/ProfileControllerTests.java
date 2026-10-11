@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import hacknc2026.backend.dto.CreateProfileRequest;
 import hacknc2026.backend.dto.ProfileResponse;
 import hacknc2026.backend.service.ProfileService;
+import java.security.Principal;
 import java.time.LocalDate;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -20,17 +21,18 @@ class ProfileControllerTests {
   private final ProfileService service = mock(ProfileService.class);
   private final MockMvc mvc =
       MockMvcBuilders.standaloneSetup(new ProfileController(service)).build();
+  private final UUID userId = UUID.randomUUID();
+  private final Principal principal = () -> userId.toString();
 
   @Test
-  void createsProfileAndReturnsItsGeneratedId() throws Exception {
-    UUID id = UUID.randomUUID();
-    when(service.createProfile(new CreateProfileRequest("alex", "Alex")))
-        .thenReturn(new ProfileResponse(id, "alex", "Alex", 0L, 1L, LocalDate.now()));
+  void createsProfileWithAuthenticatedUsersId() throws Exception {
+    when(service.createProfile(userId, new CreateProfileRequest("alex", "Alex")))
+        .thenReturn(new ProfileResponse(userId, "alex", "Alex", 0L, 1L, LocalDate.now()));
 
-    mvc.perform(post("/api/v1/profiles").contentType(MediaType.APPLICATION_JSON)
+    mvc.perform(post("/api/v1/profiles").principal(principal).contentType(MediaType.APPLICATION_JSON)
             .content("{\"username\":\"alex\",\"displayName\":\"Alex\"}"))
         .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.id").value(userId.toString()))
         .andExpect(jsonPath("$.totalPoints").value(0))
         .andExpect(jsonPath("$.leaderboardOptIn").doesNotExist())
         .andExpect(jsonPath("$.trips").doesNotExist());
@@ -43,7 +45,8 @@ class ProfileControllerTests {
         "{\"username\":\"   \",\"displayName\":\"Alex\"}",
         "{\"username\":\"alex\",\"displayName\":\"\"}",
         "{\"username\":\"" + "a".repeat(256) + "\",\"displayName\":\"Alex\"}"}) {
-      mvc.perform(post("/api/v1/profiles").contentType(MediaType.APPLICATION_JSON).content(body))
+      mvc.perform(post("/api/v1/profiles").principal(principal).contentType(MediaType.APPLICATION_JSON)
+              .content(body))
           .andExpect(status().isBadRequest());
     }
     verifyNoInteractions(service);
@@ -51,10 +54,21 @@ class ProfileControllerTests {
 
   @Test
   void returnsConflictForDuplicateUsername() throws Exception {
-    when(service.createProfile(any()))
+    when(service.createProfile(eq(userId), any()))
         .thenThrow(new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists"));
-    mvc.perform(post("/api/v1/profiles").contentType(MediaType.APPLICATION_JSON)
+    mvc.perform(post("/api/v1/profiles").principal(principal).contentType(MediaType.APPLICATION_JSON)
             .content("{\"username\":\"alex\",\"displayName\":\"Alex\"}"))
         .andExpect(status().isConflict());
+  }
+
+  @Test
+  void rejectsMissingOrInvalidIdentity() throws Exception {
+    mvc.perform(post("/api/v1/profiles").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"username\":\"alex\",\"displayName\":\"Alex\"}"))
+        .andExpect(status().isUnauthorized());
+    mvc.perform(post("/api/v1/profiles").principal(() -> "invalid").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"username\":\"alex\",\"displayName\":\"Alex\"}"))
+        .andExpect(status().isUnauthorized());
+    verifyNoInteractions(service);
   }
 }

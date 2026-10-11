@@ -15,8 +15,9 @@ import lombok.Setter;
 @NoArgsConstructor
 public class Profile {
 
+  // Not database-generated: this is always the Supabase Auth user's id (auth.users.id),
+  // assigned explicitly by ProfileService.createProfile from the authenticated principal.
   @Id
-  @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
   @Column(unique = true)
