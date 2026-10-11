@@ -42,6 +42,21 @@ export type DirectionsStep = {
     duration: number;
     bannerInstructions?: BannerInstruction[];
     voiceInstructions?: VoiceInstruction[];
+    // a second line under the instruction (public transport legs)
+    detail?: string;
+    // set on the leg that rides a bus, train or metro
+    transit?: TransitLegInfo;
+};
+
+export type TransitLegInfo = {
+    line: string | null;
+    headsign: string | null;
+    departureStop: string | null;
+    arrivalStop: string | null;
+    // ISO timestamps
+    departureTime: string | null;
+    arrivalTime: string | null;
+    agencies: string[];
 };
 
 export type DirectionsLeg = {

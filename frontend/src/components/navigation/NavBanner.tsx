@@ -1,6 +1,7 @@
 import { Loader2 } from "lucide-react";
 import ManeuverIcon from "./ManeuverIcon";
 import { formatNavDistance } from "@/lib/formatNav";
+import { stepDetail } from "@/lib/transitRoute";
 import type { BannerInstruction, DirectionsStep } from "@/types/navigation";
 
 type Props = {
@@ -24,7 +25,8 @@ function NavBanner({ step, nextStep, afterNextStep, banner, distanceToManeuver, 
     const type = banner?.primary.type ?? upcoming?.maneuver.type ?? "turn";
     const modifier = banner?.primary.modifier ?? upcoming?.maneuver.modifier;
     const instruction = banner?.primary.text ?? upcoming?.maneuver.instruction ?? "Continue";
-    const street = banner?.secondary?.text ?? nextStep?.name ?? "";
+    // public transport legs describe the line, stops and times here; roads show the street name
+    const street = banner?.secondary?.text ?? stepDetail(nextStep) ?? nextStep?.name ?? "";
 
     const showThen =
         !!afterNextStep &&
@@ -58,7 +60,7 @@ function NavBanner({ step, nextStep, afterNextStep, banner, distanceToManeuver, 
                                 {instruction}
                             </p>
                             {street && street !== instruction && (
-                                <p className="truncate text-sm text-[#17334A]/75">{street}</p>
+                                <p className="line-clamp-2 text-sm text-[#17334A]/75">{street}</p>
                             )}
                         </>
                     )}
