@@ -10,6 +10,7 @@ import RouteOptionsScreen from "@/components/routes/RouteOptionsScreen";
 import TransitScreen from "@/components/routes/TransitScreen";
 import { useTransitRoutes } from "@/hooks/useTransitRoutes";
 import type { TransitItinerary, TransitPreference } from "@/services/transitService";
+import { transitTripOption } from "@/services/transitService";
 import { getRoute } from "@/services/directionsService";
 import { itineraryToRoute } from "@/lib/transitRoute";
 import DirectionsPreviewPanel from "@/components/navigation/DirectionsPreviewPanel";
@@ -262,13 +263,7 @@ function ExplorePage() {
         }
         setTransitApproximate(built.approximate);
         setPreviewOption({
-            routeId: itinerary.id,
-            mode: "TRANSIT",
-            distanceKm: itinerary.distanceMeters / 1000,
-            durationMinutes: itinerary.durationSeconds / 60,
-            estimatedCost: itinerary.currency === "USD" ? itinerary.fare : null,
-            estimatedCo2Kg: null,
-            ecoScore: 0,
+            ...transitTripOption(itinerary),
             geometry: built.route.geometry.coordinates,
         });
         nav.previewTransit(built.route, destinationPoint);
@@ -493,6 +488,8 @@ function ExplorePage() {
 
             {!navActive && optionsOpen && destination && (
                 <RouteOptionsScreen
+                    origin={origin}
+                    destination={destinationPoint}
                     originLabel={originPlace?.name ?? "Your location"}
                     destinationName={destination.name}
                     routes={optionRoutes ?? routes}

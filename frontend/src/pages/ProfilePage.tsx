@@ -26,7 +26,8 @@ function earnedPointsLabel(trip: TripResponse) {
     if (trip.status !== "COMPLETED") return "No points earned yet";
     const points = trip.mode === "WALKING" ? trip.points?.walking
         : trip.mode === "CYCLING" ? trip.points?.cycling
-        : trip.mode === "DRIVING" ? trip.points?.driving : null;
+        : trip.mode === "DRIVING" ? trip.points?.driving
+        : trip.mode === "TRANSIT" ? trip.points?.transit : null;
     return points == null ? "EcoPoints unavailable" : `+${points.toLocaleString()} EcoPoints`;
 }
 

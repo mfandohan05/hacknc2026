@@ -8,6 +8,7 @@ function clock(value: string | null) {
 
 type Props = {
     itinerary: TransitItinerary;
+    tripPoints?: number;
     // opens the full itinerary
     onSelect: () => void;
     // starts turn-by-turn navigation along this itinerary
@@ -15,7 +16,7 @@ type Props = {
 };
 
 // A public transport itinerary summarised like the walk / bike / drive cards.
-function TransitCard({ itinerary, onSelect, onNavigate }: Props) {
+function TransitCard({ itinerary, tripPoints, onSelect, onNavigate }: Props) {
     const rides = itinerary.steps.filter((s) => s.mode === "TRANSIT");
     const lines = [...new Set(rides.map((s) => s.line).filter((l): l is string => !!l))];
     const leaves = clock(rides[0]?.departureTime ?? null);
@@ -50,6 +51,7 @@ function TransitCard({ itinerary, onSelect, onNavigate }: Props) {
                     ))}
                     <span className="vista-field ml-auto px-2 py-1 font-semibold">{fare}</span>
                 </div>
+                <p className="mt-3 text-xs">Eco points <span className="font-semibold">{tripPoints === undefined ? "—" : String(tripPoints)}</span></p>
             </button>
 
 

@@ -1,5 +1,5 @@
 import { apiJson } from "@/services/api";
-import type { LngLat } from "@/types/route";
+import type { LngLat, RouteOption } from "@/types/route";
 
 export type TransitPreference = "ALL" | "BUS" | "SUBWAY" | "TRAIN";
 export type TransitStep = {
@@ -27,6 +27,19 @@ export type TransitItinerary = {
     steps: TransitStep[];
 };
 export type TransitResponse = { routes: TransitItinerary[]; attribution: string };
+
+export function transitTripOption(itinerary: TransitItinerary): RouteOption {
+    return {
+        routeId: itinerary.id,
+        mode: "TRANSIT",
+        distanceKm: itinerary.distanceMeters / 1000,
+        durationMinutes: itinerary.durationSeconds / 60,
+        estimatedCost: itinerary.currency === "USD" ? itinerary.fare : null,
+        estimatedCo2Kg: null,
+        ecoScore: 0,
+        geometry: [],
+    };
+}
 
 export function getTransitRoutes(origin: LngLat, destination: LngLat,
     preference: TransitPreference, departureTime: string | undefined, signal?: AbortSignal) {
