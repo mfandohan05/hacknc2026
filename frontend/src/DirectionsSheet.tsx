@@ -25,6 +25,8 @@ type Props = {
     destinationLabel: string | null;
     onEditRoute: () => void;
     onViewRoutes: () => void;
+    // the search screen is open, so the summary row hands its transition name over to that screen's header
+    editing?: boolean;
     preview?: ReactNode;
 };
 
@@ -36,6 +38,7 @@ export default function DirectionsSheet({
     destinationLabel,
     onEditRoute,
     onViewRoutes,
+    editing = false,
     preview,
 }: Props) {
     const sheetHeight = Math.min(
@@ -106,6 +109,7 @@ export default function DirectionsSheet({
                 <button
                     type="button"
                     onClick={onEditRoute}
+                    style={{ viewTransitionName: editing ? "none" : "route-summary" }}
                     className="aero-input flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-left text-[#17334A]"
                 >
                     <Navigation className="size-5 shrink-0 text-[#208A5D]" />

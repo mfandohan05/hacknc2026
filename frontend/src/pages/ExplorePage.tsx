@@ -18,6 +18,7 @@ import { useNavigationCamera } from "@/hooks/useNavigationCamera";
 import { useRouteComparison } from "@/hooks/useRouteComparison";
 import { useAuth } from "@/hooks/useAuth";
 import { useWakeLock } from "@/hooks/useWakeLock";
+import { runViewTransition } from "@/lib/viewTransition";
 import { loadLastLocation, saveLastLocation } from "@/lib/locationStorage";
 import { DEFAULT_WEIGHTS, recommendedRouteId } from "@/lib/routeScoring";
 import type { PreferenceWeights } from "@/lib/routeScoring";
@@ -121,14 +122,17 @@ function ExplorePage() {
     };
 
     const handleScreenDone = (result: DirectionsResult) => {
-        setOriginPlace(result.origin);
-        setDestination(result.destination);
+        // the header morphs back into the drawer's summary row
+        runViewTransition(() => {
+            setOriginPlace(result.origin);
+            setDestination(result.destination);
+            setScreenMode(result.mode);
+            setSelectedMode(TAB_TO_ROUTE_MODE[result.mode] ?? null);
+            setScreenOpen(false);
+            setSheetOpen(false);
+        });
         if (result.destination) mapRef.current?.showPlace(result.destination);
         else mapRef.current?.clearPlace();
-        setScreenMode(result.mode);
-        setSelectedMode(TAB_TO_ROUTE_MODE[result.mode] ?? null);
-        setScreenOpen(false);
-        setSheetOpen(false);
     };
 
     const handleStartTrip = async (route: RouteOption) => {
@@ -208,7 +212,8 @@ function ExplorePage() {
                     onOpenChange={setSheetOpen}
                     originLabel={originPlace?.name ?? "Your location"}
                     destinationLabel={destination?.name ?? null}
-                    onEditRoute={() => setScreenOpen(true)}
+                    onEditRoute={() => runViewTransition(() => setScreenOpen(true))}
+                    editing={screenOpen}
                     onViewRoutes={() => setOptionsOpen(true)}
                     preview={
                         showPreview && nav.route ? (
