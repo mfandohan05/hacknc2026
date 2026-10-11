@@ -24,12 +24,14 @@ async function provisionProfile(session: Session): Promise<void> {
     }
 
     const name = session.user.user_metadata?.full_name;
+    const username = session.user.user_metadata?.username;
     const created = await fetch("/api/v1/profiles", {
         method: "POST",
         headers,
         body: JSON.stringify({
-            // Stable, unique default without exposing an email on the leaderboard.
-            username: `user_${session.user.id.replaceAll("-", "")}`,
+            // Keep a fallback for older accounts created without signup metadata.
+            username: typeof username === "string" && username.trim()
+                ? username.trim() : `user_${session.user.id.replaceAll("-", "")}`,
             displayName: typeof name === "string" && name.trim()
                 ? name.trim().slice(0, 100) : "Explorer",
         }),

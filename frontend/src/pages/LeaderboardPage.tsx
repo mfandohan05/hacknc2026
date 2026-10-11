@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Crown, Medal, RefreshCw, Trophy } from "lucide-react";
+import { apiJson } from "@/services/api";
 
 type LeaderboardEntry = {
     id: string;
@@ -15,8 +16,6 @@ type LeaderboardApiEntry = {
     rank: number;
 };
 
-const LEADERBOARD_URL = "https://elf-extras-paternity.ngrok-free.dev/api/v1/leaderboards";
-
 const rankStyles = [
     "bg-amber-100 text-amber-700",
     "bg-slate-200 text-slate-700",
@@ -29,17 +28,9 @@ function LeaderboardPage() {
     const [error, setError] = useState<string | null>(null);
 
     const loadLeaderboard = useCallback(async (signal?: AbortSignal) => {
-        setLoading(true);
-        setError(null);
-
         try {
-            const response = await fetch(LEADERBOARD_URL, { signal });
-
-            if (!response.ok) {
-                throw new Error(`Leaderboard request failed (${response.status})`);
-            }
-
-            const data: unknown = await response.json();
+            const data = await apiJson<unknown>("/api/v1/leaderboards", { signal });
+            if (signal?.aborted) return;
             const entries = Array.isArray(data)
                 ? data
                 : (data as { leaderboard?: unknown }).leaderboard;
@@ -59,6 +50,7 @@ function LeaderboardPage() {
                 })),
             );
         } catch (requestError) {
+            if (signal?.aborted) return;
             if (requestError instanceof DOMException && requestError.name === "AbortError") return;
             setError(requestError instanceof Error ? requestError.message : "Unable to load leaderboard.");
         } finally {
@@ -113,7 +105,11 @@ function LeaderboardPage() {
                                 <p>{error}</p>
                                 <button
                                     type="button"
-                                    onClick={() => void loadLeaderboard()}
+                                    onClick={() => {
+                                        setLoading(true);
+                                        setError(null);
+                                        void loadLeaderboard();
+                                    }}
                                     className="aero-orb inline-flex items-center gap-2 rounded-full px-4 py-2 font-medium text-[#17334A]"
                                 >
                                     <RefreshCw className="size-4" />

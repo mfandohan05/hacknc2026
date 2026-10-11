@@ -12,8 +12,14 @@ export async function signIn(email: string, password: string): Promise<Session> 
     return data.session;
 }
 
-export async function signUp(email: string, password: string): Promise<SignUpResult> {
-    const { data, error } = await supabase.auth.signUp({ email, password });
+export async function signUp(email: string, password: string, username: string, fullName: string): Promise<SignUpResult> {
+    const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+            data: { username: username.trim(), full_name: fullName.trim() },
+        },
+    });
     if (error) throw new Error(error.message);
     return { signedIn: data.session !== null };
 }

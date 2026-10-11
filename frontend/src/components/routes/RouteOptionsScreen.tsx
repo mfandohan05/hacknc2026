@@ -1,4 +1,4 @@
-import { ArrowLeft, Leaf } from "lucide-react";
+import { ArrowLeft, Leaf, Bus } from "lucide-react";
 import RouteComparison from "./RouteComparison";
 import PreferenceSliders from "./PreferenceSliders";
 import type { PreferenceWeights } from "@/lib/routeScoring";
@@ -17,6 +17,7 @@ type Props = {
     onSelectRoute: (routeId: string) => void;
     onStartTrip: (route: RouteOption) => void;
     onBack: () => void;
+    onTransit: () => void;
 };
 
 function RouteOptionsScreen({
@@ -32,6 +33,7 @@ function RouteOptionsScreen({
     onSelectRoute,
     onStartTrip,
     onBack,
+    onTransit,
 }: Props) {
     const selectedRoute = routes.find((r) => r.routeId === selectedRouteId) ?? null;
 
@@ -63,6 +65,10 @@ function RouteOptionsScreen({
                     <h1 className="px-1 text-xl font-semibold drop-shadow-[0_1px_0_rgba(255,255,255,0.9)]">
                         How do you want to go?
                     </h1>
+
+                    <button type="button" onClick={onTransit} className="aero-gel flex items-center justify-center gap-2 rounded-2xl p-4 font-semibold">
+                        <Bus size={20} /> Public transport · Google Maps
+                    </button>
 
                     {loading && (
                         <div className="flex flex-col gap-3" aria-busy="true" aria-label="Loading routes">

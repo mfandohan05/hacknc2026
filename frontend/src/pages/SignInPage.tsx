@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { AlertTriangle, CheckCircle2, Eye, EyeOff, Leaf, Loader2, Lock, Mail } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Eye, EyeOff, Leaf, Loader2, Lock, Mail, User } from "lucide-react";
 import AeroWindow from "@/components/layout/AeroWindow";
 import { useAuth } from "@/hooks/useAuth";
 import { signIn, signUp } from "@/services/authService";
@@ -10,7 +10,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Supabase's default minimum password length
 const MIN_PASSWORD_LENGTH = 6;
 
-type FieldErrors = { email?: string; password?: string };
+type FieldErrors = { email?: string; password?: string; username?: string; fullName?: string };
 
 function SignInPage() {
     const navigate = useNavigate();
@@ -21,6 +21,8 @@ function SignInPage() {
     const destination = (location.state as { from?: string } | null)?.from ?? "/explore";
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [username, setUsername] = useState("");
+    const [fullName, setFullName] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState<FieldErrors>({});
     const [formError, setFormError] = useState<string | null>(null);
@@ -28,6 +30,12 @@ function SignInPage() {
 
     const validate = (): FieldErrors => {
         const next: FieldErrors = {};
+        if (mode === "signup") {
+            if (!username.trim()) next.username = "Enter a username.";
+            else if (username.trim().length > 50) next.username = "Use 50 characters or fewer.";
+            if (!fullName.trim()) next.fullName = "Enter your full name.";
+            else if (fullName.trim().length > 100) next.fullName = "Use 100 characters or fewer.";
+        }
         if (!EMAIL_PATTERN.test(email.trim())) next.email = "Enter a valid email address.";
         if (password.length === 0) next.password = "Enter your password.";
         else if (mode === "signup" && password.length < MIN_PASSWORD_LENGTH) {
@@ -47,7 +55,7 @@ function SignInPage() {
         setSubmitting(true);
         try {
             if (mode === "signup") {
-                const result = await signUp(email.trim(), password);
+                const result = await signUp(email.trim(), password, username, fullName);
                 if (result.signedIn) navigate(destination, { replace: true });
                 else setNotice("Check your email to confirm your account, then sign in.");
             } else {
@@ -99,6 +107,41 @@ function SignInPage() {
                             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[#c93a30]" aria-hidden="true" />
                             {formError}
                         </div>
+                    )}
+
+                    {signingUp && (
+                        <>
+                            <Field label="Username" error={errors.username} htmlFor="signup-username">
+                                <User className="size-5 shrink-0 text-[#17334A]/60" aria-hidden="true" />
+                                <input
+                                    id="signup-username"
+                                    type="text"
+                                    autoComplete="username"
+                                    maxLength={50}
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    aria-invalid={!!errors.username}
+                                    aria-describedby={errors.username ? "signup-username-error" : undefined}
+                                    placeholder="Your username"
+                                    className="min-w-0 flex-1 bg-transparent text-base text-[#17334A] outline-none placeholder:text-[#17334A]/45"
+                                />
+                            </Field>
+                            <Field label="Full name" error={errors.fullName} htmlFor="signup-full-name">
+                                <User className="size-5 shrink-0 text-[#17334A]/60" aria-hidden="true" />
+                                <input
+                                    id="signup-full-name"
+                                    type="text"
+                                    autoComplete="name"
+                                    maxLength={100}
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                    aria-invalid={!!errors.fullName}
+                                    aria-describedby={errors.fullName ? "signup-full-name-error" : undefined}
+                                    placeholder="Your full name"
+                                    className="min-w-0 flex-1 bg-transparent text-base text-[#17334A] outline-none placeholder:text-[#17334A]/45"
+                                />
+                            </Field>
+                        </>
                     )}
 
                     <Field label="Email" error={errors.email} htmlFor="signin-email">
