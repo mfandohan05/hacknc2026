@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Leaf, LogOut, MapPin, Route, User } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ProfileCosmetic from "@/components/rewards/ProfileCosmetic";
 import AeroWindow from "@/components/layout/AeroWindow";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistance } from "@/lib/formatRoute";
@@ -62,12 +62,7 @@ function ProfilePage() {
                 <AeroWindow title="Profile" Icon={User} as="h1" bodyClassName="p-5">
                     <div className="flex items-center gap-4">
                         <div className="aero-gel flex size-16 shrink-0 items-center justify-center rounded-full">
-                            <Avatar>
-                                <AvatarImage src="../image_assets/dsuiext_4099.ico" alt="Profile" />
-                                <AvatarFallback className="bg-transparent">
-                                    <User className="size-8 text-[#17334A]" />
-                                </AvatarFallback>
-                            </Avatar>
+                            {user && <ProfileCosmetic key={user.id} userId={user.id} />}
                         </div>
                         <div className="min-w-0 flex-1">
                             <p className="truncate text-2xl font-semibold">{name}</p>

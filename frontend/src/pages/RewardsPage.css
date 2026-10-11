@@ -1,0 +1,48 @@
+.rewards-page {
+  isolation: isolate;
+  background: linear-gradient(180deg, #70c6ef 0, #c2edff 400px, #c5f0e9 900px, #98d7e4 100%);
+  color: #173e54;
+}
+.rewards-scenery { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: -1; }
+.rewards-sun { position: absolute; top: -150px; right: -100px; width: 650px; height: 650px; border-radius: 50%; background: radial-gradient(circle, #fffde4 0, #ffffffb0 15%, #ffffff30 40%, transparent 68%); }
+.rewards-cloud { position: absolute; width: 450px; height: 100px; border-radius: 50%; background: radial-gradient(ellipse, #fffffff0, #ffffff80 40%, transparent 70%); filter: blur(12px); }
+.rewards-cloud-one { top: 130px; left: -120px; transform: rotate(-8deg); }
+.rewards-cloud-two { top: 300px; right: -160px; }
+.rewards-hill { position: absolute; top: 570px; left: -30%; width: 160%; height: 550px; border-radius: 50%; transform: rotate(-9deg); background: linear-gradient(175deg, #b9e66c80, #68cb8e35 40%, transparent 70%); border-top: 2px solid #e3ffbb80; }
+.rewards-water { position: absolute; top: 710px; left: -30%; width: 170%; height: 450px; border-radius: 50%; transform: rotate(12deg); background: linear-gradient(170deg, #ffffff90, #67d3e34d 8%, transparent 60%); border-top: 1px solid white; }
+.rewards-bubble-one { width: 100px; height: 100px; right: 3%; top: 410px; }
+.rewards-bubble-two { width: 48px; height: 48px; left: 3%; top: 200px; }
+.rewards-bubble-three { width: 72px; height: 72px; left: 7%; top: 1100px; }
+.rewards-page .aero-window { border: 1px solid #ffffffed; border-radius: 18px; background: linear-gradient(135deg, #ffffffb8, #effaff88 50%, #c5eeff9e); box-shadow: inset 0 1px 0 white, 0 12px 30px #12658022, 0 2px 4px #1265801a; backdrop-filter: blur(18px); }
+.rewards-page .aero-titlebar { border-radius: 17px 17px 0 0; border-bottom: 1px solid #85c5d6; background: linear-gradient(#f3fcffe6, #d5f1ffb3 48%, #9bd1e6b3 49%, #cceeffd9); color: #21516b; text-shadow: 0 1px 1px white; }
+.rewards-page .rewards-hero { background: radial-gradient(ellipse at 95% 15%, #fff 0, transparent 55%), linear-gradient(140deg, #eafcffd9, #c3f3fac9 45%, #d5f7c9c9); }
+.rewards-balance { display: flex; align-items: center; gap: 28px; padding: 28px 8px; }
+.rewards-orbit { position: relative; display: grid; place-items: center; width: 132px; height: 132px; flex-shrink: 0; border: 1px solid #fff; border-radius: 50%; background: radial-gradient(circle at 35% 20%, #fff, #ddfff570 55%, #53cba74d); box-shadow: inset 0 0 20px #fff, 0 8px 22px #278a8833; }
+.rewards-orbit::before { content: ''; position: absolute; inset: -8px; border: 1px solid #ffffffc9; border-radius: 50%; }
+.rewards-orbit::after { content: ''; position: absolute; width: 17px; height: 17px; right: 7px; top: 0; border-radius: 50%; background: radial-gradient(circle at 30% 25%, white, #a6eef5 40%, #268caa); box-shadow: 0 1px 4px #166a8066; }
+.rewards-level { display: inline-block; border-radius: 20px; border: 1px solid #fff; padding: 4px 12px; background: linear-gradient(#fff, #d4f5d1 50%, #abe7aa 51%, #e5ffe0); box-shadow: 0 2px 4px #236f3726; font-size: 11px; font-weight: 800; letter-spacing: .12em; color: #216339; }
+.rewards-points { font-size: clamp(2.5rem, 7vw, 4.5rem); font-weight: 750; line-height: 1.2; letter-spacing: -.045em; color: #136780; text-shadow: 0 2px 0 white, 0 5px 15px #43adb233; overflow-wrap: anywhere; }
+.rewards-progress { display: block; appearance: none; width: 100%; height: 9px; border: 1px solid #85afb5; border-radius: 20px; overflow: hidden; background: #c3dce4; box-shadow: inset 0 2px 4px #22566930, 0 1px 0 white; }
+.rewards-progress-large { height: 18px; }
+.rewards-progress::-webkit-progress-bar { background: linear-gradient(#a9cbd4, #e0f2f6); border-radius: 20px; }
+.rewards-progress::-webkit-progress-value { border-radius: 20px; background: linear-gradient(#d5ffac, #8ed75f 45%, #42ab42 49%, #70d456 80%, #baff93); box-shadow: inset 0 1px 2px #fff; }
+.rewards-progress::-moz-progress-bar { border-radius: 20px; background: linear-gradient(#d5ffac, #8ed75f 45%, #42ab42 49%, #70d456 80%, #baff93); }
+.rewards-achievement { padding: 16px; border: 1px solid #fffffff0; border-radius: 13px; background: linear-gradient(150deg, #fff9, #dff5fc80); box-shadow: inset 0 1px 0 #fff, 0 3px 8px #407b8d14; }
+.rewards-achievement.is-unlocked { background: linear-gradient(145deg, #faffebef, #e6f7c8a6 55%, #c7eddca6); border-color: #afcf87; }
+.rewards-medallion { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; border: 1px solid white; color: #517585; background: linear-gradient(#fff, #e3f3f8 45%, #b6d2df 50%, #e7f4f7); box-shadow: inset 0 0 0 3px #ffffff70, 0 2px 4px #18495d25; }
+.is-unlocked .rewards-medallion { color: #886110; background: linear-gradient(#fffce0, #ffdf6d 45%, #e9b635 50%, #fff0a4); }
+.rewards-cosmetic { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; border: 1px solid #fff; border-radius: 14px; padding: 18px 12px 14px; text-align: center; background: linear-gradient(#ffffffb3, #e1f4f899); box-shadow: inset 0 1px 0 white, 0 4px 12px #29778919; }
+.rewards-cosmetic.is-equipped { border-color: #71bca8; background: linear-gradient(#f8fff6, #d4f6caa6); box-shadow: inset 0 0 0 2px #fff9, 0 4px 12px #268c6326; }
+.rewards-cosmetic.is-locked .rewards-badge-plinth { filter: saturate(.4); }
+.rewards-badge-plinth { position: relative; padding-bottom: 9px; }
+.rewards-badge-plinth::after { content: ''; position: absolute; bottom: 0; left: -7px; right: -7px; height: 15px; border: 1px solid #ffffffb3; border-radius: 50%; background: radial-gradient(ellipse, #548f9c40, #ffffff80 65%); z-index: -1; }
+.rewards-ledger { border: 1px solid #ffffffd9; border-radius: 12px; overflow: hidden; box-shadow: inset 0 1px 3px #477d8719; }
+.rewards-ledger-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px; background: #f7fdffb3; border-bottom: 1px solid #badce066; }
+.rewards-ledger-row:nth-child(even) { background: #dff3f980; }
+.rewards-ledger-row:last-child { border-bottom: 0; }
+.rewards-page button:focus-visible, .rewards-page a:focus-visible { outline: 3px solid #087499; outline-offset: 4px; }
+@media (max-width: 480px) {
+  .rewards-balance { gap: 18px; padding: 24px 0; }
+  .rewards-balance .rewards-orbit { width: 94px; height: 94px; }
+  .rewards-page .aero-caption { display: none; }
+}
