@@ -22,6 +22,8 @@ export type NavSession = {
     muted: boolean;
     // the server-side trip, when one was started
     tripId: string | null;
+    // a public transport trip: followed along its own path and never rerouted
+    transit?: boolean;
 };
 
 type Stored = NavSession & { v: number; savedAt: number };

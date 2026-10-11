@@ -16,8 +16,7 @@ type Props = {
 function ArrivedCard({ distanceMeters, durationSeconds, isDemo, onComplete, busy = false, error = null, receipt = null }: Props) {
     return (
         <div
-            className="absolute inset-x-0 bottom-0 z-50 px-3 md:inset-x-auto md:bottom-4 md:left-4 md:w-[27rem]"
-            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)" }}
+            className="absolute inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-50 px-3 pb-3 md:inset-x-auto md:bottom-4 md:left-4 md:w-[27rem] md:pb-0"
         >
             <div
                 role="status"

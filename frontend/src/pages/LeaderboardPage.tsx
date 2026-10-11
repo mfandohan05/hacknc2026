@@ -12,7 +12,8 @@ type LeaderboardEntry = {
 
 type LeaderboardApiEntry = {
     profileId: string;
-    displayName: string;
+    username?: string;
+    displayName?: string;
     totalPoints: number;
     rank: number;
 };
@@ -41,14 +42,14 @@ function LeaderboardPage() {
                 const entries = Array.isArray(data) ? data : (data as { leaderboard?: unknown }).leaderboard;
                 if (!Array.isArray(entries)) throw new Error("The leaderboard response was not a list.");
 
-                // Map the API field names to the fields used by the UI. The API already
-                // returns this list sorted, so keep its order unchanged.
+                // Prefer the API username. Keep displayName as a fallback for older responses.
+                // The API already returns this list sorted, so keep its order unchanged.
                 setLeaderboard(
-                    (entries as LeaderboardApiEntry[]).map(({ profileId, displayName, totalPoints, rank }) => ({
-                        id: profileId,
-                        username: displayName,
-                        points: totalPoints,
-                        rank,
+                    (entries as LeaderboardApiEntry[]).map((entry) => ({
+                        id: entry.profileId,
+                        username: entry.username ?? entry.displayName ?? "Unknown user",
+                        points: entry.totalPoints,
+                        rank: entry.rank,
                     })),
                 );
             })
@@ -70,7 +71,6 @@ function LeaderboardPage() {
         setReloadKey((key) => key + 1);
     };
 
-    // Explorer details-view columns
     const columns = "grid-cols-[4rem_minmax(0,1fr)_7rem]";
     const columnHeader =
         "border-r border-[#d5dfe8] bg-gradient-to-b from-white via-[#f2f6fa] to-[#e1e9f0] px-3 py-1.5 text-xs font-normal text-[#1e395b] last:border-r-0";

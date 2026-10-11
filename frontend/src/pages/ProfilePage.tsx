@@ -58,7 +58,7 @@ function ProfilePage() {
     }, [user?.id]);
 
     const email = user?.email ?? "";
-    const name = (user?.user_metadata?.full_name as string | undefined) ?? email.split("@")[0] ?? "Explorer";
+    const username = (user?.user_metadata?.username as string | undefined)?.trim() || email.split("@")[0] || "Explorer";
 
     const list: TripResponse[] = trips.status === "ready" ? trips.page.content : [];
     const completed = list.filter((t) => t.status === "COMPLETED");
@@ -77,7 +77,7 @@ function ProfilePage() {
                             {user && <ProfileCosmetic key={user.id} userId={user.id} />}
                         </div>
                         <div className="min-w-0 flex-1">
-                            <p className="truncate text-2xl font-semibold">{name}</p>
+                            <p className="truncate text-2xl font-semibold">{username}</p>
                             {email && <p className="truncate text-sm text-[#17334A]/75">{email}</p>}
                         </div>
                         <button
