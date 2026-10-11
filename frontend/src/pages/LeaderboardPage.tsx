@@ -2,13 +2,20 @@ import { useCallback, useEffect, useState } from "react";
 import { Crown, Medal, RefreshCw, Trophy } from "lucide-react";
 
 type LeaderboardEntry = {
-    id: string | number;
+    id: string;
     username: string;
     points: number;
     rank: number;
 };
 
-const LEADERBOARD_URL = "https://elf-extras-paternity.ngrok-free.dev/api/v1/leaderboard";
+type LeaderboardApiEntry = {
+    profileId: string;
+    displayName: string;
+    totalPoints: number;
+    rank: number;
+};
+
+const LEADERBOARD_URL = "/api/v1/leaderboards";
 
 const rankStyles = [
     "bg-amber-100 text-amber-700",
@@ -41,8 +48,16 @@ function LeaderboardPage() {
                 throw new Error("The leaderboard response was not a list.");
             }
 
-            // The API already returns this list sorted, so keep its order unchanged.
-            setLeaderboard(entries as LeaderboardEntry[]);
+            // Map the API field names to the fields used by the UI. The API already
+            // returns this list sorted, so keep its order unchanged.
+            setLeaderboard(
+                (entries as LeaderboardApiEntry[]).map(({ profileId, displayName, totalPoints, rank }) => ({
+                    id: profileId,
+                    username: displayName,
+                    points: totalPoints,
+                    rank,
+                })),
+            );
         } catch (requestError) {
             if (requestError instanceof DOMException && requestError.name === "AbortError") return;
             setError(requestError instanceof Error ? requestError.message : "Unable to load leaderboard.");
@@ -115,7 +130,7 @@ function LeaderboardPage() {
                                         className="grid grid-cols-[3rem_1fr_auto] items-center gap-3 rounded-xl px-2 py-3 text-[#17334A] transition-colors hover:bg-white/50"
                                     >
                                         <span
-                                            className={`flex size-8 items-center justify-center rounded-full text-sm font-bold ${rankStyles[index] ?? "bg-white/70 text-[#17334A]/70"}`}
+                                        className={`flex size-8 items-center justify-center rounded-full text-sm font-bold ${rankStyles[rank - 1] ?? "bg-white/70 text-[#17334A]/70"}`}
                                         >
                                             {rank <= 3 ? (
                                                 rank === 1 ? <Crown className="size-4" /> : <Medal className="size-4" />
