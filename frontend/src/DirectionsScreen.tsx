@@ -54,7 +54,7 @@ export default function DirectionsScreen({ initialMode = "drive", origin: initia
     };
 
     return (
-        <div className="aero-overlay-in fixed inset-0 z-[60] flex flex-col overflow-hidden md:inset-auto md:bottom-4 md:left-4 md:top-4 md:w-[400px] md:rounded-3xl md:border md:border-[#0c263c]/55 md:shadow-2xl">
+        <div className="aero-overlay-in fixed inset-0 z-[60] flex flex-col overflow-hidden md:absolute md:inset-auto md:bottom-4 md:left-4 md:top-4 md:w-[400px] md:rounded-3xl md:border md:border-[#0c263c]/55 md:shadow-2xl">
             <div aria-hidden className="aero-bg pointer-events-none absolute inset-0 overflow-hidden">
                 <span className="aero-bubble -right-8 top-56 size-32" />
                 <span className="aero-bubble left-6 top-80 size-14" />

@@ -16,4 +16,7 @@ public interface PointTransactionRepository extends JpaRepository<PointTransacti
 
   @Query("SELECT COALESCE(SUM(p.points), 0) FROM PointTransaction p WHERE p.user.id = :userId")
   long totalPointsForUser(@Param("userId") UUID userId);
+
+  @Query("SELECT COALESCE(SUM(p.points), 0) FROM PointTransaction p WHERE p.user.id = :userId AND p.points > 0")
+  long earnedPointsForUser(@Param("userId") UUID userId);
 }

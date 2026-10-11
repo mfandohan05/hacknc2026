@@ -14,6 +14,8 @@ import {
     routeBearingAt,
 } from "@/lib/navigationMath";
 import type { RouteInfo } from "@/lib/navigationMath";
+import { clearNavSession } from "@/lib/navSession";
+import type { NavSession } from "@/lib/navSession";
 import { cancelSpeech, speak, unlockSpeech } from "@/lib/speech";
 import type { BannerInstruction, DirectionsRoute, DirectionsStep, NavPosition, NavProfile } from "@/types/navigation";
 import type { LngLat } from "@/types/route";
@@ -49,6 +51,10 @@ export type NavigationState = {
     rerouting: boolean;
     rerouteError: string | null;
     isDemo: boolean;
+    // where the trip is heading, kept so a trip can be restored after a refresh
+    destination: LngLat | null;
+    // meters travelled along the route by the demo simulator
+    demoDistance: number;
     demoSpeed: DemoSpeed;
     muted: boolean;
     // navigating on real GPS before the first fix
@@ -73,6 +79,8 @@ const INITIAL: NavigationState = {
     rerouting: false,
     rerouteError: null,
     isDemo: false,
+    destination: null,
+    demoDistance: 0,
     demoSpeed: 1,
     muted: false,
     waitingForLocation: false,
@@ -102,11 +110,8 @@ function messageOf(e: unknown): string {
     return e instanceof Error ? e.message : "Something went wrong.";
 }
 
-// Navigation state machine: idle -> previewing -> navigating -> arrived.
-// Mutable bookkeeping lives in a ref so position handlers (GPS events, demo timer) never read stale state.
-export function useNavigation() {
-    const [view, setView] = useState<NavigationState>(INITIAL);
-    const core = useRef<Core>({
+function emptyCore(): Core {
+    return {
         phase: "idle",
         profile: "driving",
         route: null,
@@ -123,7 +128,68 @@ export function useNavigation() {
         rerouting: false,
         lastRerouteAt: 0,
         controller: null,
-    });
+    };
+}
+
+// Rebuilds the mutable bookkeeping for a trip that was in progress before a refresh.
+function coreFromSession(session: NavSession): Core {
+    const info = buildRouteInfo(session.route);
+    return {
+        ...emptyCore(),
+        phase: session.phase,
+        profile: session.profile,
+        route: session.route,
+        info,
+        destination: session.destination,
+        stepIndex: Math.min(Math.max(0, session.stepIndex), Math.max(0, info.steps.length - 1)),
+        isDemo: session.isDemo,
+        demoDistance: session.demoDistance,
+        muted: session.muted,
+        lastPosition: session.lastPosition
+            ? { lng: session.lastPosition.lng, lat: session.lastPosition.lat, heading: session.lastPosition.bearing }
+            : null,
+    };
+}
+
+function viewFromCore(core: Core): NavigationState {
+    const info = core.info;
+    if (!info || !core.route || core.phase === "idle") return INITIAL;
+
+    const arrived = core.phase === "arrived";
+    const located = core.lastPosition ? locate(info, [core.lastPosition.lng, core.lastPosition.lat]) : null;
+    const p = arrived
+        ? { distanceToManeuver: 0, remainingDistance: 0, remainingDuration: 0, fraction: 1 }
+        : progressAt(info, core.stepIndex, located?.along ?? 0);
+
+    return {
+        ...INITIAL,
+        phase: core.phase,
+        profile: core.profile,
+        route: core.route,
+        steps: info.steps,
+        stepIndex: core.stepIndex,
+        position: core.lastPosition
+            ? { lng: core.lastPosition.lng, lat: core.lastPosition.lat, bearing: core.lastPosition.heading ?? 0 }
+            : null,
+        distanceToManeuver: p.distanceToManeuver,
+        remainingDistance: p.remainingDistance,
+        remainingDuration: p.remainingDuration,
+        progress: p.fraction,
+        isDemo: core.isDemo,
+        destination: core.destination,
+        demoDistance: core.demoDistance,
+        muted: core.muted,
+        waitingForLocation: core.phase === "navigating" && !core.isDemo && !core.lastPosition,
+    };
+}
+
+// Navigation state machine: idle -> previewing -> navigating -> arrived.
+// Mutable bookkeeping lives in a ref so position handlers (GPS events, demo timer) never read stale state.
+// Pass a saved session to resume a trip that was in progress before a page refresh.
+export function useNavigation(initialSession: NavSession | null = null) {
+    const [initialCore] = useState(() => (initialSession ? coreFromSession(initialSession) : emptyCore()));
+    const [view, setView] = useState<NavigationState>(() => viewFromCore(initialCore));
+    const core = useRef<Core>(initialCore);
 
     const patch = useCallback((p: Partial<NavigationState>) => setView((v) => ({ ...v, ...p })), []);
 
@@ -198,6 +264,7 @@ export function useNavigation() {
                     progress: 1,
                     offRoute: false,
                     waitingForLocation: false,
+                    demoDistance: c.demoDistance,
                 });
                 return;
             }
@@ -234,6 +301,7 @@ export function useNavigation() {
                 remainingDuration: p.remainingDuration,
                 progress: p.fraction,
                 offRoute,
+                demoDistance: c.demoDistance,
                 waitingForLocation: false,
                 locationTimedOut: false,
             });
@@ -250,7 +318,8 @@ export function useNavigation() {
             c.phase = "idle";
             c.profile = profile;
             c.destination = to;
-            patch({ ...INITIAL, muted: c.muted, loading: true, profile });
+            clearNavSession();
+            patch({ ...INITIAL, muted: c.muted, loading: true, profile, destination: to });
             try {
                 const route = await getRoute(profile, from, to, controller.signal);
                 const info = applyRoute(route);
@@ -260,6 +329,7 @@ export function useNavigation() {
                     ...INITIAL,
                     muted: c.muted,
                     profile,
+                    destination: to,
                     phase: "previewing",
                     route,
                     steps: info.steps,
@@ -328,6 +398,8 @@ export function useNavigation() {
         c.offCount = 0;
         c.spoken = new Set();
         cancelSpeech();
+        // ending or completing a trip means it must not come back after a refresh
+        clearNavSession();
         setView({ ...INITIAL, muted: c.muted });
     }, []);
 

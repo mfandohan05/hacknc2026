@@ -1,6 +1,8 @@
-import { ArrowLeft, Leaf, Bus } from "lucide-react";
+import { ArrowLeft, Bus, ChevronRight, Leaf } from "lucide-react";
 import RouteComparison from "./RouteComparison";
 import PreferenceSliders from "./PreferenceSliders";
+import TransitCard from "./TransitCard";
+import type { TransitItinerary } from "@/services/transitService";
 import type { PreferenceWeights } from "@/lib/routeScoring";
 import type { RouteOption } from "@/types/route";
 
@@ -17,8 +19,13 @@ type Props = {
     onSelectRoute: (routeId: string) => void;
     onStartTrip: (route: RouteOption) => void;
     onBack: () => void;
+    // opens the public transport screen (full itineraries, preferences, departure time)
     onTransit: () => void;
+    transit: { routes: TransitItinerary[]; loading: boolean; error: string | null };
 };
+
+// how many public transport itineraries are previewed in the options list
+const TRANSIT_PREVIEW_COUNT = 2;
 
 function RouteOptionsScreen({
     originLabel,
@@ -34,11 +41,43 @@ function RouteOptionsScreen({
     onStartTrip,
     onBack,
     onTransit,
+    transit,
 }: Props) {
     const selectedRoute = routes.find((r) => r.routeId === selectedRouteId) ?? null;
 
+    const transitSection = (
+        <section aria-label="Public transport" className="flex flex-col gap-3">
+            <div className="flex items-center justify-between px-1">
+                <h2 className="flex items-center gap-2 text-base font-semibold">
+                    <Bus className="size-4" aria-hidden="true" />
+                    Public transport
+                </h2>
+                <button
+                    type="button"
+                    onClick={onTransit}
+                    className="flex min-h-11 items-center gap-1 text-sm font-semibold text-[#17334A] hover:underline"
+                >
+                    More options
+                    <ChevronRight className="size-4" aria-hidden="true" />
+                </button>
+            </div>
+
+            {transit.loading && (
+                <div className="h-24 animate-pulse rounded-2xl bg-white/60" aria-busy="true" aria-label="Loading public transport" />
+            )}
+            {!transit.loading && transit.error && <Note>{transit.error}</Note>}
+            {!transit.loading && !transit.error && transit.routes.length === 0 && (
+                <Note>No public transport found for this trip right now.</Note>
+            )}
+            {transit.routes.slice(0, TRANSIT_PREVIEW_COUNT).map((itinerary) => (
+                <TransitCard key={itinerary.id} itinerary={itinerary} onSelect={onTransit} />
+            ))}
+            <p className="px-1 text-xs text-[#17334A]/75">Public transport trips don't earn EcoPoints.</p>
+        </section>
+    );
+
     return (
-        <div className="aero-bg fixed inset-0 z-[60] flex flex-col overflow-hidden text-[#17334A] md:inset-auto md:bottom-4 md:left-4 md:top-4 md:w-[400px] md:rounded-3xl md:border md:border-[#0c263c]/55 md:shadow-2xl">
+        <div className="aero-bg fixed inset-0 z-[60] flex flex-col overflow-hidden text-[#17334A] md:absolute md:inset-auto md:bottom-4 md:left-4 md:top-4 md:w-[400px] md:rounded-3xl md:border md:border-[#0c263c]/55 md:shadow-2xl">
             <header className="aero-glass relative flex items-center gap-3 rounded-b-3xl px-3 pb-3 pt-4">
                 <button
                     type="button"
@@ -66,10 +105,6 @@ function RouteOptionsScreen({
                         How do you want to go?
                     </h1>
 
-                    <button type="button" onClick={onTransit} className="aero-gel flex items-center justify-center gap-2 rounded-2xl p-4 font-semibold">
-                        <Bus size={20} /> Public transport · Google Maps
-                    </button>
-
                     {loading && (
                         <div className="flex flex-col gap-3" aria-busy="true" aria-label="Loading routes">
                             {[0, 1, 2].map((i) => (
@@ -88,6 +123,8 @@ function RouteOptionsScreen({
                         </Note>
                     )}
 
+                    {routes.length === 0 && transitSection}
+
                     {routes.length > 0 && (
                         <>
                             <RouteComparison
@@ -96,6 +133,7 @@ function RouteOptionsScreen({
                                 selectedRouteId={selectedRouteId}
                                 onSelect={onSelectRoute}
                             />
+                            {transitSection}
                             <PreferenceSliders value={weights} onChange={onWeightsChange} />
                             <button
                                 type="button"

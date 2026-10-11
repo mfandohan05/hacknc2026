@@ -2,6 +2,7 @@ package hacknc2026.backend.controller;
 
 import hacknc2026.backend.dto.CreateProfileRequest;
 import hacknc2026.backend.dto.ProfileResponse;
+import hacknc2026.backend.dto.PointsBalanceResponse;
 import hacknc2026.backend.service.ProfileService;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -25,6 +26,12 @@ public class ProfileController {
   @GetMapping("/me")
   public ProfileResponse getMyProfile(Principal principal) {
     return profileService.getProfile(currentUserId(principal));
+  }
+
+  @GetMapping("/me/points")
+  public PointsBalanceResponse getMyPoints(Principal principal) {
+    ProfileResponse profile = profileService.getProfile(currentUserId(principal));
+    return new PointsBalanceResponse(profile.totalPoints());
   }
 
   @PostMapping

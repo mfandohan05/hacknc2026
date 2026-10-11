@@ -84,7 +84,7 @@ class ApiEndpointTests {
 
     @ParameterizedTest
     @CsvSource({
-        "GET,/api/v1/profiles/me", "POST,/api/v1/profiles",
+        "GET,/api/v1/rewards", "GET,/api/v1/rewards/ledger", "GET,/api/v1/profiles/me", "GET,/api/v1/profiles/me/points", "POST,/api/v1/profiles",
         "GET,/api/v1/trips", "POST,/api/v1/trips",
         "GET,/api/v1/trips/00000000-0000-0000-0000-000000000001",
         "GET,/api/v1/trips/00000000-0000-0000-0000-000000000001/points",
@@ -113,8 +113,11 @@ class ApiEndpointTests {
 
     @Test
     void profileTripCompletionAndLeaderboardWorkTogether() throws Exception {
+        call("GET", "/api/v1/profiles/me/points", "", token).andExpect(status().isNotFound());
         call("GET", "/api/v1/profiles/me", "", token).andExpect(status().isNotFound());
         createProfile(token, "alice");
+        call("GET", "/api/v1/profiles/me/points", "", token)
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalPoints").value(0));
         call("GET", "/api/v1/profiles/me", "", token)
                 .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(userId.toString()));
         call("GET", "/api/v1/trips", "", token)
@@ -133,6 +136,12 @@ class ApiEndpointTests {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.completedAt").value(completedAt));
         assertEquals(1, points.count());
         assertEquals(50, points.totalPointsForUser(userId));
+        call("GET", "/api/v1/profiles/me/points", "", token)
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalPoints").value(50));
+        String otherUserToken = token(UUID.randomUUID(), ISSUER, "authenticated", Instant.now().plusSeconds(300), KEYS);
+        createProfile(otherUserToken, "points-other");
+        call("GET", "/api/v1/profiles/me/points?userId=" + userId, "", otherUserToken)
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalPoints").value(0));
         call("GET", "/api/v1/leaderboards", "", token)
                 .andExpect(status().isOk()).andExpect(jsonPath("$[0].profileId").value(userId.toString()))
                 .andExpect(jsonPath("$[0].totalPoints").value(50)).andExpect(jsonPath("$[0].rank").value(1));
@@ -311,6 +320,39 @@ class ApiEndpointTests {
                     .andExpect(status().isBadRequest());
         }
         verifyNoInteractions(transit);
+    }
+
+    @Test
+    void rewardsAndLedgerArePaginatedAndIsolatedToCurrentUser() throws Exception {
+        createProfile(token, "rewards-owner");
+        for (int i = 0; i < 21; i++) {
+            jdbc.update("INSERT INTO public.point_transactions (id, profile_id, points, reason, award_key, leaderboard_eligible, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    UUID.randomUUID(), userId, i == 0 ? -10 : 25, "TEST_AWARD", "test:" + i, false,
+                    java.sql.Timestamp.from(Instant.now().plusSeconds(i)));
+        }
+        jdbc.update("UPDATE public.profiles SET total_points = 490 WHERE id = ?", userId);
+        call("GET", "/api/v1/rewards", "", token).andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalPoints").value(490))
+                .andExpect(jsonPath("$.lifetimePoints").value(500))
+                .andExpect(jsonPath("$.level").value(3))
+                .andExpect(jsonPath("$.completedTrips").value(0))
+                .andExpect(jsonPath("$.achievements[0].unlocked").value(false));
+        call("GET", "/api/v1/rewards/ledger", "", token).andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(20))
+                .andExpect(jsonPath("$.totalElements").value(21))
+                .andExpect(jsonPath("$.hasNext").value(true))
+                .andExpect(jsonPath("$.content[0].points").value(25));
+        call("GET", "/api/v1/rewards/ledger?page=1", "", token).andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].points").value(-10))
+                .andExpect(jsonPath("$.hasNext").value(false));
+        call("GET", "/api/v1/rewards/ledger?page=-1", "", token).andExpect(status().isBadRequest());
+        String other = token(UUID.randomUUID(), ISSUER, "authenticated", Instant.now().plusSeconds(300), KEYS);
+        createProfile(other, "rewards-other");
+        call("GET", "/api/v1/rewards?userId=" + userId, "", other).andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalPoints").value(0)).andExpect(jsonPath("$.level").value(1));
+        call("GET", "/api/v1/rewards/ledger?userId=" + userId, "", other).andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(0));
     }
 
     private String startTrip(String bearer) throws Exception {

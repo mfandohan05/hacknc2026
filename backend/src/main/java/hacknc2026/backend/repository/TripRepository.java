@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TripRepository extends JpaRepository<Trip, UUID> {
+  long countByProfile_IdAndStatus(UUID profileId, TripStatus status);
   Page<Trip> findByProfile_IdAndStatusNotOrderByCreatedAtDesc(UUID profileId, TripStatus status, Pageable pageable);
 
   Optional<Trip> findByIdAndProfile_Id(UUID tripId, UUID profileId);
