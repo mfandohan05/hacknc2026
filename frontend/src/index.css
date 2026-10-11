@@ -180,7 +180,7 @@
 /* Aero Glass: tinted translucent pane with a diagonal reflection, a dark outer border and a white inner border */
 .aero-glass {
   background:
-    linear-gradient(115deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.32) 42%, rgba(255, 255, 255, 0) 42.2%),
+    linear-gradient(115deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.26) 32%, rgba(255, 255, 255, 0.12) 43%, rgba(255, 255, 255, 0) 60%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(214, 238, 252, 0.55) 55%, rgba(190, 228, 248, 0.5) 100%);
   backdrop-filter: blur(18px) saturate(180%);
   -webkit-backdrop-filter: blur(18px) saturate(180%);

@@ -62,7 +62,7 @@ export default function TransitScreen({ origin, destination, destinationName, in
 
     return (
         <section
-            className="aero-bg fixed inset-0 z-[80] flex flex-col overflow-hidden text-[#17334A] md:absolute md:inset-auto md:bottom-4 md:left-4 md:top-4 md:w-[400px] md:rounded-3xl md:border md:border-[#0c263c]/55 md:shadow-2xl"
+            className="transit-panel aero-glass fixed inset-0 z-[80] flex flex-col overflow-hidden text-[#17334A] md:absolute md:inset-auto md:bottom-4 md:left-4 md:top-4 md:w-[400px] md:rounded-3xl md:border md:border-[#0c263c]/55 md:shadow-2xl"
             aria-label="Public transport"
         >
             <header className="aero-glass relative flex items-center gap-3 rounded-b-3xl px-3 pb-3 pt-4">
