@@ -165,12 +165,18 @@ class ApiEndpointTests {
         assertEquals(0, points.count());
     }
 
-    @Test
-    void cancelledTripsAreInaccessible() throws Exception {
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = {false, true})
+    void cancelledTripsAreDeleted(boolean started) throws Exception {
         createProfile(token, "cancel");
-        String id = startTrip(token);
+        String id = started ? startTrip(token) : json.readTree(
+                call("POST", "/api/v1/trips", TRIP, token)
+                        .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString())
+                .get("id").asText();
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM public.trips", Integer.class));
         call("POST", "/api/v1/trips/" + id + "/cancel", "", token)
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("CANCELLED"));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM public.trips", Integer.class));
         for (String action : List.of("start", "complete", "cancel")) {
             call("POST", "/api/v1/trips/" + id + "/" + action, "", token).andExpect(status().isNotFound());
         }
