@@ -1,5 +1,7 @@
 # EcoQuest
 
+### [Demo](https://hacknc2026-six.vercel.app)
+
 Choose your next journey with the planet in mind.
 
 EcoQuest is a sustainable travel application built for HackNC 2026. It helps users compare transportation options, balance environmental impact with everyday priorities, and earn EcoPoints for completed trips. A desktop-inspired interface brings together maps, navigation, progress tracking, and customizable themes.
