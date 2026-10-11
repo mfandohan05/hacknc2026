@@ -99,14 +99,14 @@ function RouteOptionsScreen({
                             <PreferenceSliders value={weights} onChange={onWeightsChange} />
                             <button
                                 type="button"
-                                disabled={!selectedRoute}
+                                disabled={!selectedRoute || loading || !!error}
                                 onClick={() => selectedRoute && onStartTrip(selectedRoute)}
                                 className="aero-gel h-12 w-full rounded-full text-base font-semibold disabled:opacity-50"
                             >
                                 Start trip
                             </button>
                             <p className="text-center text-xs text-[#17334A]/75">
-                                Eco points are earned for walking and biking, based on distance traveled.
+                                Estimated points are credited only after you arrive. Canceled trips earn no points.
                             </p>
                         </>
                     )}

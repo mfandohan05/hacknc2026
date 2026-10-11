@@ -25,7 +25,8 @@ import { loadLastLocation, saveLastLocation } from "@/lib/locationStorage";
 import { DEFAULT_WEIGHTS, recommendedRouteId } from "@/lib/routeScoring";
 import type { PreferenceWeights } from "@/lib/routeScoring";
 import type { SelectedPlace } from "@/services/searchService";
-import { cancelTrip, completeTrip, startTrip } from "@/services/tripService";
+import { completeTrip, getPointBalance, pointsForMode } from "@/services/tripService";
+import { TripSession } from "@/services/tripSession";
 import type { DirectionsStep, NavProfile } from "@/types/navigation";
 import type { RouteMode, RouteOption } from "@/types/route";
 
@@ -69,11 +70,17 @@ function ExplorePage() {
     const mapRef = useRef<MapHandle>(null);
 
     const nav = useNavigation();
+    const { phase, isDemo, exit } = nav;
     const { user } = useAuth();
     // the option the user picked on the comparison page; its estimates are saved with the trip
     const [previewOption, setPreviewOption] = useState<RouteOption | null>(null);
-    // resolves to the server trip id once /trips/start returns (null for guests, demos and failures)
-    const tripIdRef = useRef<Promise<string | null> | null>(null);
+    // Only a successfully started server trip can be completed.
+    const tripIdRef = useRef<string | null>(null);
+    const sessionRef = useRef(new TripSession());
+    const operationRef = useRef(false);
+    const cancelRequestedRef = useRef(false);
+    const [plannedRoutes, setPlannedRoutes] = useState<{ key: string; routes: RouteOption[] } | null>(null);
+    const [receipt, setReceipt] = useState<{ earned: number; balance: number } | null>(null);
     const [completing, setCompleting] = useState(false);
     const [tripError, setTripError] = useState<string | null>(null);
     const navigating = nav.phase === "navigating";
@@ -99,6 +106,30 @@ function ExplorePage() {
     const { data, loading, error } = useRouteComparison(origin, destinationPoint);
     const routes = useMemo(() => data?.routes ?? NO_ROUTES, [data]);
 
+    const planningKey = optionsOpen && user && origin && destinationPoint && routes.length
+        ? JSON.stringify([origin, destinationPoint, routes]) : null;
+    useEffect(() => {
+        if (!planningKey) return;
+        let active = true;
+        const [from, to, options] = JSON.parse(planningKey) as [NonNullable<typeof origin>, NonNullable<typeof destinationPoint>, RouteOption[]];
+        const session = sessionRef.current;
+        void (async () => {
+            await session.cancelExcept();
+            if (!active) return;
+            const planned = await Promise.all(options.map(async (option) => {
+                await session.plan(from, to, option);
+                const points = await session.points(option.routeId);
+                return { ...option, tripPoints: pointsForMode(points, option.mode) };
+            }));
+            if (active) setPlannedRoutes({ key: planningKey, routes: planned });
+        })().catch((e: unknown) => {
+            if (active) setTripError(e instanceof Error ? e.message : "Couldn't plan your trip.");
+        });
+        return () => { active = false; };
+    }, [planningKey]);
+
+    const optionRoutes = plannedRoutes?.key === planningKey ? plannedRoutes.routes : null;
+
     // recommendation re-ranks live as the sliders move
     const recommendedId = useMemo(() => recommendedRouteId(routes, weights), [routes, weights]);
     const selectedRouteId = routes.find((r) => r.mode === selectedMode)?.routeId ?? recommendedId;
@@ -117,6 +148,7 @@ function ExplorePage() {
     };
 
     const handlePlaceSelect = (place: SelectedPlace) => {
+        void handleEndNavigation();
         setDestination(place);
         mapRef.current?.showPlace(place);
         setSelectedMode(null);
@@ -152,47 +184,74 @@ function ExplorePage() {
         mapRef.current?.fitToCoordinates(result.geometry.coordinates, PEEK_FIT_BOTTOM_PADDING);
     };
 
-    // Real trips are recorded on the backend when signed in. Demo trips never touch it, so they
-    // cannot count toward verified rankings.
-    const handleStartNavigation = (demo: boolean) => {
-        nav.start({ demo });
+    const handleStartNavigation = async (demo: boolean) => {
+        if (operationRef.current || nav.phase !== "previewing") return;
+        operationRef.current = true;
+        cancelRequestedRef.current = false;
         setTripError(null);
-        tripIdRef.current = null;
-        if (demo || !user || !previewOption || !nav.route || !origin || !destinationPoint) return;
-        tripIdRef.current = startTrip(origin, destinationPoint, previewOption, nav.route)
-            .then((trip) => trip.id)
-            .catch((e: unknown) => {
-                console.error("Could not start the trip on the server", e);
-                return null;
-            });
+        setReceipt(null);
+        try {
+            if (demo) await sessionRef.current.cancelExcept();
+            else if (user && previewOption) {
+                tripIdRef.current = await sessionRef.current.start(previewOption.routeId);
+            }
+            if (!cancelRequestedRef.current) nav.start({ demo });
+        } catch (e) {
+            setTripError(e instanceof Error ? e.message : "Couldn't start your trip. Try again.");
+        } finally {
+            operationRef.current = false;
+            if (cancelRequestedRef.current) await handleEndNavigation();
+        }
     };
 
-    const handleTripComplete = async (trip: { isDemo: boolean }) => {
-        const pending = tripIdRef.current;
-        if (!trip.isDemo && pending) {
-            setCompleting(true);
-            setTripError(null);
-            try {
-                const id = await pending;
-                if (id) await completeTrip(id);
-            } catch (e) {
-                setTripError(e instanceof Error ? e.message : "Couldn't save your trip. Try again.");
-                setCompleting(false);
-                return;
-            }
+    const handleTripComplete = useCallback(async () => {
+        if (operationRef.current || cancelRequestedRef.current || phase !== "arrived") return;
+        if (receipt || isDemo || !user) { exit(); return; }
+        const id = tripIdRef.current;
+        if (!id || !previewOption) return;
+        operationRef.current = true;
+        setCompleting(true);
+        setTripError(null);
+        try {
+            const trip = await completeTrip(id);
+            sessionRef.current.complete(id);
+            const profile = await getPointBalance();
+            setReceipt({ earned: pointsForMode(trip.points, previewOption.mode), balance: profile.totalPoints });
+            window.dispatchEvent(new Event("points-updated"));
+        } catch (e) {
+            setTripError(e instanceof Error ? e.message : "Couldn't save your trip. Try again.");
+        } finally {
+            operationRef.current = false;
             setCompleting(false);
         }
-        tripIdRef.current = null;
-        nav.exit();
+    }, [phase, isDemo, exit, user, previewOption, receipt]);
+
+    // Arrival triggers completion automatically; failures remain visible for an explicit retry.
+    useEffect(() => {
+        if (arrived && user && !nav.isDemo && !receipt && !tripError) void handleTripComplete();
+    }, [arrived, user, nav.isDemo, receipt, tripError, handleTripComplete]);
+
+    const handleEndNavigation = async () => {
+        cancelRequestedRef.current = true;
+        if (operationRef.current) return;
+        operationRef.current = true;
+        setTripError(null);
+        try {
+            await sessionRef.current.cancelExcept();
+            tripIdRef.current = null;
+            setPlannedRoutes(null);
+            setOptionsOpen(false);
+            nav.exit();
+        } catch (e) {
+            setTripError(e instanceof Error ? e.message : "Couldn't cancel your trip. Try again.");
+        } finally { operationRef.current = false; }
     };
 
-    const handleEndNavigation = () => {
-        const pending = tripIdRef.current;
-        tripIdRef.current = null;
-        nav.exit();
-        // best effort: mark the server trip cancelled
-        if (pending) void pending.then((id) => (id ? cancelTrip(id) : undefined)).catch(() => undefined);
-    };
+    // Abandoning Explore also cancels requests that were still creating planned trips.
+    useEffect(() => {
+        const session = sessionRef.current;
+        return () => { void session.cancelExcept().catch(console.error); };
+    }, []);
 
     const step = nav.steps[nav.stepIndex];
     const showPreview = nav.phase === "previewing" && nav.route !== null;
@@ -211,6 +270,7 @@ function ExplorePage() {
             />
 
             {!navActive && <NavigationBar />}
+            {tripError && !arrived && <div className="absolute top-36 left-4 right-4 z-[80]"><NavToast message={tripError} onRetry={() => void handleEndNavigation()} /></div>}
 
             {!navActive && (
                 <DirectionsSheet
@@ -218,9 +278,9 @@ function ExplorePage() {
                     onOpenChange={setSheetOpen}
                     originLabel={originPlace?.name ?? "Your location"}
                     destinationLabel={destination?.name ?? null}
-                    onEditRoute={() => runViewTransition(() => setScreenOpen(true))}
+                    onEditRoute={() => { void handleEndNavigation(); runViewTransition(() => setScreenOpen(true)); }}
                     editing={screenOpen}
-                    onViewRoutes={() => setOptionsOpen(true)}
+                    onViewRoutes={() => { setTripError(null); setPlannedRoutes(null); setOptionsOpen(true); }}
                     onSelectMode={(mode) => {
                         setOptionsOpen(false);
                         setTransitPreference(mode === "bus" ? "BUS" : mode === "metro" ? "SUBWAY" : mode === "train" ? "TRAIN" : "ALL");
@@ -234,7 +294,7 @@ function ExplorePage() {
                                 onStart={() => handleStartNavigation(false)}
                                 onDemo={() => handleStartNavigation(true)}
                                 onSelectStep={(s: DirectionsStep) => mapRef.current?.flyToPoint(s.maneuver.location, 17)}
-                                onClose={nav.exit}
+                                onClose={() => void handleEndNavigation()}
                             />
                         ) : undefined
                     }
@@ -308,7 +368,8 @@ function ExplorePage() {
                     distanceMeters={nav.route.distance}
                     durationSeconds={nav.route.duration}
                     isDemo={nav.isDemo}
-                    onComplete={() => void handleTripComplete({ isDemo: nav.isDemo })}
+                    onComplete={() => void (cancelRequestedRef.current ? handleEndNavigation() : handleTripComplete())}
+                    receipt={receipt}
                     busy={completing}
                     error={tripError}
                 />
@@ -318,17 +379,17 @@ function ExplorePage() {
                 <RouteOptionsScreen
                     originLabel={originPlace?.name ?? "Your location"}
                     destinationName={destination.name}
-                    routes={routes}
+                    routes={optionRoutes ?? routes}
                     recommendedRouteId={recommendedId}
                     selectedRouteId={selectedRouteId}
-                    loading={loading}
-                    error={error}
+                    loading={loading || (!!user && !optionRoutes && !tripError)}
+                    error={tripError ?? error}
                     weights={weights}
                     onWeightsChange={setWeights}
                     onSelectRoute={(id) => setSelectedMode(routes.find((r) => r.routeId === id)?.mode ?? null)}
                     onStartTrip={(route) => void handleStartTrip(route)}
-                    onBack={() => setOptionsOpen(false)}
-                    onTransit={() => { setOptionsOpen(false); setTransitPreference("ALL"); }}
+                    onBack={() => void handleEndNavigation()}
+                    onTransit={() => { void handleEndNavigation().then(() => setTransitPreference("ALL")); }}
                 />
             )}
             {!navActive && screenOpen && (

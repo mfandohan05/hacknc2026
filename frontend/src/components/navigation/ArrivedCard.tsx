@@ -8,11 +8,12 @@ type Props = {
     onComplete: () => void;
     // saving the trip
     busy?: boolean;
+    receipt?: { earned: number; balance: number } | null;
     // saving failed; the user can try again
     error?: string | null;
 };
 
-function ArrivedCard({ distanceMeters, durationSeconds, isDemo, onComplete, busy = false, error = null }: Props) {
+function ArrivedCard({ distanceMeters, durationSeconds, isDemo, onComplete, busy = false, error = null, receipt = null }: Props) {
     return (
         <div
             className="absolute inset-x-0 bottom-0 z-50 px-3 md:inset-x-auto md:bottom-4 md:left-4 md:w-[27rem]"
@@ -41,6 +42,7 @@ function ArrivedCard({ distanceMeters, durationSeconds, isDemo, onComplete, busy
                         <dd className="text-lg font-bold">{formatNavDuration(durationSeconds)}</dd>
                     </div>
                 </dl>
+                {receipt && <p className="font-semibold">+{receipt.earned} points · Balance: {receipt.balance.toLocaleString()}</p>}
                 {error && (
                     <p role="alert" className="text-sm font-medium text-[#c93a30]">
                         {error}
@@ -52,7 +54,7 @@ function ArrivedCard({ distanceMeters, durationSeconds, isDemo, onComplete, busy
                     disabled={busy}
                     className="aero-gel h-12 w-full rounded-full text-base font-semibold disabled:opacity-70"
                 >
-                    {busy ? "Saving…" : error ? "Try again" : "Complete trip"}
+                    {busy ? "Saving…" : error ? "Try again" : receipt || isDemo ? "Done" : "Complete trip"}
                 </button>
             </div>
         </div>

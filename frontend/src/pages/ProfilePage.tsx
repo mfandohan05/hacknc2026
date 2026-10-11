@@ -5,12 +5,12 @@ import AeroWindow from "@/components/layout/AeroWindow";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistance } from "@/lib/formatRoute";
 import { signOut } from "@/services/authService";
-import { getTrips } from "@/services/tripService";
+import { getTrips, getPointBalance } from "@/services/tripService";
 import type { TripPage, TripResponse } from "@/services/tripService";
 
 const MODE_LABEL: Record<string, string> = {
     WALKING: "Walk",
-    BIKING: "Bike",
+    CYCLING: "Bike",
     DRIVING: "Drive",
 };
 
@@ -24,6 +24,8 @@ function formatDate(iso: string | null) {
 function ProfilePage() {
     const { user } = useAuth();
     const [trips, setTrips] = useState<TripsState>({ status: "loading" });
+    const [balance, setBalance] = useState<number | null>(null);
+    const [balanceError, setBalanceError] = useState(false);
     const [signingOut, setSigningOut] = useState(false);
 
     useEffect(() => {
@@ -44,6 +46,16 @@ function ProfilePage() {
             active = false;
         };
     }, []);
+
+    useEffect(() => {
+        let active = true;
+        const refresh = () => { void getPointBalance().then((profile) => {
+            if (active) { setBalance(profile.totalPoints); setBalanceError(false); }
+        }).catch(() => { if (active) setBalanceError(true); }); };
+        refresh();
+        window.addEventListener("points-updated", refresh);
+        return () => { active = false; window.removeEventListener("points-updated", refresh); };
+    }, [user?.id]);
 
     const email = user?.email ?? "";
     const name = (user?.user_metadata?.full_name as string | undefined) ?? email.split("@")[0] ?? "Explorer";
@@ -87,6 +99,7 @@ function ProfilePage() {
                         </button>
                     </div>
 
+                    <p className="mt-5 text-lg font-semibold">Point balance: {balanceError ? "Unavailable — please reload" : balance?.toLocaleString() ?? "…"}</p>
                     <div className="mt-6 grid grid-cols-2 gap-3">
                         <div className="rounded-2xl bg-white/55 p-4">
                             <div className="flex items-center gap-2 text-sm text-[#17334A]/75">

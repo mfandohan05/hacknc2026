@@ -1,11 +1,16 @@
 import { apiJson } from "@/services/api";
 import { CAR_KG_CO2E_PER_KM } from "@/services/routeService";
-import type { DirectionsRoute } from "@/types/navigation";
 import type { LngLat, RouteMode, RouteOption } from "@/types/route";
 
-export type TripMode = "WALKING" | "BIKING" | "DRIVING";
+export type TripMode = "WALKING" | "CYCLING" | "DRIVING";
+
+export type TripPoints = { walking: number; cycling: number; driving: number };
+
+export const pointsForMode = (points: TripPoints, mode: RouteMode) =>
+    points[mode === "WALK" ? "walking" : mode === "BIKE" ? "cycling" : "driving"];
 
 export type TripResponse = {
+    points: TripPoints;
     id: string;
     mode: TripMode | null;
     status: "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | null;
@@ -24,14 +29,14 @@ export type TripPage = {
 
 const MODE_MAP: Record<RouteMode, TripMode> = {
     WALK: "WALKING",
-    BIKE: "BIKING",
+    BIKE: "CYCLING",
     CAR: "DRIVING",
 };
 
-// Starts a server-side trip for a real (non-demo) navigation session.
-export function startTrip(origin: LngLat, destination: LngLat, option: RouteOption, route: DirectionsRoute) {
-    const distanceKm = route.distance / 1000;
-    return apiJson<TripResponse>("/api/v1/trips/start", {
+// A planned trip has estimates only; no balance is credited until completion.
+export function createTrip(origin: LngLat, destination: LngLat, option: RouteOption) {
+    const distanceKm = option.distanceKm;
+    return apiJson<TripResponse>("/api/v1/trips", {
         method: "POST",
         body: JSON.stringify({
             originLatitude: origin.lat,
@@ -39,8 +44,8 @@ export function startTrip(origin: LngLat, destination: LngLat, option: RouteOpti
             destinationLatitude: destination.lat,
             destinationLongitude: destination.lng,
             mode: MODE_MAP[option.mode],
-            distanceMeters: route.distance,
-            durationSeconds: route.duration,
+            distanceMeters: option.distanceKm * 1000,
+            durationSeconds: option.durationMinutes * 60,
             estimatedCo2Kg: option.estimatedCo2Kg ?? 0,
             // what the same distance would emit by car
             baselineCo2Kg: distanceKm * CAR_KG_CO2E_PER_KM,
@@ -56,3 +61,11 @@ export const cancelTrip = (id: string) =>
     apiJson<TripResponse>(`/api/v1/trips/${encodeURIComponent(id)}/cancel`, { method: "POST" });
 
 export const getTrips = (size = 20) => apiJson<TripPage>(`/api/v1/trips?size=${size}`);
+
+export const startTrip = (id: string) =>
+    apiJson<TripResponse>(`/api/v1/trips/${encodeURIComponent(id)}/start`, { method: "POST" });
+
+export const getTripPoints = (id: string) =>
+    apiJson<TripPoints>(`/api/v1/trips/${encodeURIComponent(id)}/points`);
+
+export const getPointBalance = () => apiJson<{ totalPoints: number }>("/api/v1/profiles/me");

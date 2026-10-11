@@ -15,6 +15,8 @@ export type RouteOption = {
     estimatedCo2Kg: number | null;
     // Points earned: 0 for driving, one point per 0.1 miles for walking/biking
     ecoScore: number;
+    // Server estimate; awarded only on successful completion.
+    tripPoints?: number;
     // line to draw on the map as [lng, lat] pairs
     geometry: [number, number][];
 };

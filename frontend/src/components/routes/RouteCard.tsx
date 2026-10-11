@@ -50,13 +50,13 @@ function RouteCard({ route, selected, recommended, savingsKg, onSelect }: Props)
 
             <dl className="mt-3 grid grid-cols-2 gap-2 text-center text-xs">
                 <Stat label="CO₂e (est.)" value={formatCo2(route.estimatedCo2Kg)} />
-                <Stat label="Eco points" value={String(route.ecoScore)} />
+                <Stat label="Eco points" value={route.tripPoints === undefined ? "—" : String(route.tripPoints)} />
             </dl>
 
             <div
                 className="aero-progress-track mt-2 h-2.5 overflow-hidden rounded-full"
                 role="meter"
-                aria-label="Eco points"
+                aria-label="Emissions savings score"
                 aria-valuemin={0}
                 aria-valuemax={100}
                         aria-valuenow={Math.min(100, route.ecoScore)}
