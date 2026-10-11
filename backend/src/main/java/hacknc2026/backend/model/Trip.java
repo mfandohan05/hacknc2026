@@ -55,6 +55,11 @@ public class Trip {
     @Column(name = "estimated_cost", precision = 12, scale = 2)
     private BigDecimal estimatedCost;
 
+    private String currency;
+
+    @Column(name = "emissions_methodology_version")
+    private String emissionsMethodologyVersion;
+
     @Enumerated(EnumType.STRING)
     private TripStatus status;
 
