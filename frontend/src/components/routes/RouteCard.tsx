@@ -55,7 +55,7 @@ function RouteCard({ route, selected, recommended, savingsKg, onSelect }: Props)
             </dl>
 
             <div
-                className="mt-2 h-2 overflow-hidden rounded-full bg-[#17334A]/15"
+                className="aero-progress-track mt-2 h-2.5 overflow-hidden rounded-full"
                 role="meter"
                 aria-label="Eco score"
                 aria-valuemin={0}
@@ -63,7 +63,7 @@ function RouteCard({ route, selected, recommended, savingsKg, onSelect }: Props)
                 aria-valuenow={route.ecoScore}
             >
                 <div
-                    className="h-full rounded-full bg-gradient-to-r from-[#54C571] to-[#208A5D]"
+                    className="aero-progress-fill h-full rounded-full"
                     style={{ width: `${route.ecoScore}%` }}
                 />
             </div>

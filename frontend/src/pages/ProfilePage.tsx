@@ -1,5 +1,6 @@
 import { MapPin, Route, Star, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import AeroWindow from "@/components/layout/AeroWindow";
 
 type ProfileData = {
     name: string;
@@ -22,7 +23,7 @@ function ProfilePage() {
             <span aria-hidden className="aero-bubble bottom-40 right-8 size-24" />
 
             <section className="relative mx-auto flex max-w-lg flex-col gap-4">
-                <div className="aero-glass rounded-3xl p-6 text-[#17334A]">
+                <AeroWindow title="Profile" Icon={User} as="h1" bodyClassName="p-5">
                     <div className="flex items-center gap-4">
                         <div className="aero-gel flex size-16 shrink-0 items-center justify-center rounded-full">
                             <Avatar>
@@ -36,7 +37,7 @@ function ProfilePage() {
                             </Avatar>
                         </div>
                         <div>
-                            <h1 className="text-2xl font-semibold">{profile.name}</h1>
+                            <p className="text-2xl font-semibold">{profile.name}</p>
                         </div>
                     </div>
 
@@ -56,14 +57,11 @@ function ProfilePage() {
                             <p className="mt-2 text-3xl font-bold tabular-nums">{profile.tripsCompleted}</p>
                         </div>
                     </div>
-                </div>
+                </AeroWindow>
 
-                <div className="aero-glass rounded-3xl p-6 text-[#17334A]">
+                <AeroWindow title="Previous trips" Icon={Route} bodyClassName="p-5">
                     <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-lg font-semibold">Previous trips</h2>
-                            <p className="text-sm text-[#17334A]/65">Your points will come from these trips.</p>
-                        </div>
+                        <p className="text-sm text-[#17334A]/75">Your points will come from these trips.</p>
                         <MapPin className="size-5 text-[#208A5D]" />
                     </div>
 
@@ -73,7 +71,7 @@ function ProfilePage() {
                             Trip history and earned points will appear here once connected.
                         </p>
                     </div>
-                </div>
+                </AeroWindow>
             </section>
         </main>
     );

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Crown, Medal, RefreshCw, Trophy } from "lucide-react";
+import AeroWindow from "@/components/layout/AeroWindow";
 
 type LeaderboardEntry = {
     id: string;
@@ -78,16 +79,13 @@ function LeaderboardPage() {
             <span aria-hidden className="aero-bubble -right-10 top-24 size-36" />
             <span aria-hidden className="aero-bubble left-4 top-1/2 size-16" />
 
-            <section className="aero-glass relative mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col rounded-3xl p-5 sm:p-6">
-                <div className="mb-5 flex items-center gap-3">
-                    <span className="aero-gel flex size-12 shrink-0 items-center justify-center rounded-full">
-                        <Trophy className="size-6" />
-                    </span>
-                    <div>
-                        <h1 className="text-2xl font-semibold text-[#17334A]">Global Leaderboard</h1>
-                    </div>
-                </div>
-
+            <AeroWindow
+                title="Global Leaderboard"
+                Icon={Trophy}
+                as="h1"
+                className="mx-auto min-h-0 w-full max-w-lg flex-1"
+                bodyClassName="flex min-h-0 flex-1 flex-col p-4 sm:p-5"
+            >
                 <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/35">
                     <div className="grid grid-cols-[3rem_1fr_auto] items-center gap-3 border-b border-white/60 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#17334A]/60">
                         <span>Rank</span>
@@ -150,7 +148,7 @@ function LeaderboardPage() {
                         )}
                     </div>
                 </div>
-            </section>
+            </AeroWindow>
         </main>
     );
 }

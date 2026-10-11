@@ -60,7 +60,7 @@ function TripPanel({
                 </div>
 
                 <div
-                    className="mt-3 h-2.5 overflow-hidden rounded-full bg-[#17334A]/15"
+                    className="aero-progress-track mt-3 h-3 overflow-hidden rounded-full"
                     role="progressbar"
                     aria-label="Trip progress"
                     aria-valuemin={0}
@@ -68,7 +68,7 @@ function TripPanel({
                     aria-valuenow={percent}
                 >
                     <div
-                        className="h-full rounded-full bg-gradient-to-r from-[#54C571] to-[#208A5D] transition-[width] duration-500 motion-reduce:transition-none"
+                        className="aero-progress-fill h-full rounded-full transition-[width] duration-500 motion-reduce:transition-none"
                         style={{ width: `${percent}%` }}
                     />
                 </div>

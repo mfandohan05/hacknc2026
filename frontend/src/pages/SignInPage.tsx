@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AlertTriangle, Eye, EyeOff, Leaf, Loader2, Lock, Mail } from "lucide-react";
+import AeroWindow from "@/components/layout/AeroWindow";
 import { signIn } from "@/services/authService";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -49,13 +50,12 @@ function SignInPage() {
             <span aria-hidden className="aero-bubble bottom-24 right-6 size-24" />
             <span aria-hidden className="aero-bubble -left-8 bottom-10 size-32" />
 
-            <section className="aero-glass relative w-full max-w-sm rounded-3xl p-6 text-[#17334A]">
+            <AeroWindow title="Sign in to EcoQuest" Icon={Leaf} as="h1" className="w-full max-w-sm" bodyClassName="p-6">
                 <div className="flex flex-col items-center text-center">
                     <span className="aero-gel flex size-16 items-center justify-center rounded-full">
                         <Leaf className="size-8" aria-hidden="true" />
                     </span>
-                    <h1 className="mt-4 text-2xl font-bold drop-shadow-[0_1px_0_rgba(255,255,255,0.9)]">EcoQuest</h1>
-                    <p className="mt-1 text-sm text-[#17334A]/75">Sign in to track your greener trips.</p>
+                    <p className="mt-3 text-sm text-[#17334A]/80">Sign in to track your greener trips.</p>
                 </div>
 
                 <form onSubmit={onSubmit} noValidate className="mt-6 flex flex-col gap-4">
@@ -125,7 +125,7 @@ function SignInPage() {
                         Continue as guest
                     </Link>
                 </div>
-            </section>
+            </AeroWindow>
         </main>
     );
 }

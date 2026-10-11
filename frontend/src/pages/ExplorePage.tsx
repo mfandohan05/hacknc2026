@@ -51,7 +51,6 @@ const NO_ROUTES: RouteOption[] = [];
 function ExplorePage() {
     const [sheetOpen, setSheetOpen] = useState(false);
     const [destination, setDestination] = useState<SelectedPlace | null>(null);
-    // null means the user's current location
     const [originPlace, setOriginPlace] = useState<SelectedPlace | null>(null);
     const [screenOpen, setScreenOpen] = useState(false);
     const [screenMode, setScreenMode] = useState<DirectionsResult["mode"]>("drive");

@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import AeroWindow from "./AeroWindow";
 
 type Props = {
     title: string;
@@ -14,13 +15,12 @@ function AeroPage({ title, Icon, message = "Coming soon." }: Props) {
             <span aria-hidden className="aero-bubble bottom-40 right-8 size-24" />
             <span aria-hidden className="aero-bubble -left-8 bottom-16 size-28" />
 
-            <div className="aero-glass relative mx-auto flex max-w-sm flex-col items-center gap-4 rounded-3xl px-6 py-10 text-center">
+            <AeroWindow title={title} Icon={Icon} as="h1" className="mx-auto max-w-sm" bodyClassName="flex flex-col items-center gap-4 px-6 py-10 text-center">
                 <span className="aero-gel flex size-16 items-center justify-center rounded-full">
                     <Icon className="size-8" />
                 </span>
-                <h1 className="text-2xl font-semibold text-[#17334A] drop-shadow-[0_1px_0_rgba(255,255,255,0.9)]">{title}</h1>
-                <p className="text-[#17334A]/70">{message}</p>
-            </div>
+                <p className="text-[#17334A]/80">{message}</p>
+            </AeroWindow>
         </main>
     );
 }
