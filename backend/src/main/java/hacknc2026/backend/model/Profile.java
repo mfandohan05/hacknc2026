@@ -30,9 +30,6 @@ public class Profile {
 
   private Long level;
 
-  @Column(name = "leaderboard_opt_in")
-  private Boolean leaderboardOptIn;
-
   @Column(name = "created_at")
   private LocalDate createdAt;
 
