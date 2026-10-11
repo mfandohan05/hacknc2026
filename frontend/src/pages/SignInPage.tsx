@@ -1,0 +1,165 @@
+import { useState } from "react";
+import type { FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { AlertTriangle, Eye, EyeOff, Leaf, Loader2, Lock, Mail } from "lucide-react";
+import { signIn } from "@/services/authService";
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+type FieldErrors = { email?: string; password?: string };
+
+function SignInPage() {
+    const navigate = useNavigate();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [errors, setErrors] = useState<FieldErrors>({});
+    const [formError, setFormError] = useState<string | null>(null);
+    const [submitting, setSubmitting] = useState(false);
+
+    const validate = (): FieldErrors => {
+        const next: FieldErrors = {};
+        if (!EMAIL_PATTERN.test(email.trim())) next.email = "Enter a valid email address.";
+        if (password.length === 0) next.password = "Enter your password.";
+        return next;
+    };
+
+    const onSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        const found = validate();
+        setErrors(found);
+        setFormError(null);
+        if (Object.keys(found).length > 0) return;
+
+        setSubmitting(true);
+        try {
+            await signIn(email.trim(), password);
+            navigate("/explore", { replace: true });
+        } catch (err) {
+            setFormError(err instanceof Error ? err.message : "Couldn't sign you in. Try again.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <main className="aero-bg relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 pt-[calc(env(safe-area-inset-top)+2.5rem)]">
+            <span aria-hidden className="aero-bubble -right-10 top-20 size-40" />
+            <span aria-hidden className="aero-bubble left-4 top-1/3 size-16" />
+            <span aria-hidden className="aero-bubble bottom-24 right-6 size-24" />
+            <span aria-hidden className="aero-bubble -left-8 bottom-10 size-32" />
+
+            <section className="aero-glass relative w-full max-w-sm rounded-3xl p-6 text-[#17334A]">
+                <div className="flex flex-col items-center text-center">
+                    <span className="aero-gel flex size-16 items-center justify-center rounded-full">
+                        <Leaf className="size-8" aria-hidden="true" />
+                    </span>
+                    <h1 className="mt-4 text-2xl font-bold drop-shadow-[0_1px_0_rgba(255,255,255,0.9)]">EcoQuest</h1>
+                    <p className="mt-1 text-sm text-[#17334A]/75">Sign in to track your greener trips.</p>
+                </div>
+
+                <form onSubmit={onSubmit} noValidate className="mt-6 flex flex-col gap-4">
+                    {formError && (
+                        <div
+                            role="alert"
+                            className="flex items-start gap-2 rounded-2xl border border-white/80 bg-white/70 px-3 py-2.5 text-sm font-medium"
+                        >
+                            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[#c93a30]" aria-hidden="true" />
+                            {formError}
+                        </div>
+                    )}
+
+                    <Field label="Email" error={errors.email} htmlFor="signin-email">
+                        <Mail className="size-5 shrink-0 text-[#17334A]/60" aria-hidden="true" />
+                        <input
+                            id="signin-email"
+                            type="email"
+                            inputMode="email"
+                            autoComplete="email"
+                            autoFocus
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            aria-invalid={!!errors.email}
+                            aria-describedby={errors.email ? "signin-email-error" : undefined}
+                            placeholder="you@example.com"
+                            className="min-w-0 flex-1 bg-transparent text-base text-[#17334A] outline-none placeholder:text-[#17334A]/45"
+                        />
+                    </Field>
+
+                    <Field label="Password" error={errors.password} htmlFor="signin-password">
+                        <Lock className="size-5 shrink-0 text-[#17334A]/60" aria-hidden="true" />
+                        <input
+                            id="signin-password"
+                            type={showPassword ? "text" : "password"}
+                            autoComplete="current-password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            aria-invalid={!!errors.password}
+                            aria-describedby={errors.password ? "signin-password-error" : undefined}
+                            placeholder="Your password"
+                            className="min-w-0 flex-1 bg-transparent text-base text-[#17334A] outline-none placeholder:text-[#17334A]/45"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword((v) => !v)}
+                            aria-label={showPassword ? "Hide password" : "Show password"}
+                            aria-pressed={showPassword}
+                            className="flex size-9 shrink-0 items-center justify-center rounded-full text-[#17334A]/70 hover:bg-white/60"
+                        >
+                            {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                        </button>
+                    </Field>
+
+                    <button
+                        type="submit"
+                        disabled={submitting}
+                        className="aero-gel mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-full text-base font-semibold disabled:opacity-70"
+                    >
+                        {submitting && <Loader2 className="size-5 animate-spin" aria-hidden="true" />}
+                        {submitting ? "Signing in…" : "Sign in"}
+                    </button>
+                </form>
+
+                <div className="mt-5 flex flex-col items-center gap-2 text-sm">
+                    <Link to="/explore" className="font-semibold text-[#208A5D] hover:underline">
+                        Continue as guest
+                    </Link>
+                </div>
+            </section>
+        </main>
+    );
+}
+
+function Field({
+    label,
+    error,
+    htmlFor,
+    children,
+}: {
+    label: string;
+    error?: string;
+    htmlFor: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <div>
+            <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-semibold">
+                {label}
+            </label>
+            <div
+                className={`aero-input flex h-12 items-center gap-2 rounded-full px-4 ${
+                    error ? "!border-[#c93a30]" : ""
+                }`}
+            >
+                {children}
+            </div>
+            {error && (
+                <p id={`${htmlFor}-error`} className="mt-1.5 px-2 text-xs font-medium text-[#c93a30]">
+                    {error}
+                </p>
+            )}
+        </div>
+    );
+}
+
+export default SignInPage;

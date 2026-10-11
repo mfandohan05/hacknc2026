@@ -1,3 +1,5 @@
+import { formatNavDistance } from "./formatNav";
+
 export function formatDuration(minutes: number): string {
     if (minutes < 60) return `${minutes} min`;
     const h = Math.floor(minutes / 60);
@@ -10,8 +12,9 @@ export function formatStepDuration(seconds: number): string {
     return minutes < 1 ? "< 1 min" : formatDuration(minutes);
 }
 
+// US units (feet / miles), matching turn-by-turn navigation
 export function formatDistance(km: number): string {
-    return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+    return formatNavDistance(km * 1000);
 }
 
 // null is unknown, never shown as zero or free

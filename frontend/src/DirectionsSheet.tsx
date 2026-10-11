@@ -2,12 +2,13 @@ import { useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import { Bus, ChevronRight, LayoutGrid, Navigation, Route, TrainFront, TramFront } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 export type Mode = "drive" | "walk" | "bike" | "all" | "bus" | "metro" | "train";
 
 const SHEET_HEIGHT = 340;
+const PREVIEW_SHEET_HEIGHT = 480;
 const PEEK_HEIGHT = 185;
-const MAX_OFFSET = SHEET_HEIGHT - PEEK_HEIGHT;
 
 const transitModes: { id: Mode; label: string; Icon: LucideIcon }[] = [
     { id: "all", label: "All", Icon: LayoutGrid },
@@ -24,6 +25,8 @@ type Props = {
     destinationLabel: string | null;
     onEditRoute: () => void;
     onViewRoutes: () => void;
+    // when set, replaces the default content (used for the turn-by-turn preview)
+    preview?: ReactNode;
 };
 
 export default function DirectionsSheet({
@@ -34,14 +37,20 @@ export default function DirectionsSheet({
     destinationLabel,
     onEditRoute,
     onViewRoutes,
+    preview,
 }: Props) {
+    const sheetHeight = Math.min(
+        preview ? PREVIEW_SHEET_HEIGHT : SHEET_HEIGHT,
+        Math.round(window.innerHeight * 0.75),
+    );
+    const maxOffset = sheetHeight - PEEK_HEIGHT;
     const [dragOffset, setDragOffset] = useState<number | null>(null);
     const dragging = dragOffset !== null;
-    const offset = dragOffset ?? (open ? 0 : MAX_OFFSET);
+    const offset = dragOffset ?? (open ? 0 : maxOffset);
     const [selectedTransit, setSelectedTransit] = useState<Mode | null>(null);
     const drag = useRef<{ startY: number; startOffset: number; moved: boolean } | null>(null);
 
-    const clamp = (v: number) => Math.min(MAX_OFFSET, Math.max(0, v));
+    const clamp = (v: number) => Math.min(maxOffset, Math.max(0, v));
 
     const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
         e.currentTarget.setPointerCapture(e.pointerId);
@@ -61,7 +70,7 @@ export default function DirectionsSheet({
         const { moved } = drag.current;
         drag.current = null;
         setDragOffset(null);
-        onOpenChange(moved ? offset <= MAX_OFFSET / 2 : !open);
+        onOpenChange(moved ? offset <= maxOffset / 2 : !open);
     };
 
     const chooseTransit = (mode: Mode) => {
@@ -71,15 +80,15 @@ export default function DirectionsSheet({
 
     return (
         <div
-            className="aero-glass absolute inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] md:bottom-0 z-50 rounded-t-3xl border-b-0"
+            className="aero-glass absolute flex flex-col inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] md:bottom-0 z-50 rounded-t-3xl border-b-0"
             style={{
-                height: SHEET_HEIGHT,
+                height: sheetHeight,
                 transform: `translateY(${offset}px)`,
-                transition: dragging ? "none" : "transform 220ms ease-out",
+                transition: dragging ? "none" : "transform 220ms ease-out, height 220ms ease-out",
             }}
         >
             <div
-                className="cursor-grab touch-none select-none pb-2 pt-2 active:cursor-grabbing"
+                className="shrink-0 cursor-grab touch-none select-none pb-2 pt-2 active:cursor-grabbing"
                 onPointerDown={onPointerDown}
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
@@ -91,6 +100,9 @@ export default function DirectionsSheet({
                 </h2>
             </div>
 
+            {preview ? (
+                <div className="min-h-0 flex-1 px-4 pb-4 pt-1">{preview}</div>
+            ) : (
             <div className="px-4 pt-2">
                 <button
                     type="button"
@@ -141,6 +153,7 @@ export default function DirectionsSheet({
                     ))}
                 </div>
             </div>
+            )}
         </div>
     );
 }

@@ -2,6 +2,8 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useImperativeHandle, useRef } from "react";
 import type { RouteOption } from "@/types/route";
+import type { Coordinate } from "@/types/navigation";
+import { syncNavRoute, removeNavRoute } from "@/lib/navRouteLayer";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_KEY;
 
@@ -9,12 +11,26 @@ export type MapHandle = {
   // fly to a place and drop (or move) the single destination marker
   showPlace: (place: { longitude: number; latitude: number }) => void;
   clearPlace: () => void;
+  // the underlying map, for camera control and markers; null before it exists
+  getMap: () => mapboxgl.Map | null;
+  fitToCoordinates: (coords: Coordinate[], bottomPadding?: number) => void;
+  flyToPoint: (point: Coordinate, zoom?: number) => void;
+};
+
+export type UserLocationUpdate = {
+  longitude: number;
+  latitude: number;
+  // degrees clockwise from north, null when unavailable
+  heading: number | null;
 };
 
 type Props = {
   ref?: React.Ref<MapHandle>;
   onMapClick?: () => void;
-  onUserLocation?: (location: { longitude: number; latitude: number }) => void;
+  onUserLocation?: (location: UserLocationUpdate) => void;
+  // where the map starts instead of the default view (read once, at creation)
+  initialCenter?: { longitude: number; latitude: number } | null;
+  navRoute?: Coordinate[] | null;
   routes?: RouteOption[];
   selectedRouteId?: string | null;
 };
@@ -31,14 +47,16 @@ function createMarkerElement() {
   return el;
 }
 
-export default function InteractiveMap({ ref, onMapClick, onUserLocation, routes = [], selectedRouteId = null }: Props) {
+export default function InteractiveMap({ ref, onMapClick, onUserLocation, initialCenter = null, navRoute = null, routes = [], selectedRouteId = null }: Props) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const onMapClickRef = useRef(onMapClick);
   const onUserLocationRef = useRef(onUserLocation);
   const loadedRef = useRef(false);
+  const initialCenterRef = useRef(initialCenter);
   const routesRef = useRef({ routes, selectedRouteId });
+  const navRouteRef = useRef(navRoute);
 
   const drawRoutes = () => {
     const map = mapRef.current;
@@ -88,11 +106,27 @@ export default function InteractiveMap({ ref, onMapClick, onUserLocation, routes
       markerRef.current = new mapboxgl.Marker({ element: createMarkerElement() })
         .setLngLat([longitude, latitude])
         .addTo(map);
-      map.flyTo({ center: [longitude, latitude], zoom: 15 });
+      // clear any padding left over from fitting a route so the place lands mid-screen
+      map.flyTo({ center: [longitude, latitude], zoom: 15, padding: { top: 0, bottom: 0, left: 0, right: 0 } });
     },
     clearPlace: () => {
       markerRef.current?.remove();
       markerRef.current = null;
+    },
+    getMap: () => mapRef.current,
+    fitToCoordinates: (coords, bottomPadding) => {
+      const map = mapRef.current;
+      if (!map || coords.length === 0) return;
+      const bounds = new mapboxgl.LngLatBounds();
+      coords.forEach((c) => bounds.extend(c));
+      map.fitBounds(bounds, {
+        padding: { ...FIT_PADDING, bottom: bottomPadding ?? FIT_PADDING.bottom },
+        maxZoom: 17,
+        duration: 800,
+      });
+    },
+    flyToPoint: (point, zoom = 17) => {
+      mapRef.current?.flyTo({ center: point, zoom });
     },
   }));
 
@@ -102,8 +136,10 @@ export default function InteractiveMap({ ref, onMapClick, onUserLocation, routes
     const map = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/streets-v12",
-      center: [-74.5, 40],
-      zoom: 9,
+      center: initialCenterRef.current
+        ? [initialCenterRef.current.longitude, initialCenterRef.current.latitude]
+        : [-74.5, 40],
+      zoom: initialCenterRef.current ? 14 : 9,
       attributionControl: false,
       logoPosition: "bottom-right",
     });
@@ -119,19 +155,32 @@ export default function InteractiveMap({ ref, onMapClick, onUserLocation, routes
     });
 
     map.on("click", () => onMapClickRef.current?.());
-    geolocate.on("geolocate", (e: GeolocationPosition) =>
-      onUserLocationRef.current?.({ longitude: e.coords.longitude, latitude: e.coords.latitude }),
-    );
+    geolocate.on("geolocate", (e: GeolocationPosition) => {
+      const { heading } = e.coords;
+      onUserLocationRef.current?.({
+        longitude: e.coords.longitude,
+        latitude: e.coords.latitude,
+        heading: heading !== null && Number.isFinite(heading) ? heading : null,
+      });
+    });
+    // sources and layers are lost when the style reloads, so draw them again
+    map.on("style.load", () => {
+      if (!loadedRef.current) return;
+      drawRoutes();
+      syncNavRoute(map, navRouteRef.current);
+    });
     map.addControl(geolocate, "bottom-right");
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-right");
 
     map.on("load", () => {
       loadedRef.current = true;
       drawRoutes();
+      syncNavRoute(map, navRouteRef.current);
       geolocate.trigger();
     });
 
     return () => {
+      removeNavRoute(map);
       markerRef.current?.remove();
       markerRef.current = null;
       loadedRef.current = false;
@@ -145,6 +194,12 @@ export default function InteractiveMap({ ref, onMapClick, onUserLocation, routes
     routesRef.current = { routes, selectedRouteId };
     drawRoutes();
   }, [routes, selectedRouteId]);
+
+  useEffect(() => {
+    navRouteRef.current = navRoute;
+    const map = mapRef.current;
+    if (map && loadedRef.current) syncNavRoute(map, navRoute);
+  }, [navRoute]);
 
   // frame all routes whenever a new set arrives
   useEffect(() => {
