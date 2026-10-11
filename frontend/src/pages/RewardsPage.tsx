@@ -2,20 +2,17 @@ import "./RewardsPage.css";
 import { useAppTheme } from "@/context/ThemeContext";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, Gift, Leaf, LockKeyhole, RefreshCw, ScrollText, Sparkles, Trophy } from "lucide-react";
+import { Check, Gift, LockKeyhole, RefreshCw, Sparkles, Trophy } from "lucide-react";
 import AeroWindow from "@/components/layout/AeroWindow";
 import CosmeticBadge from "@/components/rewards/CosmeticBadge";
 import { useAuth } from "@/hooks/useAuth";
-import { getRewards, getLedger } from "@/services/rewardsService";
-import type { Rewards, Ledger } from "@/services/rewardsService";
+import { getRewards } from "@/services/rewardsService";
+import type { Rewards } from "@/services/rewardsService";
 
 function AccountRewards() {
     const [data, setData] = useState<Rewards | null>(null);
-    const [ledger, setLedger] = useState<Ledger | null>(null);
-    const [page, setPage] = useState(0);
     const [retry, setRetry] = useState(0);
     const [error, setError] = useState<string | null>(null);
-    const [ledgerError, setLedgerError] = useState<string | null>(null);
     const { theme: active, equip, updateCosmetics } = useAppTheme();
     const [notice, setNotice] = useState("");
 
@@ -26,14 +23,7 @@ function AccountRewards() {
         }).catch(() => { if (!abort.signal.aborted) setError("Couldn't load your rewards. Please try again."); });
         return () => abort.abort();
     }, [retry, updateCosmetics]);
-    useEffect(() => {
-        const abort = new AbortController();
-        void getLedger(page, abort.signal).then((result) => {
-            if (!abort.signal.aborted) { setLedger(result); setLedgerError(null); }
-        }).catch(() => { if (!abort.signal.aborted) setLedgerError("Couldn't load your EcoPoints ledger."); });
-        return () => abort.abort();
-    }, [page, retry]);
-    const refresh = () => { setError(null); setLedgerError(null); setData(null); setLedger(null); setRetry((r) => r + 1); };
+    const refresh = () => { setError(null); setData(null); setRetry((r) => r + 1); };
 
     return <div className="contents" data-rewards-theme={active}>
         <AeroWindow title="EcoQuest • Rewards center" Icon={Gift} as="h1" className="rewards-hero">
