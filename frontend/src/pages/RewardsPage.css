@@ -175,6 +175,3 @@
   border-color: var(--reward-accent);
   background: linear-gradient(white, var(--reward-soft) 49%, var(--reward-mid) 50%, var(--reward-soft));
 }
-@media (max-width: 640px) {
-  .rewards-page:has([data-rewards-theme="sprout"], [data-rewards-theme="ocean"], [data-rewards-theme="sunset"], [data-rewards-theme="aurora"]) { background-attachment: scroll; background-size: cover; background-repeat: no-repeat; background-position: center top; }
-}
