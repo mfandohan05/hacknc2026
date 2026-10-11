@@ -55,7 +55,7 @@ function AccountRewards() {
         </AeroWindow>
         {data && <>
             <AeroWindow title="Achievement garden" Icon={Trophy}>
-                <p className="mb-4 text-sm text-slate-600">{data.achievements.filter((a) => a.unlocked).length} of {data.achievements.length} unlocked. Milestones celebrate your progress without spending points.</p>
+                <p className="mb-4 text-sm text-slate-600">{data.achievements.filter((a) => a.unlocked).length} of {data.achievements.length} unlocked. Milestones celebrate your progress.</p>
                 <div className="grid gap-3 sm:grid-cols-2">{data.achievements.map((a) => <article key={a.id} className={`rewards-achievement ${a.unlocked ? "is-unlocked" : "is-locked"}`}>
                     <div className="flex items-center gap-2"><span className="rewards-medallion">{a.unlocked ? <Trophy size={22} /> : <LockKeyhole size={18} />}</span><h2 className="font-semibold">{a.name}</h2></div>
                     <p className="mt-2 text-sm text-slate-600">{a.description}</p>
@@ -64,7 +64,7 @@ function AccountRewards() {
                 </article>)}</div>
             </AeroWindow>
             <AeroWindow title="Your collection • Cosmetic unlocks" Icon={Sparkles}>
-                <p className="mb-4 text-sm text-slate-600">Equip a theme to change colors across the app, plus your profile badge. Free to equip; saved on this browser.</p>
+                <p className="mb-4 text-sm text-slate-600">Equip a theme to change colors across the app, plus your profile badge.</p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{data.cosmetics.map((c) => <article key={c.id} className={`rewards-cosmetic ${active === c.id ? "is-equipped" : ""} ${!c.unlocked ? "is-locked" : ""}`}>
                     <div className="rewards-badge-plinth"><CosmeticBadge id={c.id} large /></div><h2 className="font-semibold">{c.name}</h2><p className="text-xs text-slate-600">{c.description}</p>
                     <button disabled={!c.unlocked || active === c.id} className="aero-orb mt-auto flex min-h-10 items-center justify-center gap-1 rounded-full px-3 text-xs font-semibold disabled:opacity-65" onClick={() => {
@@ -73,18 +73,6 @@ function AccountRewards() {
                 </article>)}</div>{notice && <p role="status" className="mt-3 text-sm">{notice}</p>}
             </AeroWindow>
         </>}
-        <AeroWindow title="EcoPoints ledger" Icon={ScrollText}>
-            <p className="mb-4 text-sm text-slate-600">Your account's point transactions, newest first.</p>
-            {ledgerError ? <p role="alert">{ledgerError} <button className="underline" onClick={refresh}>Retry</button></p>
-                : !ledger ? <p role="status">Loading transactions…</p>
-                : <>{ledger.content.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 p-6 text-center"><Leaf className="mx-auto mb-2 text-emerald-700" /><p>No EcoPoints transactions yet.</p><Link to="/explore" className="mt-2 inline-block font-semibold underline">Plan your first trip</Link></div>
-                    : <ul className="rewards-ledger">{ledger.content.map((entry) => <li key={entry.id} className="rewards-ledger-row">
-                        <div><p className="font-medium">{entry.reason === "TRIP_COMPLETION" ? "Trip completed" : entry.reason.replaceAll("_", " ").toLowerCase()}</p><time dateTime={entry.createdAt} className="text-xs text-slate-600">{new Date(entry.createdAt).toLocaleString()}</time></div>
-                        <span className={`font-bold tabular-nums ${entry.points >= 0 ? "text-emerald-800" : "text-rose-700"}`}>{entry.points > 0 ? "+" : ""}{entry.points.toLocaleString()} <span className="text-xs font-normal">EP</span></span>
-                    </li>)}</ul>}
-                    <div className="mt-4 flex items-center justify-between gap-3 text-sm"><button disabled={page === 0} className="aero-orb rounded-full px-4 py-2 disabled:opacity-40" onClick={() => { setLedger(null); setPage((p) => p - 1); }}>Previous</button><span>Page {ledger.page + 1} · {ledger.totalElements} entries</span><button disabled={!ledger.hasNext} className="aero-orb rounded-full px-4 py-2 disabled:opacity-40" onClick={() => { setLedger(null); setPage((p) => p + 1); }}>Next</button></div>
-                </>}
-        </AeroWindow>
     </div>;
 }
 
