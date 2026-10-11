@@ -84,7 +84,7 @@ export default function DirectionsSheet({
             style={{
                 height: sheetHeight,
                 transform: `translateY(${offset}px)`,
-                transition: dragging ? "none" : "transform 220ms ease-out",
+                transition: dragging ? "none" : "transform 220ms ease-out, height 220ms ease-out",
             }}
         >
             <div

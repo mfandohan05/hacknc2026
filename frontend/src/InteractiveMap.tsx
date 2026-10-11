@@ -13,7 +13,7 @@ export type MapHandle = {
   clearPlace: () => void;
   // the underlying map, for camera control and markers; null before it exists
   getMap: () => mapboxgl.Map | null;
-  fitToCoordinates: (coords: Coordinate[]) => void;
+  fitToCoordinates: (coords: Coordinate[], bottomPadding?: number) => void;
   flyToPoint: (point: Coordinate, zoom?: number) => void;
 };
 
@@ -28,6 +28,8 @@ type Props = {
   ref?: React.Ref<MapHandle>;
   onMapClick?: () => void;
   onUserLocation?: (location: UserLocationUpdate) => void;
+  // where the map starts instead of the default view (read once, at creation)
+  initialCenter?: { longitude: number; latitude: number } | null;
   navRoute?: Coordinate[] | null;
   routes?: RouteOption[];
   selectedRouteId?: string | null;
@@ -45,13 +47,14 @@ function createMarkerElement() {
   return el;
 }
 
-export default function InteractiveMap({ ref, onMapClick, onUserLocation, navRoute = null, routes = [], selectedRouteId = null }: Props) {
+export default function InteractiveMap({ ref, onMapClick, onUserLocation, initialCenter = null, navRoute = null, routes = [], selectedRouteId = null }: Props) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const onMapClickRef = useRef(onMapClick);
   const onUserLocationRef = useRef(onUserLocation);
   const loadedRef = useRef(false);
+  const initialCenterRef = useRef(initialCenter);
   const routesRef = useRef({ routes, selectedRouteId });
   const navRouteRef = useRef(navRoute);
 
@@ -111,12 +114,16 @@ export default function InteractiveMap({ ref, onMapClick, onUserLocation, navRou
       markerRef.current = null;
     },
     getMap: () => mapRef.current,
-    fitToCoordinates: (coords) => {
+    fitToCoordinates: (coords, bottomPadding) => {
       const map = mapRef.current;
       if (!map || coords.length === 0) return;
       const bounds = new mapboxgl.LngLatBounds();
       coords.forEach((c) => bounds.extend(c));
-      map.fitBounds(bounds, { padding: FIT_PADDING, maxZoom: 17, duration: 800 });
+      map.fitBounds(bounds, {
+        padding: { ...FIT_PADDING, bottom: bottomPadding ?? FIT_PADDING.bottom },
+        maxZoom: 17,
+        duration: 800,
+      });
     },
     flyToPoint: (point, zoom = 17) => {
       mapRef.current?.flyTo({ center: point, zoom });
@@ -129,8 +136,10 @@ export default function InteractiveMap({ ref, onMapClick, onUserLocation, navRou
     const map = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/streets-v12",
-      center: [-74.5, 40],
-      zoom: 9,
+      center: initialCenterRef.current
+        ? [initialCenterRef.current.longitude, initialCenterRef.current.latitude]
+        : [-74.5, 40],
+      zoom: initialCenterRef.current ? 14 : 9,
       attributionControl: false,
       logoPosition: "bottom-right",
     });

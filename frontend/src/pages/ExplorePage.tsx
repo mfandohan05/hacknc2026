@@ -17,6 +17,7 @@ import { useNavigation } from "@/hooks/useNavigation";
 import { useNavigationCamera } from "@/hooks/useNavigationCamera";
 import { useRouteComparison } from "@/hooks/useRouteComparison";
 import { useWakeLock } from "@/hooks/useWakeLock";
+import { loadLastLocation, saveLastLocation } from "@/lib/locationStorage";
 import { DEFAULT_WEIGHTS, recommendedRouteId } from "@/lib/routeScoring";
 import type { PreferenceWeights } from "@/lib/routeScoring";
 import type { SelectedPlace } from "@/services/searchService";
@@ -44,6 +45,9 @@ const PROFILE_LABEL: Record<NavProfile, string> = {
 // ignore GPS updates smaller than this (about 50 m) so route requests are not refired by jitter
 const LOCATION_JITTER_DEG = 0.0005;
 
+// room for the collapsed drawer (peek) and the tab bar below a fitted route
+const PEEK_FIT_BOTTOM_PADDING = 290;
+
 const NO_ROUTES: RouteOption[] = [];
 
 function ExplorePage() {
@@ -56,7 +60,9 @@ function ExplorePage() {
     const [optionsOpen, setOptionsOpen] = useState(false);
     const [selectedMode, setSelectedMode] = useState<RouteMode | null>(null);
     const [weights, setWeights] = useState<PreferenceWeights>(DEFAULT_WEIGHTS);
-    const [userLocation, setUserLocation] = useState<{ longitude: number; latitude: number } | null>(null);
+    const [userLocation, setUserLocation] = useState<{ longitude: number; latitude: number } | null>(loadLastLocation);
+    // the map is recreated on every visit to this tab, so it starts from the last known location
+    const [initialCenter] = useState(userLocation);
     const mapRef = useRef<MapHandle>(null);
 
     const nav = useNavigation();
@@ -88,13 +94,15 @@ function ExplorePage() {
     const selectedRouteId = routes.find((r) => r.mode === selectedMode)?.routeId ?? recommendedId;
 
     const handleUserLocation = (loc: UserLocationUpdate) => {
-        setUserLocation((prev) =>
-            prev &&
-            Math.abs(prev.longitude - loc.longitude) < LOCATION_JITTER_DEG &&
-            Math.abs(prev.latitude - loc.latitude) < LOCATION_JITTER_DEG
-                ? prev
-                : { longitude: loc.longitude, latitude: loc.latitude },
-        );
+        const moved =
+            !userLocation ||
+            Math.abs(userLocation.longitude - loc.longitude) >= LOCATION_JITTER_DEG ||
+            Math.abs(userLocation.latitude - loc.latitude) >= LOCATION_JITTER_DEG;
+        if (moved) {
+            const next = { longitude: loc.longitude, latitude: loc.latitude };
+            setUserLocation(next);
+            saveLastLocation(next);
+        }
         nav.feedPosition({ lng: loc.longitude, lat: loc.latitude, heading: loc.heading });
     };
 
@@ -102,7 +110,8 @@ function ExplorePage() {
         setDestination(place);
         mapRef.current?.showPlace(place);
         setSelectedMode(null);
-        setSheetOpen(true);
+        // stays down at its peek (showing the destination and "See routes") so it never covers the route on the map
+        setSheetOpen(false);
     };
 
     const handleScreenDone = (result: DirectionsResult) => {
@@ -113,16 +122,17 @@ function ExplorePage() {
         setScreenMode(result.mode);
         setSelectedMode(TAB_TO_ROUTE_MODE[result.mode] ?? null);
         setScreenOpen(false);
-        if (result.destination) setSheetOpen(true);
+        setSheetOpen(false);
     };
 
-    // from the options page: load the turn-by-turn route and preview it in the drawer
     const handleStartTrip = async (route: RouteOption) => {
         if (!origin || !destinationPoint) return;
         setOptionsOpen(false);
-        setSheetOpen(true);
+        // collapse the drawer to its peek right away, so the preview content never pushes it upward
+        setSheetOpen(false);
         const result = await nav.preview(ROUTE_MODE_TO_PROFILE[route.mode], origin, destinationPoint);
-        if (result) mapRef.current?.fitToCoordinates(result.geometry.coordinates);
+        if (!result) return;
+        mapRef.current?.fitToCoordinates(result.geometry.coordinates, PEEK_FIT_BOTTOM_PADDING);
     };
 
     const handleTripComplete = (trip: { isDemo: boolean }) => {
@@ -141,6 +151,7 @@ function ExplorePage() {
         <div className="relative h-screen w-full overflow-hidden">
             <InteractiveMap
                 ref={mapRef}
+                initialCenter={initialCenter}
                 onMapClick={() => setSheetOpen(false)}
                 onUserLocation={handleUserLocation}
                 routes={nav.phase === "idle" ? routes : NO_ROUTES}
