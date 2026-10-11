@@ -8,6 +8,7 @@ import DirectionsScreen from "../DirectionsScreen";
 import type { DirectionsResult } from "../DirectionsScreen";
 import RouteOptionsScreen from "@/components/routes/RouteOptionsScreen";
 import TransitScreen from "@/components/routes/TransitScreen";
+import { useTransitRoutes } from "@/hooks/useTransitRoutes";
 import type { TransitPreference } from "@/services/transitService";
 import DirectionsPreviewPanel from "@/components/navigation/DirectionsPreviewPanel";
 import NavBanner from "@/components/navigation/NavBanner";
@@ -98,6 +99,8 @@ function ExplorePage() {
     const destinationPoint = destination ? { lng: destination.longitude, lat: destination.latitude } : null;
     const { data, loading, error } = useRouteComparison(origin, destinationPoint);
     const routes = useMemo(() => data?.routes ?? NO_ROUTES, [data]);
+    // public transport is only looked up while the route options are on screen
+    const transit = useTransitRoutes(origin, destinationPoint, optionsOpen);
 
     // recommendation re-ranks live as the sliders move
     const recommendedId = useMemo(() => recommendedRouteId(routes, weights), [routes, weights]);
@@ -328,7 +331,8 @@ function ExplorePage() {
                     onSelectRoute={(id) => setSelectedMode(routes.find((r) => r.routeId === id)?.mode ?? null)}
                     onStartTrip={(route) => void handleStartTrip(route)}
                     onBack={() => setOptionsOpen(false)}
-                    onTransit={() => { setOptionsOpen(false); setTransitPreference("ALL"); }}
+                    onTransit={() => setTransitPreference("ALL")}
+                    transit={transit}
                 />
             )}
             {!navActive && screenOpen && (
