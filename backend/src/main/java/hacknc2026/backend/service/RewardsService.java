@@ -42,10 +42,10 @@ public class RewardsService {
             achievement("five-hundred", "Making a difference", "Earn 500 EcoPoints.", earned, 500),
             achievement("thousand", "Eco champion", "Earn 1,000 EcoPoints.", earned, 1000)),
         List.of(
-            cosmetic("sprout", "Sprout", "A fresh green explorer badge.", 1, level),
+            cosmetic("sprout", "Sprouty", "Your little green companion for every journey.", 1, level),
             cosmetic("ocean", "Ocean", "A cool blue badge for your next adventure.", 2, level),
-            cosmetic("sunset", "Sunset", "A warm amber glow for a regular explorer.", 3, level),
-            cosmetic("aurora", "Aurora", "An iridescent violet badge for an Eco champion.", 5, level)));
+            cosmetic("sunset", "Sunset", "A bright weather badge for a regular explorer.", 3, level),
+            cosmetic("aurora", "Fauna", "A glossy ladybug for an Eco champion.", 5, level)));
   }
 
   private AchievementProgress achievement(String id, String name, String description, long value, long target) {
