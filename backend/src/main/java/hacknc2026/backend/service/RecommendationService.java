@@ -10,8 +10,6 @@ import java.util.Comparator;
 @Service
 public class RecommendationService {
 
-    // Mirrors frontend/src/lib/routeScoring.ts's comfortScore so client and server
-    // agree on the same heuristic once the frontend calls this endpoint directly.
     private static final double COMFORT_FLOOR = 0.1;
 
     public record Weights(double environment, double time, double cost, double comfort) {
@@ -66,8 +64,6 @@ public class RecommendationService {
         return 100.0 * (max - value) / (max - min);
     }
 
-    // No data source for comfort yet, so it's a mode-based heuristic: a base value
-    // minus an exertion penalty per km, same formula and constants as the frontend.
     private double comfortScore(RouteOption option) {
         double base = switch (option.mode()) {
             case DRIVING -> 0.9;

@@ -100,7 +100,6 @@ public class TripService {
         }
         requireStatus(trip, TripStatus.IN_PROGRESS);
         trip.setStatus(TripStatus.COMPLETED);
-        // Match database timestamp precision so retries return the same timestamp.
         trip.setCompletedAt(Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS));
         pointTransactionService.awardTripCompletion(userId, tripId);
         return TripResponse.from(trip);
@@ -116,7 +115,6 @@ public class TripService {
         }
         trip.setStatus(TripStatus.CANCELLED);
         TripResponse response = TripResponse.from(trip);
-        // Keep the cancellation response contract, but do not retain abandoned trips.
         tripRepository.delete(trip);
         return response;
     }

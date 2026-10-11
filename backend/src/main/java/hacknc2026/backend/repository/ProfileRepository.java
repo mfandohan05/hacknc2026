@@ -15,11 +15,6 @@ public interface ProfileRepository extends JpaRepository<Profile, UUID> {
 
   boolean existsByUsername(String username);
 
-  // Atomic DB-side increment, so this is safe under concurrent awards for the same
-  // user without needing a pessimistic lock on the profile row.
-  // clearAutomatically: without it, a findById() later in the same transaction can
-  // return a stale cached Profile instead of this update's value.
-  // Flush pending ledger inserts and trip changes before clearing the context.
   @Modifying(clearAutomatically = true, flushAutomatically = true)
   @Query("UPDATE Profile p SET p.totalPoints = COALESCE(p.totalPoints, 0) + :points WHERE p.id = :profileId")
   void incrementTotalPoints(@Param("profileId") UUID profileId, @Param("points") long points);

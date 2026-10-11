@@ -17,10 +17,8 @@ public class LeaderboardService {
 
   public List<LeaderboardEntry> getLeaderboard() {
     List<Profile> profiles =
-        profileRepository.findAll(); // Get all because who cares about optimization ;)
+        profileRepository.findAll();
 
-    // total_points has no DB default, so a row inserted outside the app (e.g. directly
-    // in the Supabase dashboard) can have it null — treat that as 0 rather than NPE.
     profiles.sort(Comparator.comparingLong((Profile p) -> pointsOrZero(p)).reversed());
 
     List<LeaderboardEntry> leaderboard = new ArrayList<>();

@@ -41,8 +41,6 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-// Real filters, controllers, services, repositories and transactions. Only the
-// external Mapbox response and signing authority are replaced for local tests.
 @SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:endpoints;DB_CLOSE_DELAY=-1;MODE=PostgreSQL")
 @Import(ApiEndpointTests.TokenConfig.class)
 class ApiEndpointTests {
@@ -287,7 +285,6 @@ class ApiEndpointTests {
     void failedLedgerInsertRollsBackTripCompletionAndProfilePoints() throws Exception {
         createProfile(token, "rollback");
         String id = startTrip(token);
-        // Force a database failure during award insertion, after completion began.
         jdbc.execute("ALTER TABLE public.point_transactions ADD CONSTRAINT test_reject_award CHECK (points < 0)");
         try {
             assertThrows(jakarta.servlet.ServletException.class,
