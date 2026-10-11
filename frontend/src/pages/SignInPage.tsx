@@ -93,7 +93,7 @@ function SignInPage() {
     const signingUp = mode === "signup";
 
     return (
-        <main className="aero-bg relative flex h-full items-center justify-center px-4 py-6 pt-[calc(env(safe-area-inset-top)+1.5rem)]">
+        <main className="aero-bg relative flex h-full items-center justify-center px-4 py-6 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+1.5rem)] md:pb-6">
             <span aria-hidden className="aero-bubble -right-10 top-20 size-40" />
             <span aria-hidden className="aero-bubble left-4 top-1/3 size-16" />
             <span aria-hidden className="aero-bubble bottom-24 right-6 size-24" />
