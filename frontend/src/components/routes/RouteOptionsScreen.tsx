@@ -21,6 +21,8 @@ type Props = {
     onBack: () => void;
     // opens the public transport screen (full itineraries, preferences, departure time)
     onTransit: () => void;
+    // starts turn-by-turn navigation along one of the public transport itineraries
+    onNavigateTransit: (itinerary: TransitItinerary) => void;
     transit: { routes: TransitItinerary[]; loading: boolean; error: string | null };
 };
 
@@ -41,6 +43,7 @@ function RouteOptionsScreen({
     onStartTrip,
     onBack,
     onTransit,
+    onNavigateTransit,
     transit,
 }: Props) {
     const selectedRoute = routes.find((r) => r.routeId === selectedRouteId) ?? null;
@@ -70,7 +73,12 @@ function RouteOptionsScreen({
                 <Note>No public transport found for this trip right now.</Note>
             )}
             {transit.routes.slice(0, TRANSIT_PREVIEW_COUNT).map((itinerary) => (
-                <TransitCard key={itinerary.id} itinerary={itinerary} onSelect={onTransit} />
+                <TransitCard
+                    key={itinerary.id}
+                    itinerary={itinerary}
+                    onSelect={onTransit}
+                    onNavigate={() => onNavigateTransit(itinerary)}
+                />
             ))}
             <p className="px-1 text-xs text-[#17334A]/75">Public transport trips don't earn EcoPoints.</p>
         </section>

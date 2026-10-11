@@ -51,6 +51,8 @@ export type NavigationState = {
     rerouting: boolean;
     rerouteError: string | null;
     isDemo: boolean;
+    // a public transport itinerary rather than a Mapbox route: never rerouted, no server trip
+    isTransit: boolean;
     // where the trip is heading, kept so a trip can be restored after a refresh
     destination: LngLat | null;
     // meters travelled along the route by the demo simulator
@@ -79,6 +81,7 @@ const INITIAL: NavigationState = {
     rerouting: false,
     rerouteError: null,
     isDemo: false,
+    isTransit: false,
     destination: null,
     demoDistance: 0,
     demoSpeed: 1,
@@ -97,6 +100,7 @@ type Core = {
     offCount: number;
     spoken: Set<string>;
     isDemo: boolean;
+    transit: boolean;
     demoDistance: number;
     demoSpeed: DemoSpeed;
     muted: boolean;
@@ -121,6 +125,7 @@ function emptyCore(): Core {
         offCount: 0,
         spoken: new Set(),
         isDemo: false,
+        transit: false,
         demoDistance: 0,
         demoSpeed: 1,
         muted: false,
@@ -143,6 +148,7 @@ function coreFromSession(session: NavSession): Core {
         destination: session.destination,
         stepIndex: Math.min(Math.max(0, session.stepIndex), Math.max(0, info.steps.length - 1)),
         isDemo: session.isDemo,
+        transit: session.transit ?? false,
         demoDistance: session.demoDistance,
         muted: session.muted,
         lastPosition: session.lastPosition
@@ -176,6 +182,7 @@ function viewFromCore(core: Core): NavigationState {
         remainingDuration: p.remainingDuration,
         progress: p.fraction,
         isDemo: core.isDemo,
+        isTransit: core.transit,
         destination: core.destination,
         demoDistance: core.demoDistance,
         muted: core.muted,
@@ -271,7 +278,8 @@ export function useNavigation(initialSession: NavSession | null = null) {
 
             // off-route detection: a few consecutive fixes, then one debounced reroute
             c.offCount = located.offRoute > OFF_ROUTE_METERS ? c.offCount + 1 : 0;
-            const offRoute = c.offCount >= OFF_ROUTE_FIXES;
+            // a transit itinerary is followed as is; the route is never swapped for a driving one
+            const offRoute = !c.transit && c.offCount >= OFF_ROUTE_FIXES;
             if (offRoute && !c.rerouting && Date.now() - c.lastRerouteAt > REROUTE_COOLDOWN_MS) {
                 void reroute({ lng: pos.lng, lat: pos.lat });
             }
@@ -318,6 +326,7 @@ export function useNavigation(initialSession: NavSession | null = null) {
             c.phase = "idle";
             c.profile = profile;
             c.destination = to;
+            c.transit = false;
             clearNavSession();
             patch({ ...INITIAL, muted: c.muted, loading: true, profile, destination: to });
             try {
@@ -345,6 +354,37 @@ export function useNavigation(initialSession: NavSession | null = null) {
             }
         },
         [applyRoute, patch],
+    );
+
+    // Previews a public transport itinerary that has already been turned into a route.
+    const previewTransit = useCallback(
+        (route: DirectionsRoute, destination: LngLat) => {
+            const c = core.current;
+            c.controller?.abort();
+            c.controller = null;
+            c.phase = "idle";
+            c.profile = "walking";
+            c.destination = destination;
+            c.transit = true;
+            clearNavSession();
+            const info = applyRoute(route);
+            c.phase = "previewing";
+            const p = progressAt(info, 0, 0);
+            setView({
+                ...INITIAL,
+                muted: c.muted,
+                profile: "walking",
+                destination,
+                isTransit: true,
+                phase: "previewing",
+                route,
+                steps: info.steps,
+                distanceToManeuver: p.distanceToManeuver,
+                remainingDistance: p.remainingDistance,
+                remainingDuration: p.remainingDuration,
+            });
+        },
+        [applyRoute],
     );
 
     const start = useCallback(
@@ -395,6 +435,7 @@ export function useNavigation(initialSession: NavSession | null = null) {
         c.route = null;
         c.info = null;
         c.rerouting = false;
+        c.transit = false;
         c.offCount = 0;
         c.spoken = new Set();
         cancelSpeech();
@@ -467,6 +508,7 @@ export function useNavigation(initialSession: NavSession | null = null) {
         ...view,
         banner,
         preview,
+        previewTransit,
         start,
         feedPosition,
         exit,

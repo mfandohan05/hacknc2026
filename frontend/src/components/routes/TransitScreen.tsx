@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Bus, Footprints, Loader2 } from "lucide-react";
+import { ArrowLeft, Bus, Footprints, Loader2, Navigation } from "lucide-react";
 import { ApiError } from "@/services/api";
 import { formatDistance } from "@/lib/formatRoute";
 import { getTransitRoutes } from "@/services/transitService";
-import type { TransitPreference, TransitResponse } from "@/services/transitService";
+import type { TransitItinerary, TransitPreference, TransitResponse } from "@/services/transitService";
 import type { LngLat } from "@/types/route";
 
 type Props = {
@@ -13,13 +13,15 @@ type Props = {
     initialPreference: TransitPreference;
     onBack: () => void;
     onEditRoute: () => void;
+    // starts turn-by-turn navigation along an itinerary
+    onNavigate: (itinerary: TransitItinerary) => void;
 };
 
 function time(value: string | null) {
     return value ? new Date(value).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "";
 }
 
-export default function TransitScreen({ origin, destination, destinationName, initialPreference, onBack, onEditRoute }: Props) {
+export default function TransitScreen({ origin, destination, destinationName, initialPreference, onBack, onEditRoute, onNavigate }: Props) {
     const [preference, setPreference] = useState(initialPreference);
     const [departure, setDeparture] = useState("");
     const [queryDeparture, setQueryDeparture] = useState<string | undefined>();
@@ -198,6 +200,14 @@ export default function TransitScreen({ origin, destination, destinationName, in
                                             </li>
                                         ))}
                                     </ol>
+                                    <button
+                                        type="button"
+                                        onClick={() => onNavigate(route)}
+                                        className="aero-gel flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold"
+                                    >
+                                        <Navigation className="size-4" aria-hidden="true" />
+                                        Navigate this route
+                                    </button>
                                 </article>
                             ))}
 

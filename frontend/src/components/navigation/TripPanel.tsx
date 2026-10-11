@@ -31,8 +31,7 @@ function TripPanel({
 
     return (
         <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-50 px-3 md:inset-x-auto md:bottom-4 md:left-4 md:w-[27rem]"
-            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)" }}
+            className="pointer-events-none absolute inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-50 px-3 pb-3 md:inset-x-auto md:bottom-4 md:left-4 md:w-[27rem] md:pb-0"
         >
             <div className="aero-glass pointer-events-auto mx-auto max-w-md rounded-2xl px-4 py-3 text-[#17334A]">
                 <div className="flex items-center gap-3">
