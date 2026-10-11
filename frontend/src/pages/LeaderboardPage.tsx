@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Crown, Medal, RefreshCw, Trophy } from "lucide-react";
 import AeroWindow from "@/components/layout/AeroWindow";
 import { apiJson } from "@/services/api";
@@ -28,48 +28,46 @@ function LeaderboardPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const loadLeaderboard = useCallback(async (signal?: AbortSignal) => {
-        try {
-            const data = await apiJson<unknown>("/api/v1/leaderboards", { signal });
-            if (signal?.aborted) return;
-            const entries = Array.isArray(data)
-                ? data
-                : (data as { leaderboard?: unknown }).leaderboard;
-
-            if (!Array.isArray(entries)) {
-                throw new Error("The leaderboard response was not a list.");
-            }
-
-            // Map the API field names to the fields used by the UI. The API already
-            // returns this list sorted, so keep its order unchanged.
-            setLeaderboard(
-                (entries as LeaderboardApiEntry[]).map(({ profileId, displayName, totalPoints, rank }) => ({
-                    id: profileId,
-                    username: displayName,
-                    points: totalPoints,
-                    rank,
-                })),
-            );
-        } catch (requestError) {
-            if (signal?.aborted) return;
-            if (requestError instanceof DOMException && requestError.name === "AbortError") return;
-            setError(requestError instanceof Error ? requestError.message : "Unable to load leaderboard.");
-        } finally {
-            if (!signal?.aborted) setLoading(false);
-        }
-    }, []);
+    // bumped by Refresh to fetch again
+    const [reloadKey, setReloadKey] = useState(0);
 
     useEffect(() => {
         const controller = new AbortController();
-        void loadLeaderboard(controller.signal);
+        const signal = controller.signal;
+
+        apiJson<unknown>("/api/v1/leaderboards", { signal })
+            .then((data) => {
+                if (signal.aborted) return;
+                const entries = Array.isArray(data) ? data : (data as { leaderboard?: unknown }).leaderboard;
+                if (!Array.isArray(entries)) throw new Error("The leaderboard response was not a list.");
+
+                // Map the API field names to the fields used by the UI. The API already
+                // returns this list sorted, so keep its order unchanged.
+                setLeaderboard(
+                    (entries as LeaderboardApiEntry[]).map(({ profileId, displayName, totalPoints, rank }) => ({
+                        id: profileId,
+                        username: displayName,
+                        points: totalPoints,
+                        rank,
+                    })),
+                );
+            })
+            .catch((requestError: unknown) => {
+                if (signal.aborted) return;
+                if (requestError instanceof DOMException && requestError.name === "AbortError") return;
+                setError(requestError instanceof Error ? requestError.message : "Unable to load leaderboard.");
+            })
+            .finally(() => {
+                if (!signal.aborted) setLoading(false);
+            });
 
         return () => controller.abort();
-    }, [loadLeaderboard]);
+    }, [reloadKey]);
 
     const reload = () => {
         setLoading(true);
         setError(null);
-        void loadLeaderboard();
+        setReloadKey((key) => key + 1);
     };
 
     // Explorer details-view columns

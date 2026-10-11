@@ -21,9 +21,9 @@ import { useNavigationCamera } from "@/hooks/useNavigationCamera";
 import { useRouteComparison } from "@/hooks/useRouteComparison";
 import { useAuth } from "@/hooks/useAuth";
 import { useWakeLock } from "@/hooks/useWakeLock";
-import { loadNavSession, saveNavSession } from "@/lib/navSession";
 import { runViewTransition } from "@/lib/viewTransition";
 import { loadLastLocation, saveLastLocation } from "@/lib/locationStorage";
+import { loadNavSession, saveNavSession } from "@/lib/navSession";
 import { DEFAULT_WEIGHTS, recommendedRouteId } from "@/lib/routeScoring";
 import type { PreferenceWeights } from "@/lib/routeScoring";
 import type { SelectedPlace } from "@/services/searchService";
@@ -42,6 +42,12 @@ const ROUTE_MODE_TO_PROFILE: Record<RouteMode, NavProfile> = {
     CAR: "driving",
     WALK: "walking",
     BIKE: "cycling",
+};
+
+const PROFILE_TO_ROUTE_MODE: Record<NavProfile, RouteMode> = {
+    driving: "CAR",
+    walking: "WALK",
+    cycling: "BIKE",
 };
 
 const PROFILE_LABEL: Record<NavProfile, string> = {
@@ -71,12 +77,24 @@ function ExplorePage() {
     const [initialCenter] = useState(userLocation);
     const mapRef = useRef<MapHandle>(null);
 
-    const nav = useNavigation();
+    // a trip that was in progress when the page was refreshed picks up where it left off
+    const [restoredSession] = useState(() => loadNavSession());
+    const nav = useNavigation(restoredSession);
+    const { phase, isDemo, exit, profile: navProfile } = nav;
     const { user } = useAuth();
     // the option the user picked on the comparison page; its estimates are saved with the trip
     const [previewOption, setPreviewOption] = useState<RouteOption | null>(null);
-    // resolves to the server trip id once /trips/start returns (null for guests, demos and failures)
-    const tripIdRef = useRef<Promise<string | null> | null>(null);
+    // Only a successfully started server trip can be completed.
+    const tripIdRef = useRef<string | null>(restoredSession?.tripId ?? null);
+    // the same id kept in state so it is saved with the navigation session
+    const [tripId, setTripId] = useState<string | null>(restoredSession?.tripId ?? null);
+    const sessionRef = useRef(new TripSession());
+    // which of the session's trips is the one being driven (kept alive when Explore unmounts mid-trip)
+    const activeKeyRef = useRef<string | undefined>(undefined);
+    const operationRef = useRef(false);
+    const cancelRequestedRef = useRef(false);
+    const [plannedRoutes, setPlannedRoutes] = useState<{ key: string; routes: RouteOption[] } | null>(null);
+    const [receipt, setReceipt] = useState<{ earned: number; balance: number } | null>(null);
     const [completing, setCompleting] = useState(false);
     const [tripError, setTripError] = useState<string | null>(null);
     const navigating = nav.phase === "navigating";
@@ -86,6 +104,11 @@ function ExplorePage() {
     const getMap = useCallback(() => mapRef.current?.getMap() ?? null, []);
     const { following, recenter } = useNavigationCamera({ getMap, active: navActive, position: nav.position });
     useWakeLock(navigating);
+
+    // a restored trip's server record is handed to the session so End and Complete still reach it
+    useEffect(() => {
+        if (restoredSession?.tripId) activeKeyRef.current = sessionRef.current.adopt(restoredSession.tripId);
+    }, [restoredSession]);
 
     // keep the trip saved while it is in progress so a refresh can resume it
     const { route: navRoute, destination: navDestination } = nav;
@@ -125,6 +148,30 @@ function ExplorePage() {
     const routes = useMemo(() => data?.routes ?? NO_ROUTES, [data]);
     // public transport is only looked up while the route options are on screen
     const transit = useTransitRoutes(origin, destinationPoint, optionsOpen);
+
+    const planningKey = optionsOpen && user && origin && destinationPoint && routes.length
+        ? JSON.stringify([origin, destinationPoint, routes]) : null;
+    useEffect(() => {
+        if (!planningKey) return;
+        let active = true;
+        const [from, to, options] = JSON.parse(planningKey) as [NonNullable<typeof origin>, NonNullable<typeof destinationPoint>, RouteOption[]];
+        const session = sessionRef.current;
+        void (async () => {
+            await session.cancelExcept();
+            if (!active) return;
+            const planned = await Promise.all(options.map(async (option) => {
+                await session.plan(from, to, option);
+                const points = await session.points(option.routeId);
+                return { ...option, tripPoints: pointsForMode(points, option.mode) };
+            }));
+            if (active) setPlannedRoutes({ key: planningKey, routes: planned });
+        })().catch((e: unknown) => {
+            if (active) setTripError(e instanceof Error ? e.message : "Couldn't plan your trip.");
+        });
+        return () => { active = false; };
+    }, [planningKey]);
+
+    const optionRoutes = plannedRoutes?.key === planningKey ? plannedRoutes.routes : null;
 
     // recommendation re-ranks live as the sliders move
     const recommendedId = useMemo(() => recommendedRouteId(routes, weights), [routes, weights]);
@@ -185,24 +232,28 @@ function ExplorePage() {
         operationRef.current = true;
         cancelRequestedRef.current = false;
         setTripError(null);
-        tripIdRef.current = null;
-        if (demo || !user || !previewOption || !nav.route || !origin || !destinationPoint) return;
-        tripIdRef.current = startTrip(origin, destinationPoint, previewOption, nav.route)
-            .then((trip) => {
-                setTripId(trip.id);
-                return trip.id;
-            })
-            .catch((e: unknown) => {
-                console.error("Could not start the trip on the server", e);
-                return null;
-            });
+        setReceipt(null);
+        try {
+            if (demo) await sessionRef.current.cancelExcept();
+            else if (user && previewOption) {
+                tripIdRef.current = await sessionRef.current.start(previewOption.routeId);
+                activeKeyRef.current = previewOption.routeId;
+                setTripId(tripIdRef.current);
+            }
+            if (!cancelRequestedRef.current) nav.start({ demo });
+        } catch (e) {
+            setTripError(e instanceof Error ? e.message : "Couldn't start your trip. Try again.");
+        } finally {
+            operationRef.current = false;
+            if (cancelRequestedRef.current) await handleEndNavigation();
+        }
     };
 
     const handleTripComplete = useCallback(async () => {
         if (operationRef.current || cancelRequestedRef.current || phase !== "arrived") return;
-        if (receipt || isDemo || !user) { exit(); return; }
+        if (receipt || isDemo || !user) { setTripId(null); exit(); return; }
         const id = tripIdRef.current;
-        if (!id || !previewOption) return;
+        if (!id) return;
         operationRef.current = true;
         setCompleting(true);
         setTripError(null);
@@ -210,7 +261,7 @@ function ExplorePage() {
             const trip = await completeTrip(id);
             sessionRef.current.complete(id);
             const profile = await getPointBalance();
-            setReceipt({ earned: pointsForMode(trip.points, previewOption.mode), balance: profile.totalPoints });
+            setReceipt({ earned: pointsForMode(trip.points, previewOption?.mode ?? PROFILE_TO_ROUTE_MODE[navProfile]), balance: profile.totalPoints });
             window.dispatchEvent(new Event("points-updated"));
         } catch (e) {
             setTripError(e instanceof Error ? e.message : "Couldn't save your trip. Try again.");
@@ -218,11 +269,19 @@ function ExplorePage() {
             operationRef.current = false;
             setCompleting(false);
         }
-    }, [phase, isDemo, exit, user, previewOption, receipt]);
+    }, [phase, isDemo, exit, navProfile, user, previewOption, receipt]);
 
     // Arrival triggers completion automatically; failures remain visible for an explicit retry.
     useEffect(() => {
-        if (arrived && user && !nav.isDemo && !receipt && !tripError) void handleTripComplete();
+        if (!(arrived && user && !nav.isDemo && !receipt && !tripError)) return;
+        let cancelled = false;
+        // deferred a tick so the handler's state updates don't happen synchronously inside the effect
+        queueMicrotask(() => {
+            if (!cancelled) void handleTripComplete();
+        });
+        return () => {
+            cancelled = true;
+        };
     }, [arrived, user, nav.isDemo, receipt, tripError, handleTripComplete]);
 
     const handleEndNavigation = async () => {
@@ -233,6 +292,8 @@ function ExplorePage() {
         try {
             await sessionRef.current.cancelExcept();
             tripIdRef.current = null;
+            setTripId(null);
+            activeKeyRef.current = undefined;
             setPlannedRoutes(null);
             setOptionsOpen(false);
             nav.exit();
@@ -241,10 +302,18 @@ function ExplorePage() {
         } finally { operationRef.current = false; }
     };
 
-    // Abandoning Explore also cancels requests that were still creating planned trips.
+    // Abandoning Explore also cancels requests that were still creating planned trips, but a trip
+    // that is being driven stays alive so it can be resumed when the user comes back.
+    const navActiveRef = useRef(false);
+    useEffect(() => {
+        navActiveRef.current = navActive;
+    }, [navActive]);
     useEffect(() => {
         const session = sessionRef.current;
-        return () => { void session.cancelExcept().catch(console.error); };
+        return () => {
+            const keep = navActiveRef.current ? activeKeyRef.current : undefined;
+            void session.cancelExcept(keep).catch(console.error);
+        };
     }, []);
 
     const step = nav.steps[nav.stepIndex];
@@ -382,8 +451,8 @@ function ExplorePage() {
                     onWeightsChange={setWeights}
                     onSelectRoute={(id) => setSelectedMode(routes.find((r) => r.routeId === id)?.mode ?? null)}
                     onStartTrip={(route) => void handleStartTrip(route)}
-                    onBack={() => setOptionsOpen(false)}
-                    onTransit={() => setTransitPreference("ALL")}
+                    onBack={() => void handleEndNavigation()}
+                    onTransit={() => { void handleEndNavigation().then(() => setTransitPreference("ALL")); }}
                     transit={transit}
                 />
             )}

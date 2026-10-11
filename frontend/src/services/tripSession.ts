@@ -41,6 +41,17 @@ export class TripSession {
         return trip.id;
     }
 
+    // Registers a trip that was already started in an earlier page load, so it can still be
+    // completed or cancelled. Returns the key to pass to cancelExcept to keep it.
+    adopt(id: string) {
+        const key = `restored:${id}`;
+        if (!this.trips.has(key)) {
+            this.trips.set(key, Promise.resolve({ id } as Awaited<ReturnType<typeof createTrip>>));
+            this.started.add(id);
+        }
+        return key;
+    }
+
     complete(id: string) { this.finished.add(id); }
 
     async cancelExcept(keep?: string) {
