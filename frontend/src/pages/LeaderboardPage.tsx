@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Crown, Medal, RefreshCw, Trophy } from "lucide-react";
 import AeroWindow from "@/components/layout/AeroWindow";
+import { apiFetch } from "@/services/api";
 
 type LeaderboardEntry = {
     id: string;
@@ -15,8 +16,6 @@ type LeaderboardApiEntry = {
     totalPoints: number;
     rank: number;
 };
-
-const LEADERBOARD_URL = "/api/v1/leaderboards";
 
 const rankStyles = [
     "bg-amber-100 text-amber-700",
@@ -34,13 +33,7 @@ function LeaderboardPage() {
         setError(null);
 
         try {
-            const response = await fetch(LEADERBOARD_URL, { signal });
-
-            if (!response.ok) {
-                throw new Error(`Leaderboard request failed (${response.status})`);
-            }
-
-            const data: unknown = await response.json();
+            const data = await apiFetch<unknown>("/leaderboards", { signal });
             const entries = Array.isArray(data)
                 ? data
                 : (data as { leaderboard?: unknown }).leaderboard;
