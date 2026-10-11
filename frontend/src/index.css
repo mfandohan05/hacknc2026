@@ -138,8 +138,8 @@
 
 .mapboxgl-map .mapboxgl-ctrl-group {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.3));
-  backdrop-filter: blur(12px) saturate(150%);
   -webkit-backdrop-filter: blur(12px) saturate(150%);
+  backdrop-filter: blur(12px) saturate(150%);
   border: 1px solid rgba(12, 38, 60, 0.55);
   border-radius: 8px;
   box-shadow: 0 8px 32px rgba(23, 51, 74, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -155,8 +155,8 @@
 
 .mapboxgl-map .mapboxgl-ctrl-attrib {
   background: rgba(255, 255, 255, 0.3)!important;
-  backdrop-filter: blur(8px)!important;
   -webkit-backdrop-filter: blur(8px)!important;
+  backdrop-filter: blur(8px)!important;
   border-radius: 12px!important;
 }
 
@@ -188,8 +188,8 @@
   background:
     linear-gradient(115deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.26) 32%, rgba(255, 255, 255, 0.12) 43%, rgba(255, 255, 255, 0) 60%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(214, 238, 252, 0.55) 55%, rgba(190, 228, 248, 0.5) 100%);
-  backdrop-filter: blur(18px) saturate(180%);
   -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
   border: 1px solid rgba(12, 38, 60, 0.55);
   box-shadow:
     0 10px 30px rgba(10, 30, 50, 0.3),
@@ -274,8 +274,8 @@
   background: linear-gradient(180deg, rgba(88, 118, 145, 0.82) 0%, rgba(22, 44, 66, 0.9) 49%, rgba(4, 16, 30, 0.94) 51%, rgba(18, 52, 78, 0.9) 100%);
   border-top: 1px solid rgba(255, 255, 255, 0.55);
   box-shadow: 0 -6px 24px rgba(5, 20, 35, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
 }
 
 /* the selected taskbar button glows: the icon pill on mobile, the whole button on desktop */
