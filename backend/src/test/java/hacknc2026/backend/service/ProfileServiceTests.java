@@ -7,6 +7,7 @@ import hacknc2026.backend.dto.CreateProfileRequest;
 import hacknc2026.backend.model.Profile;
 import hacknc2026.backend.repository.ProfileRepository;
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -36,7 +37,7 @@ class ProfileServiceTests {
 
   @Test
   void rejectsDuplicateWithoutSaving() {
-    when(repository.existsByUsername("alex")).thenReturn(true);
+    when(repository.existsById(userId)).thenReturn(true);
     var exception = assertThrows(ResponseStatusException.class,
         () -> service.createProfile(userId, new CreateProfileRequest("alex", "Alex")));
     assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
@@ -50,5 +51,26 @@ class ProfileServiceTests {
     var exception = assertThrows(ResponseStatusException.class,
         () -> service.createProfile(userId, new CreateProfileRequest("alex", "Alex")));
     assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
+  }
+
+  @Test
+  void getProfileReturnsTheStoredTotalPointsColumn() {
+    Profile profile = new Profile();
+    profile.setId(userId);
+    profile.setUsername("alex");
+    profile.setDisplayName("Alex");
+    profile.setTotalPoints(229L);
+    profile.setLevel(1L);
+    profile.setCreatedAt(LocalDate.now());
+    when(repository.findById(userId)).thenReturn(Optional.of(profile));
+
+    assertEquals(229L, service.getProfile(userId).totalPoints());
+  }
+
+  @Test
+  void getProfileThrowsNotFoundForUnknownUser() {
+    when(repository.findById(userId)).thenReturn(Optional.empty());
+    var exception = assertThrows(ResponseStatusException.class, () -> service.getProfile(userId));
+    assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
   }
 }

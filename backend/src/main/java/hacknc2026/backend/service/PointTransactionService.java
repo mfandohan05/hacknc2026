@@ -5,6 +5,7 @@ import hacknc2026.backend.model.PointTransaction;
 import hacknc2026.backend.model.Trip;
 import hacknc2026.backend.model.TripStatus;
 import hacknc2026.backend.repository.PointTransactionRepository;
+import hacknc2026.backend.repository.ProfileRepository;
 import hacknc2026.backend.repository.TripRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class PointTransactionService {
   private final PointTransactionRepository repository;
   private final TripRepository tripRepository;
+  private final ProfileRepository profileRepository;
   private final PointCalculationService calculator;
 
   public Page<PointTransactionResponse> getTransactions(UUID userId, Pageable pageable) {
@@ -59,6 +61,7 @@ public class PointTransactionService {
     transaction.setAwardKey(awardKey);
     transaction.setLeaderboardEligible(false);
     repository.save(transaction);
+    profileRepository.incrementTotalPoints(userId, points);
     return points;
   }
 }

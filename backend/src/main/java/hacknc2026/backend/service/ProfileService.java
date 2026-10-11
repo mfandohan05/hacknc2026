@@ -18,6 +18,12 @@ import org.springframework.web.server.ResponseStatusException;
 public class ProfileService {
   private final ProfileRepository profileRepository;
 
+  public ProfileResponse getProfile(UUID userId) {
+    Profile profile = profileRepository.findById(userId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
+    return ProfileResponse.from(profile);
+  }
+
   @Transactional
   public ProfileResponse createProfile(UUID userId, CreateProfileRequest request) {
     // Profile.id is assigned (not @GeneratedValue), so a save() for an id that already

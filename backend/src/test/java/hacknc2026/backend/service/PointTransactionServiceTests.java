@@ -15,8 +15,9 @@ import static org.mockito.Mockito.*;
 class PointTransactionServiceTests {
     private final PointTransactionRepository ledger = mock(PointTransactionRepository.class);
     private final TripRepository trips = mock(TripRepository.class);
+    private final ProfileRepository profiles = mock(ProfileRepository.class);
     private final PointCalculationService calculator = new PointCalculationService();
-    private final PointTransactionService service = new PointTransactionService(ledger, trips, calculator);
+    private final PointTransactionService service = new PointTransactionService(ledger, trips, profiles, calculator);
     private final UUID userId = UUID.randomUUID();
     private final UUID tripId = UUID.randomUUID();
 
@@ -47,6 +48,8 @@ class PointTransactionServiceTests {
         assertEquals(key, captured.getValue().getAwardKey());
         assertSame(trip.getProfile(), captured.getValue().getUser());
         assertFalse(captured.getValue().isLeaderboardEligible());
+        // only the first call actually awards; the second returns the cached existing transaction
+        verify(profiles, times(1)).incrementTotalPoints(userId, 50);
     }
 
     @Test
@@ -55,6 +58,7 @@ class PointTransactionServiceTests {
         when(ledger.findByAwardKey(anyString())).thenReturn(Optional.empty());
         assertEquals(0, service.awardTripCompletion(userId, tripId));
         verify(ledger, never()).save(any());
+        verifyNoInteractions(profiles);
     }
 
     @Test
@@ -64,6 +68,7 @@ class PointTransactionServiceTests {
         completedTrip().setStatus(TripStatus.IN_PROGRESS);
         assertThrows(ResponseStatusException.class, () -> service.awardTripCompletion(userId, tripId));
         verifyNoInteractions(ledger);
+        verifyNoInteractions(profiles);
     }
 
     private Trip completedTrip() {

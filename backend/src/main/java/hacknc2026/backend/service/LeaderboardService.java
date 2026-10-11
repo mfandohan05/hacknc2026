@@ -14,27 +14,26 @@ import org.springframework.stereotype.Service;
 public class LeaderboardService {
 
   private final ProfileRepository profileRepository;
-  private final PointTransactionService pointTransactionService;
-
-  private record RankedProfile(Profile profile, long totalPoints) {}
 
   public List<LeaderboardEntry> getLeaderboard() {
     List<Profile> profiles =
         profileRepository.findAll(); // Get all because who cares about optimization ;)
 
-    List<RankedProfile> ranked = profiles.stream()
-        .map(p -> new RankedProfile(p, pointTransactionService.getTotalPoints(p.getId())))
-        .sorted(Comparator.comparingLong(RankedProfile::totalPoints).reversed())
-        .limit(100)
-        .toList();
+    // total_points has no DB default, so a row inserted outside the app (e.g. directly
+    // in the Supabase dashboard) can have it null — treat that as 0 rather than NPE.
+    profiles.sort(Comparator.comparingLong((Profile p) -> pointsOrZero(p)).reversed());
 
     List<LeaderboardEntry> leaderboard = new ArrayList<>();
-    for (int i = 0; i < ranked.size(); i++) {
-      RankedProfile entry = ranked.get(i);
+    for (int i = 0; i < Math.min(100, profiles.size()); i++) {
+      Profile profile = profiles.get(i);
       leaderboard.add(new LeaderboardEntry(
-          entry.profile().getId(), entry.profile().getDisplayName(), entry.totalPoints(), i + 1));
+          profile.getId(), profile.getDisplayName(), pointsOrZero(profile), i + 1));
     }
 
     return leaderboard;
+  }
+
+  private long pointsOrZero(Profile profile) {
+    return profile.getTotalPoints() == null ? 0L : profile.getTotalPoints();
   }
 }
