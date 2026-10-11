@@ -1,6 +1,7 @@
 import { Play, Radio, X } from "lucide-react";
 import ManeuverIcon from "./ManeuverIcon";
 import { formatNavDistance, formatNavDuration } from "@/lib/formatNav";
+import { stepDetail } from "@/lib/transitRoute";
 import type { DirectionsRoute, DirectionsStep } from "@/types/navigation";
 
 type Props = {
@@ -63,12 +64,17 @@ function DirectionsPreviewPanel({ route, steps, modeLabel, onStart, onDemo, onSe
                         <button
                             type="button"
                             onClick={() => onSelectStep(step)}
-                            className="flex min-h-11 w-full items-center gap-3 px-3 py-2 text-left hover:bg-white/60"
+                            className="flex min-h-11 w-full items-start gap-3 px-3 py-2 text-left hover:bg-white/60"
                         >
                             <span className="aero-blue flex size-9 shrink-0 items-center justify-center rounded-xl">
                                 <ManeuverIcon type={step.maneuver.type} modifier={step.maneuver.modifier} className="size-5" />
                             </span>
-                            <span className="min-w-0 flex-1 text-sm">{step.maneuver.instruction}</span>
+                            <span className="min-w-0 flex-1 text-sm">
+                                <span className="block font-medium">{step.maneuver.instruction}</span>
+                                {stepDetail(step) && (
+                                    <span className="mt-0.5 block text-xs text-[#17334A]/75">{stepDetail(step)}</span>
+                                )}
+                            </span>
                             {step.distance > 0 && (
                                 <span className="shrink-0 text-xs font-medium text-[#17334A]/75">
                                     {formatNavDistance(step.distance)}
