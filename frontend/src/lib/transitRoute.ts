@@ -2,17 +2,14 @@ import { along, length, lineSliceAlong, lineString } from "@turf/turf";
 import type { TransitItinerary, TransitStep } from "@/services/transitService";
 import type { Coordinate, DirectionsRoute, DirectionsStep } from "@/types/navigation";
 
-// maneuver.type values used for transit steps (ManeuverIcon maps them to a bus / walking icon)
 export const TRANSIT_BOARD = "transit-board";
 export const TRANSIT_WALK = "transit-walk";
 
 export type TransitRoute = {
     route: DirectionsRoute;
-    // true when the path was estimated from a road route rather than taken from the transit provider
     approximate: boolean;
 };
 
-// one walking stretch (many small provider steps merged) or one ride
 type Leg = { transit: boolean; steps: TransitStep[] };
 
 function pathOf(step: TransitStep): Coordinate[] {
@@ -23,7 +20,6 @@ function clock(iso: string | null): string | null {
     return iso ? new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : null;
 }
 
-// Consecutive walking steps ("Head northeast…", "Turn right…") become one "Walk to the stop" leg.
 function groupLegs(steps: TransitStep[]): Leg[] {
     const legs: Leg[] = [];
     for (const step of steps) {
@@ -35,7 +31,6 @@ function groupLegs(steps: TransitStep[]): Leg[] {
     return legs;
 }
 
-// The second line under a step: which line, toward where, between which stops, and when.
 export function stepDetail(step: DirectionsStep | undefined): string | null {
     if (!step) return null;
     const t = step.transit;
@@ -50,8 +45,6 @@ export function stepDetail(step: DirectionsStep | undefined): string | null {
     return parts.length > 0 ? parts.join(" · ") : null;
 }
 
-// Splits a road route into one piece per leg, sized by each leg's share of the itinerary's distance
-// (or duration when distances are missing). The legs' own paths are unknown, so this is a stand-in.
 function approximatePaths(legs: Leg[], baseLine: Coordinate[]): Coordinate[][] {
     const line = lineString(baseLine);
     const total = length(line, { units: "meters" });
@@ -76,11 +69,6 @@ function approximatePaths(legs: Leg[], baseLine: Coordinate[]): Coordinate[][] {
     });
 }
 
-// Turns a public transport itinerary into the same route shape the turn-by-turn navigation uses:
-// one step per walking stretch or ride ("Walk to Main St stop", "Board 7 toward Downtown…",
-// "Get off at Station St…"), joined end to end.
-// Uses the legs' own paths when the backend sends them; otherwise estimates them from `fallbackPath`
-// (a road route from the start to the destination). Returns null when neither is available.
 export function itineraryToRoute(
     itinerary: TransitItinerary,
     destinationName: string,
@@ -97,7 +85,6 @@ export function itineraryToRoute(
         paths = approximatePaths(legs, fallbackPath);
         approximate = true;
     } else {
-        // some legs have paths: bridge the others with a straight line between their neighbours
         for (let i = 0; i < paths.length; i += 1) {
             if (paths[i].length >= 2) continue;
             let from: Coordinate | undefined;
@@ -149,9 +136,7 @@ export function itineraryToRoute(
             };
         }
 
-        // walking: head to the next stop, or to the destination
         const target = next?.transit ? (next.steps[0].departureStop ?? "the stop") : where;
-        // provider instructions sometimes contain line breaks
         const firstMove = first.instruction?.replace(/\s*\n+\s*/g, ". ").trim();
         return {
             maneuver: {

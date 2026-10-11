@@ -1,7 +1,5 @@
-/* Rewards page: Windows Vista / Windows 7 Aero. Selectors and structure are unchanged; only the look. */
 .rewards-page {
   isolation: isolate;
-  /* Aero wallpaper: deep blue sky into aqua and green, with soft light rays */
   background:
     linear-gradient(118deg, transparent 38%, #ffffff30 46%, transparent 54%),
     radial-gradient(ellipse at 12% 6%, #ffffff99, transparent 45%),
@@ -20,7 +18,6 @@
 .rewards-bubble-two { width: 48px; height: 48px; left: 3%; top: 200px; }
 .rewards-bubble-three { width: 72px; height: 72px; left: 7%; top: 1100px; }
 
-/* window frame: dark outer border, white inner border, glass body with a diagonal reflection */
 .rewards-page .aero-window {
   border: 1px solid #0c263c8c;
   border-radius: 8px;
@@ -39,7 +36,6 @@
 }
 .rewards-page .rewards-hero { background: radial-gradient(ellipse at 95% 15%, #ffffffd9 0, transparent 55%), linear-gradient(140deg, #f3fbffd9, #cdeefaa6 50%, #dbf6d4a6); }
 
-/* hero: balance */
 .rewards-balance { display: flex; align-items: center; gap: 28px; padding: 28px 8px; }
 .rewards-orbit { position: relative; display: grid; place-items: center; width: 132px; height: 132px; flex-shrink: 0; border: 1px solid #0c263c66; border-radius: 50%; background: radial-gradient(circle at 35% 20%, #fff, #d8f1ffa6 55%, #5fb6e866); box-shadow: inset 0 0 0 2px #ffffffb3, inset 0 -10px 18px #2a7fb633, 0 8px 22px #0a1e3238; }
 .rewards-orbit::before { content: ''; position: absolute; inset: -8px; border: 1px solid #ffffffc9; border-radius: 50%; }
@@ -47,21 +43,18 @@
 .rewards-level { display: inline-block; border-radius: 3px; border: 1px solid #3c7fb1; padding: 3px 10px; background: linear-gradient(#f6fbff, #d9f0fc 49%, #bee6fd 50%, #e4f6ff); box-shadow: inset 0 0 0 1px #ffffffcc; font-size: 11px; font-weight: 700; letter-spacing: .12em; color: #0b3a5c; }
 .rewards-points { font-size: clamp(2.5rem, 7vw, 4.5rem); font-weight: 300; line-height: 1.2; letter-spacing: -.03em; color: #0b3a5c; text-shadow: 0 0 12px #fff, 0 1px 0 #ffffffcc; overflow-wrap: anywhere; }
 
-/* progress: Windows 7 green bar with a glossy sheen */
 .rewards-progress { display: block; appearance: none; width: 100%; height: 14px; border: 1px solid #7f8f9c; border-radius: 3px; overflow: hidden; background: #e6e6e6; box-shadow: inset 0 1px 3px #0a1e3238, 0 1px 0 #ffffffcc; }
 .rewards-progress-large { height: 20px; }
 .rewards-progress::-webkit-progress-bar { background: linear-gradient(#cfd6dc, #f1f4f6); border-radius: 2px; }
 .rewards-progress::-webkit-progress-value { border-radius: 2px; background: linear-gradient(#ffffff99 0, #ffffff22 48%, #00000010 50%, #ffffff30 100%), linear-gradient(90deg, #5be67d, #1fa83f); box-shadow: inset 0 0 0 1px #ffffff66, 0 0 6px #3cdc6e99; }
 .rewards-progress::-moz-progress-bar { border-radius: 2px; background: linear-gradient(#ffffff99 0, #ffffff22 48%, #00000010 50%, #ffffff30 100%), linear-gradient(90deg, #5be67d, #1fa83f); }
 
-/* achievements: Explorer-style items on a white pane; unlocked ones are highlighted */
 .rewards-achievement { padding: 14px; border: 1px solid #c3d4e2; border-radius: 3px; background: linear-gradient(#ffffff, #f4f8fb); box-shadow: inset 0 0 0 1px #ffffffcc; transition: background .2s, border-color .2s; }
 .rewards-achievement:hover { border-color: #70c0e7; background: linear-gradient(#f4fbff, #dbeffa); }
 .rewards-achievement.is-unlocked { background: linear-gradient(#f4fce9, #d9f1bf); border-color: #8fc86a; }
 .rewards-medallion { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; border: 1px solid #0c263c66; color: #3f6075; background: linear-gradient(#fff, #e6f1f8 48%, #b9d3e2 52%, #e9f4fa); box-shadow: inset 0 0 0 2px #ffffff99, 0 2px 4px #0a1e3233; }
 .is-unlocked .rewards-medallion { color: #7a5200; background: linear-gradient(#fffbe0, #ffdc66 48%, #e4ac2c 52%, #ffefa0); border-color: #9a7418; }
 
-/* cosmetics: icon tiles; the equipped one uses the Windows 7 selection blue */
 .rewards-cosmetic { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; border: 1px solid #c3d4e2; border-radius: 3px; padding: 18px 12px 14px; text-align: center; background: linear-gradient(#ffffff, #f2f7fb); box-shadow: inset 0 0 0 1px #ffffffcc; transition: background .2s, border-color .2s; }
 .rewards-cosmetic:hover { border-color: #70c0e7; background: linear-gradient(#f4fbff, #dbeffa); }
 .rewards-cosmetic.is-equipped { border-color: #26a0da; background: linear-gradient(#e8f6fe, #c4e5f6); box-shadow: inset 0 0 0 1px #ffffffcc, 0 0 8px #26a0da55; }
@@ -69,14 +62,12 @@
 .rewards-badge-plinth { position: relative; padding-bottom: 9px; }
 .rewards-badge-plinth::after { content: ''; position: absolute; bottom: 0; left: -7px; right: -7px; height: 15px; border: 1px solid #ffffffb3; border-radius: 50%; background: radial-gradient(ellipse, #3a77a040, #ffffff80 65%); z-index: -1; }
 
-/* ledger: a details-view list */
 .rewards-ledger { border: 1px solid #c3d4e2; border-radius: 3px; overflow: hidden; background: #fff; box-shadow: inset 0 1px 3px #0a1e3214; }
 .rewards-ledger-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; background: #ffffff; border-bottom: 1px solid #e3ecf3; transition: background .2s; }
 .rewards-ledger-row:nth-child(even) { background: #f6fafd; }
 .rewards-ledger-row:hover { background: linear-gradient(#f4fbff, #e1f1fa); }
 .rewards-ledger-row:last-child { border-bottom: 0; }
 
-/* buttons inside the page: Windows 7 push buttons (grey, turning blue on hover) */
 .rewards-page .aero-orb,
 .rewards-page .aero-gel {
   border: 1px solid #707070;
@@ -104,7 +95,6 @@
   .rewards-page .aero-caption { display: none; }
 }
 
-/* Theme scope is derived from the validated equipped badge, never the document body. */
 .rewards-page {
   --reward-accent: #237849;
   --reward-soft: #def6df;

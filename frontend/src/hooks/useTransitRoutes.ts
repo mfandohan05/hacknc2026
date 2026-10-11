@@ -6,8 +6,6 @@ import type { LngLat } from "@/types/route";
 
 type Settled = { key: string; routes: TransitItinerary[]; error: string | null };
 
-// Public transport itineraries (any mode, leaving now) for the route options list.
-// `enabled` keeps the paid Google lookup from running until the options are actually on screen.
 export function useTransitRoutes(origin: LngLat | null, destination: LngLat | null, enabled: boolean) {
     const [settled, setSettled] = useState<Settled | null>(null);
 

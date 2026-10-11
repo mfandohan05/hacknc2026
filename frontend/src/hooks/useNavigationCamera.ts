@@ -12,13 +12,8 @@ type Options = {
 const NAV_ZOOM = 17;
 const NAV_PITCH = 60;
 const SETTLE_MS = 900;
-// how quickly the drawn position catches up with the latest fix (smaller = snappier)
 const SMOOTHING_MS = 220;
-// gestures that mean the user took manual control of the camera
 const GESTURE_EVENTS = ["dragstart", "zoomstart", "rotatestart", "pitchstart"] as const;
-// fitBounds padding (used for the route preview) persists on the camera, so navigation always
-// sets its own. Top-only padding pushes the followed position below the middle of the screen,
-// leaving more of the road ahead visible.
 const NO_PADDING = { top: 0, bottom: 0, left: 0, right: 0 };
 const AHEAD_PADDING_RATIO = 0.3;
 
@@ -26,7 +21,6 @@ function navPadding(map: mapboxgl.Map) {
     return { top: Math.round(map.getContainer().clientHeight * AHEAD_PADDING_RATIO), bottom: 0, left: 0, right: 0 };
 }
 
-// moves `from` toward `to` along the shortest way round the compass
 function lerpAngle(from: number, to: number, t: number) {
     const diff = ((to - from + 540) % 360) - 180;
     return (from + diff * t + 360) % 360;
@@ -44,18 +38,12 @@ function createArrowElement() {
     return el;
 }
 
-// Draws the arrow marker and follows it with the camera while navigating.
-// GPS fixes arrive about once a second, so the drawn position is eased toward the latest fix on
-// every animation frame; the marker and the camera both move continuously instead of in steps.
-// Does not watch location itself; positions come from the navigation hook.
 export function useNavigationCamera({ getMap, active, position }: Options) {
     const [stopped, setStopped] = useState(false);
     const markerRef = useRef<mapboxgl.Marker | null>(null);
     const targetRef = useRef<Position | null>(position);
-    // where the arrow is actually drawn this frame
     const shownRef = useRef<Position | null>(null);
     const followingRef = useRef(false);
-    // true while the camera is easing into the navigation view; per-frame updates wait for it
     const settlingRef = useRef(false);
     const following = active && !stopped;
     const hasPosition = position !== null;
@@ -65,7 +53,6 @@ export function useNavigationCamera({ getMap, active, position }: Options) {
         followingRef.current = following;
     }, [position, following]);
 
-    // marker, gesture listeners, map chrome and the frame loop for a navigation session
     useEffect(() => {
         if (!active) return;
         const map = getMap();
@@ -74,11 +61,9 @@ export function useNavigationCamera({ getMap, active, position }: Options) {
         const container = map.getContainer();
         container.classList.add("nav-active");
 
-        // programmatic camera moves carry no originalEvent
         const onGesture = (e: { originalEvent?: unknown }) => {
             if (e.originalEvent) setStopped(true);
         };
-        // mapbox's per-event listener types don't all expose originalEvent
         const listener = onGesture as never;
         GESTURE_EVENTS.forEach((name) => map.on(name, listener));
 
@@ -136,7 +121,6 @@ export function useNavigationCamera({ getMap, active, position }: Options) {
         };
     }, [active, getMap]);
 
-    // ease into the navigation view when following starts, and again on Re-center
     useEffect(() => {
         if (!following || !hasPosition) return;
         const map = getMap();

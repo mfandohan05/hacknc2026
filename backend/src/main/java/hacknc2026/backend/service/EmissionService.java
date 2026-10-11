@@ -17,8 +17,6 @@ public class EmissionService {
 
     private final MapboxDirectionsClient mapboxDirectionsClient;
 
-    // MVP factor for a solo-occupant car; walking/cycling counted as zero direct
-    // operational emissions (lifecycle emissions are explicitly out of scope).
     private static final BigDecimal DRIVING_KG_PER_KM = BigDecimal.valueOf(0.192);
 
     public BigDecimal estimateCo2Kg(TravelMode mode, double distanceKm) {
@@ -29,9 +27,6 @@ public class EmissionService {
         return factor.multiply(BigDecimal.valueOf(distanceKm)).setScale(3, RoundingMode.HALF_UP);
     }
 
-    // Standalone estimate: looks up the real route distance for origin/destination/mode
-    // and applies estimateCo2Kg — the same calculation RouteService uses per-mode in
-    // /routes/compare, exposed on its own for callers that just want one mode's figure.
     public EmissionEstimateResponse estimateForTrip(Coordinates origin, Coordinates destination, TravelMode mode) {
         MapboxRoute route = mapboxDirectionsClient.fetchRoute(
                 mode.mapboxProfile(),

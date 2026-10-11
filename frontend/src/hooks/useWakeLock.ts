@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 
-// Keeps the screen on while `active`; re-acquires after the tab becomes visible again.
 export function useWakeLock(active: boolean) {
     useEffect(() => {
         if (!active || !("wakeLock" in navigator)) return;
@@ -17,7 +16,6 @@ export function useWakeLock(active: boolean) {
                 }
                 sentinel = s;
             } catch {
-                // denied or unsupported in this context; navigation still works
             }
         };
 

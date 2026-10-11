@@ -26,10 +26,6 @@ public class ProfileService {
 
   @Transactional
   public ProfileResponse createProfile(UUID userId, CreateProfileRequest request) {
-    // Profile.id is assigned (not @GeneratedValue), so a save() for an id that already
-    // exists is a merge/update, not an insert — the DB's primary-key constraint never
-    // fires. This check is the only thing that actually stops overwriting an existing
-    // profile.
     if (profileRepository.existsById(userId)) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Profile already exists for this user");
     }
@@ -50,7 +46,6 @@ public class ProfileService {
     try {
       return ProfileResponse.from(profileRepository.saveAndFlush(profile));
     } catch (DataIntegrityViolationException exception) {
-      // Flushing here also handles concurrent requests for the same username.
       throw new ResponseStatusException(
           HttpStatus.CONFLICT, "Profile conflicts with an existing record", exception);
     }

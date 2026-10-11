@@ -28,7 +28,6 @@ function LeaderboardPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // bumped by Refresh to fetch again
     const [reloadKey, setReloadKey] = useState(0);
 
     useEffect(() => {
@@ -41,7 +40,6 @@ function LeaderboardPage() {
                 const entries = Array.isArray(data) ? data : (data as { leaderboard?: unknown }).leaderboard;
                 if (!Array.isArray(entries)) throw new Error("The leaderboard response was not a list.");
 
-                // The API already returns this list sorted, so keep its order unchanged.
                 setLeaderboard(
                     (entries as LeaderboardApiEntry[]).map((entry) => ({
                         id: entry.profileId,
@@ -85,7 +83,6 @@ function LeaderboardPage() {
                 className="mx-auto min-h-0 w-full max-w-2xl flex-1"
                 bodyClassName="flex min-h-0 flex-1 flex-col p-0"
             >
-                {/* command bar */}
                 <div className="flex items-center gap-1 border-b border-[#17334A]/15 bg-gradient-to-b from-[#f9fbfd] to-[#e4ecf4] px-2 py-1 text-sm text-[#17334A]">
                     <button
                         type="button"
@@ -98,7 +95,6 @@ function LeaderboardPage() {
                     </button>
                 </div>
 
-                {/* details view */}
                 <div className="flex min-h-0 flex-1 flex-col bg-white text-[#0f2f45]" role="table" aria-label="Global leaderboard">
                     <div role="row" className={`grid ${columns} border-b border-[#d5dfe8]`}>
                         <span role="columnheader" className={columnHeader}>
@@ -173,7 +169,6 @@ function LeaderboardPage() {
                     </div>
                 </div>
 
-                {/* status bar */}
                 <div className="border-t border-[#17334A]/20 bg-gradient-to-b from-[#f5f8fb] to-[#dfe8f1] px-3 py-1.5 text-xs text-[#17334A]">
                     {loading ? "Loading…" : `${leaderboard.length} item${leaderboard.length === 1 ? "" : "s"}`}
                 </div>

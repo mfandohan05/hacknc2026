@@ -48,7 +48,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             acceptSession(next);
         });
 
-        // Also restore existing accounts that signed up before profile setup existed.
         const initialRevision = revision;
         void supabase.auth.getSession().then(({ data, error }) => {
             if (!active || revision !== initialRevision) return;

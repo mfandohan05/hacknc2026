@@ -28,7 +28,6 @@ public class RewardsService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
     long earned = points.earnedPointsForUser(userId);
     long balance = profile.getTotalPoints() == null ? 0 : profile.getTotalPoints();
-    // Match the displayed balance, including administrative adjustments in Supabase.
     long progressionPoints = Math.max(0, balance);
     long level = progressionPoints / 250 + 1;
     long completed = trips.countByProfile_IdAndStatus(userId, TripStatus.COMPLETED);

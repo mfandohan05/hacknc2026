@@ -5,9 +5,7 @@ import { stepDetail } from "@/lib/transitRoute";
 import type { BannerInstruction, DirectionsStep } from "@/types/navigation";
 
 type Props = {
-    // the step being driven; its banner describes the maneuver at its end
     step: DirectionsStep | undefined;
-    // the step after it, used for the street name and "then" hint
     nextStep: DirectionsStep | undefined;
     afterNextStep: DirectionsStep | undefined;
     banner: BannerInstruction | null;
@@ -16,7 +14,6 @@ type Props = {
     isDemo: boolean;
 };
 
-// show a "then" hint when the following maneuver comes right after the next one
 const THEN_WITHIN_METERS = 250;
 const THEN_STEP_MAX_METERS = 200;
 
@@ -25,7 +22,6 @@ function NavBanner({ step, nextStep, afterNextStep, banner, distanceToManeuver, 
     const type = banner?.primary.type ?? upcoming?.maneuver.type ?? "turn";
     const modifier = banner?.primary.modifier ?? upcoming?.maneuver.modifier;
     const instruction = banner?.primary.text ?? upcoming?.maneuver.instruction ?? "Continue";
-    // public transport legs describe the line, stops and times here; roads show the street name
     const street = banner?.secondary?.text ?? stepDetail(nextStep) ?? nextStep?.name ?? "";
 
     const showThen =
@@ -55,7 +51,6 @@ function NavBanner({ step, nextStep, afterNextStep, banner, distanceToManeuver, 
                     ) : (
                         <>
                             <p className="text-3xl font-bold leading-tight">{formatNavDistance(distanceToManeuver)}</p>
-                            {/* only the instruction is announced; the changing distance would be too chatty */}
                             <p aria-live="polite" className="text-base font-medium leading-snug">
                                 {instruction}
                             </p>

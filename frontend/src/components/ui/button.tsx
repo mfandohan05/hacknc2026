@@ -54,6 +54,5 @@ function Button({
   )
 }
 
-// shadcn exports the variants helper next to the component; fast refresh only needs a full reload for this file
 // eslint-disable-next-line react-refresh/only-export-components
 export { Button, buttonVariants }

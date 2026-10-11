@@ -103,7 +103,6 @@ class PointTransactionServiceTests {
         assertEquals(key, captured.getValue().getAwardKey());
         assertSame(trip.getProfile(), captured.getValue().getUser());
         assertFalse(captured.getValue().isLeaderboardEligible());
-        // only the first call actually awards; the second returns the cached existing transaction
         verify(profiles, times(1)).incrementTotalPoints(userId, 50);
     }
 

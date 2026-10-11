@@ -5,8 +5,6 @@ import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './context/AuthProvider'
 
-// A data router (not <BrowserRouter>) is required for the `viewTransition` navigation option to work.
-// The single splat route renders the app, whose own <Routes> handle the pages.
 const router = createBrowserRouter([
   {
     path: '*',

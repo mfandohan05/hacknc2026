@@ -28,6 +28,34 @@ function setup(overrides = {}) {
     return { session: new TripSession(), calls };
 }
 
+test('transit estimates use the itinerary distance and request the transit points field', async () => {
+    const requests = [];
+    const { transitTripOption } = load('src/services/transitService.ts', {});
+    const tripService = load('src/services/tripService.ts', {
+        '@/services/api': { apiJson: async (url, init) => {
+            requests.push([url, init?.body ? JSON.parse(init.body) : null]);
+            return init?.method === 'POST' ? { id: 'transit-trip' }
+                : { walking: 10, cycling: 10, driving: 0, transit: 25 };
+        } },
+        '@/services/routeService': { CAR_KG_CO2E_PER_KM: 0.2 },
+    });
+    const { TripSession } = load('src/services/tripSession.ts', {
+        './tripService': tripService, './api': { ApiError: class extends Error {} },
+    });
+    const session = new TripSession();
+    const option = transitTripOption({ id: 'bus', distanceMeters: 4000, durationSeconds: 600, fare: 2, currency: 'USD' });
+    await session.plan({ lat: 1, lng: 2 }, { lat: 3, lng: 4 }, option);
+    const points = await session.points(option.routeId);
+    assert.equal(tripService.pointsForMode(points, option.mode), 25);
+    assert.equal(requests[0][1].mode, 'TRANSIT');
+    assert.equal(requests[0][1].distanceMeters, 4000);
+    assert.equal(requests[0][1].durationSeconds, 600);
+    assert.equal(requests[0][1].estimatedCost, 2);
+    assert.equal(requests[1][0], '/api/v1/trips/transit-trip/points');
+    await session.cancelExcept();
+    assert.equal(requests[2][0], '/api/v1/trips/transit-trip/cancel');
+});
+
 test('viewing options plans trips, fetches points, and starts only the selected trip', async () => {
     const { session, calls } = setup();
     await session.plan({}, {}, { routeId: 'walk' });

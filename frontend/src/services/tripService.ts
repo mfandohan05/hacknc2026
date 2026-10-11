@@ -34,7 +34,6 @@ const MODE_MAP: Record<RouteMode, TripMode> = {
     TRANSIT: "TRANSIT",
 };
 
-// A planned trip has estimates only; no balance is credited until completion.
 export function createTrip(origin: LngLat, destination: LngLat, option: RouteOption) {
     const distanceKm = option.distanceKm;
     return apiJson<TripResponse>("/api/v1/trips", {
@@ -48,7 +47,6 @@ export function createTrip(origin: LngLat, destination: LngLat, option: RouteOpt
             distanceMeters: option.distanceKm * 1000,
             durationSeconds: option.durationMinutes * 60,
             estimatedCo2Kg: option.estimatedCo2Kg ?? 0,
-            // what the same distance would emit by car
             baselineCo2Kg: distanceKm * CAR_KG_CO2E_PER_KM,
             estimatedCost: option.estimatedCost,
         }),

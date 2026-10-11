@@ -22,7 +22,6 @@ function useOnline() {
     return online;
 }
 
-// Reads the browser's location permission and follows changes to it.
 function useGeolocationPermission(): GeoPermission {
     const [state, setState] = useState<GeoPermission>("unknown");
 
@@ -72,7 +71,6 @@ function TrayClock() {
 const iconButton =
     "aero-taskbtn relative flex size-8 items-center justify-center rounded-md border border-transparent text-white";
 
-// Notification area: connection, location permission and account status, then the clock. Desktop only.
 function TaskbarTray() {
     const online = useOnline();
     const geo = useGeolocationPermission();

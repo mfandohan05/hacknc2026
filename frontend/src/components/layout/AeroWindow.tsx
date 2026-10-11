@@ -4,16 +4,13 @@ import type { ReactNode } from "react";
 type Props = {
     title: string;
     Icon?: LucideIcon;
-    // heading level of the title (the page's main heading should be an h1)
     as?: "h1" | "h2";
     className?: string;
     bodyClassName?: string;
-    // show the minimize / maximize / close buttons (visual only)
     controls?: boolean;
     children: ReactNode;
 };
 
-// Vista-style caption buttons. They are decorative: not focusable and hidden from assistive tech.
 function CaptionButtons() {
     return (
         <div aria-hidden="true" className="aero-caption -mr-3 ml-auto flex shrink-0 self-start">
@@ -37,7 +34,6 @@ function CaptionButtons() {
     );
 }
 
-// A Vista-style window: glass body under a glossy caption bar with the title and an icon.
 function AeroWindow({ title, Icon, as: Heading = "h2", className = "", bodyClassName = "p-5", controls = true, children }: Props) {
     return (
         <section className={`aero-glass aero-window relative flex flex-col text-[#17334A] ${className}`}>
@@ -46,7 +42,6 @@ function AeroWindow({ title, Icon, as: Heading = "h2", className = "", bodyClass
                 <Heading className="min-w-0 truncate text-sm">{title}</Heading>
                 {controls && <CaptionButtons />}
             </header>
-            {/* Windows 7 style: a glass frame around an inset client pane, all inside rounded outer corners */}
             <div className="aero-window-frame">
                 <div className={`aero-window-pane ${bodyClassName}`}>{children}</div>
             </div>

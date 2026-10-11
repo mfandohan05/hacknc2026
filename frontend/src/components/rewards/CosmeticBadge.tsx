@@ -15,7 +15,6 @@ const badgeImages: Record<string, string> = {
 export default function CosmeticBadge({ id, large = false }: { id: string; large?: boolean }) {
     const { label, Icon, color } = styles[id as keyof typeof styles] ?? styles.sprout;
     if (id === "sprout") {
-        // Frame the central globe within the source's wide, off-center canvas.
         return <svg role="img" aria-label="Sprouty badge" viewBox="530 425 755 755"
             className={`inline-block shrink-0 overflow-hidden rounded-full drop-shadow-md ${large ? "size-20" : "size-12"}`}>
             <image href={badgeImages.sprout} width="1987" height="1369" />

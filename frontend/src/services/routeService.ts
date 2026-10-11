@@ -2,13 +2,10 @@ import { ApiError, apiJson } from "@/services/api";
 import { DEFAULT_WEIGHTS } from "@/lib/routeScoring";
 import type { LngLat, RouteComparison, RouteMode, RouteOption } from "@/types/route";
 
-// kg CO2e per km for a solo-occupant car. Mirrors the backend's EmissionService; used for the
-// trip baseline sent to /api/v1/trips/start.
 export const CAR_KG_CO2E_PER_KM = 0.192;
 
 type ApiTravelMode = "WALKING" | "CYCLING" | "DRIVING";
 
-// POST /api/v1/routes/compare response (RouteResponse / RouteOption on the backend)
 type CompareResponse = {
     routes: {
         routeId: string;
@@ -29,8 +26,6 @@ const MODE_MAP: Record<ApiTravelMode, RouteMode> = {
     DRIVING: "CAR",
 };
 
-// Compares walking, cycling and driving through the backend, which owns the Mapbox calls and the
-// emissions and cost estimates.
 export async function compareRoutes(from: LngLat, to: LngLat, signal?: AbortSignal): Promise<RouteComparison> {
     let data: CompareResponse;
     try {
@@ -56,8 +51,6 @@ export async function compareRoutes(from: LngLat, to: LngLat, signal?: AbortSign
 
     if (data.routes.length === 0) throw new Error("No routes found between these places.");
 
-    // eco score: how much of a car's emissions this route avoids (car = 0, no emissions = 100).
-    // The backend's own ecoScore is a blend of the user's priorities, so it is not shown as one.
     const carCo2 = data.routes.find((r) => r.mode === "DRIVING")?.estimatedCo2Kg ?? null;
 
     const routes: RouteOption[] = data.routes.map((r) => {
@@ -80,7 +73,5 @@ export async function compareRoutes(from: LngLat, to: LngLat, signal?: AbortSign
         };
     });
 
-    // The recommendation is re-ranked live on the client (the comfort slider has no backend
-    // equivalent), so the backend's pick is only used when the client has nothing to rank.
     return { routes, recommendedRouteId: data.recommendedRouteId };
 }

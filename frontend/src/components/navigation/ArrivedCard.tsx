@@ -6,10 +6,8 @@ type Props = {
     durationSeconds: number;
     isDemo: boolean;
     onComplete: () => void;
-    // saving the trip
     busy?: boolean;
     receipt?: { earned: number; balance: number } | null;
-    // saving failed; the user can try again
     error?: string | null;
 };
 

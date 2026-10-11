@@ -12,7 +12,6 @@ function AccountTheme({ userId, children }: { userId: string | null; children: R
     const theme = cosmetics.some((c) => c.id === selected && c.unlocked) ? selected : "sprout";
     useEffect(() => {
         if (!userId) return;
-        // Warm the wallpapers so the first theme fade includes the image.
         for (const src of ["/image_assets/sprouty-background.jpg", "/image_assets/ocean-background.png", "/image_assets/sunset-asadal.jpg", "/image_assets/fauna-leaves.jpg"]) {
             const wallpaper = new Image();
             wallpaper.src = src;
@@ -20,7 +19,7 @@ function AccountTheme({ userId, children }: { userId: string | null; children: R
         const abort = new AbortController();
         void getRewards(abort.signal).then((data) => {
             if (!abort.signal.aborted) setCosmetics(data.cosmetics);
-        }).catch(() => { /* Keep the default theme when account rewards are unavailable. */ });
+        }).catch(() => {  });
         const sync = (event: StorageEvent) => {
             if (event.key === `aeropath:cosmetic:${userId}` || event.key === null) {
                 runViewTransition(() => setSelected(readCosmetic(userId)), "theme");

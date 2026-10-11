@@ -8,11 +8,8 @@ const MIN_CHARS = 2;
 type Near = { longitude: number; latitude: number } | null | undefined;
 type Settled = { q: string; suggestions: Suggestion[]; error: boolean };
 
-// Debounced place autocomplete on the Mapbox Search Box API (suggest + retrieve).
-// One session token covers a typing session: every suggest call plus the final retrieve.
 export function usePlaceSearch(near?: Near) {
     const [query, setQueryState] = useState("");
-    // text filled in by a selection; it is not searched again
     const [suppressed, setSuppressed] = useState<string | null>(null);
     const [settled, setSettled] = useState<Settled | null>(null);
     const [selecting, setSelecting] = useState(false);
@@ -49,7 +46,6 @@ export function usePlaceSearch(near?: Near) {
     }, [q, active]);
 
     const setQuery = useCallback((value: string) => {
-        // a new session starts when the user starts typing
         if (!sessionRef.current && value.trim().length > 0) sessionRef.current = crypto.randomUUID();
         setSelectError(false);
         setQueryState(value);
@@ -67,7 +63,6 @@ export function usePlaceSearch(near?: Near) {
         setSelecting(true);
         try {
             const place = await retrievePlace(suggestion.mapbox_id, sessionToken);
-            // the session ends with a retrieve; the next keystroke starts a new one
             sessionRef.current = null;
             setSuppressed(place.name);
             setQueryState(place.name);
@@ -93,9 +88,7 @@ export function usePlaceSearch(near?: Near) {
         loading: active && current === null,
         selecting,
         error,
-        // a finished search with nothing found
         noResults: current !== null && !current.error && suggestions.length === 0,
-        // there is a query worth showing a list for
         hasQuery: active,
     };
 }

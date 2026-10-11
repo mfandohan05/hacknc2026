@@ -34,6 +34,5 @@ export function saveLastLocation(location: StoredLocation) {
         const saved: Saved = { ...location, savedAt: Date.now() };
         localStorage.setItem(KEY, JSON.stringify(saved));
     } catch {
-        // storage unavailable; the map just starts from its default view next time
     }
 }

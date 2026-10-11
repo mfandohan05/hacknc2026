@@ -2,11 +2,14 @@ import { ArrowLeft, Bus, ChevronRight, Leaf } from "lucide-react";
 import RouteComparison from "./RouteComparison";
 import PreferenceSliders from "./PreferenceSliders";
 import TransitCard from "./TransitCard";
+import { useTransitPoints } from "@/hooks/useTransitPoints";
 import type { TransitItinerary } from "@/services/transitService";
 import type { PreferenceWeights } from "@/lib/routeScoring";
-import type { RouteOption } from "@/types/route";
+import type { LngLat, RouteOption } from "@/types/route";
 
 type Props = {
+    origin: LngLat | null;
+    destination: LngLat | null;
     originLabel: string;
     destinationName: string;
     routes: RouteOption[];
@@ -19,17 +22,16 @@ type Props = {
     onSelectRoute: (routeId: string) => void;
     onStartTrip: (route: RouteOption) => void;
     onBack: () => void;
-    // opens the public transport screen (full itineraries, preferences, departure time)
     onTransit: () => void;
-    // starts turn-by-turn navigation along one of the public transport itineraries
     onNavigateTransit: (itinerary: TransitItinerary) => void;
     transit: { routes: TransitItinerary[]; loading: boolean; error: string | null };
 };
 
-// how many public transport itineraries are previewed in the options list
 const TRANSIT_PREVIEW_COUNT = 2;
 
 function RouteOptionsScreen({
+    origin,
+    destination,
     originLabel,
     destinationName,
     routes,
@@ -47,6 +49,7 @@ function RouteOptionsScreen({
     transit,
 }: Props) {
     const selectedRoute = routes.find((r) => r.routeId === selectedRouteId) ?? null;
+    const transitPoints = useTransitPoints(transit.routes, origin, destination);
 
     const transitSection = (
         <section aria-label="Public transport" className="flex flex-col gap-3">
@@ -76,11 +79,13 @@ function RouteOptionsScreen({
                 <TransitCard
                     key={itinerary.id}
                     itinerary={itinerary}
+                    tripPoints={transitPoints.points[itinerary.id]}
                     onSelect={onTransit}
                     onNavigate={() => onNavigateTransit(itinerary)}
                 />
             ))}
-            <p className="px-1 text-xs text-[#17334A]/75">Public transport trips don't earn EcoPoints.</p>
+            {transitPoints.loading && <p role="status" className="px-1 text-xs">Loading transit points…</p>}
+            {transitPoints.error && <Note>{transitPoints.error}</Note>}
         </section>
     );
 

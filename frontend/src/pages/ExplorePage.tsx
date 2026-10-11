@@ -10,6 +10,7 @@ import RouteOptionsScreen from "@/components/routes/RouteOptionsScreen";
 import TransitScreen from "@/components/routes/TransitScreen";
 import { useTransitRoutes } from "@/hooks/useTransitRoutes";
 import type { TransitItinerary, TransitPreference } from "@/services/transitService";
+import { transitTripOption } from "@/services/transitService";
 import { getRoute } from "@/services/directionsService";
 import { itineraryToRoute } from "@/lib/transitRoute";
 import DirectionsPreviewPanel from "@/components/navigation/DirectionsPreviewPanel";
@@ -76,30 +77,23 @@ function ExplorePage() {
     const [selectedMode, setSelectedMode] = useState<RouteMode | null>(null);
     const [weights, setWeights] = useState<PreferenceWeights>(DEFAULT_WEIGHTS);
     const [userLocation, setUserLocation] = useState<{ longitude: number; latitude: number } | null>(loadLastLocation);
-    // the map is recreated on every visit to this tab, so it starts from the last known location
     const [initialCenter] = useState(userLocation);
     const mapRef = useRef<MapHandle>(null);
 
-    // a trip that was in progress when the page was refreshed picks up where it left off
     const [restoredSession] = useState(() => loadNavSession());
     const nav = useNavigation(restoredSession);
     const { phase, isDemo, isTransit, exit, profile: navProfile } = nav;
     const { user } = useAuth();
-    // the option the user picked on the comparison page; its estimates are saved with the trip
     const [previewOption, setPreviewOption] = useState<RouteOption | null>(null);
-    // Only a successfully started server trip can be completed.
     const tripIdRef = useRef<string | null>(restoredSession?.tripId ?? null);
-    // the same id kept in state so it is saved with the navigation session
     const [tripId, setTripId] = useState<string | null>(restoredSession?.tripId ?? null);
     const sessionRef = useRef(new TripSession());
-    // which of the session's trips is the one being driven (kept alive when Explore unmounts mid-trip)
     const activeKeyRef = useRef<string | undefined>(undefined);
     const operationRef = useRef(false);
     const cancelRequestedRef = useRef(false);
     const [plannedRoutes, setPlannedRoutes] = useState<{ key: string; routes: RouteOption[] } | null>(null);
     const [receipt, setReceipt] = useState<{ earned: number; balance: number } | null>(null);
     const [completing, setCompleting] = useState(false);
-    // public transport navigation: building the route, and whether its path is an estimate
     const [transitBuilding, setTransitBuilding] = useState(false);
     const [transitApproximate, setTransitApproximate] = useState(false);
     const [tripError, setTripError] = useState<string | null>(null);
@@ -111,12 +105,10 @@ function ExplorePage() {
     const { following, recenter } = useNavigationCamera({ getMap, active: navActive, position: nav.position });
     useWakeLock(navigating);
 
-    // a restored trip's server record is handed to the session so End and Complete still reach it
     useEffect(() => {
         if (restoredSession?.tripId) activeKeyRef.current = sessionRef.current.adopt(restoredSession.tripId);
     }, [restoredSession]);
 
-    // keep the trip saved while it is in progress so a refresh can resume it
     const { route: navRoute, destination: navDestination } = nav;
     const savedPhase = nav.phase === "navigating" || nav.phase === "arrived" ? nav.phase : null;
     useEffect(() => {
@@ -144,7 +136,6 @@ function ExplorePage() {
     const destinationPoint = destination ? { lng: destination.longitude, lat: destination.latitude } : null;
     const { data, loading, error } = useRouteComparison(origin, destinationPoint);
     const routes = useMemo(() => data?.routes ?? NO_ROUTES, [data]);
-    // public transport is only looked up while the route options are on screen
     const transit = useTransitRoutes(origin, destinationPoint, optionsOpen);
 
     const planningKey = optionsOpen && user && origin && destinationPoint && routes.length
@@ -171,7 +162,6 @@ function ExplorePage() {
 
     const optionRoutes = plannedRoutes?.key === planningKey ? plannedRoutes.routes : null;
 
-    // recommendation re-ranks live as the sliders move
     const recommendedId = useMemo(() => recommendedRouteId(routes, weights), [routes, weights]);
     const selectedRouteId = routes.find((r) => r.mode === selectedMode)?.routeId ?? recommendedId;
 
@@ -193,12 +183,10 @@ function ExplorePage() {
         setDestination(place);
         mapRef.current?.showPlace(place);
         setSelectedMode(null);
-        // stays down at its peek (showing the destination and "See routes") so it never covers the route on the map
         setSheetOpen(false);
     };
 
     const handleScreenDone = (result: DirectionsResult) => {
-        // the header morphs back into the drawer's summary row
         runViewTransition(() => {
             setOriginPlace(result.origin);
             setDestination(result.destination);
@@ -218,16 +206,12 @@ function ExplorePage() {
         if (!origin || !destinationPoint) return;
         setOptionsOpen(false);
         setPreviewOption(route);
-        // collapse the drawer to its peek right away, so the preview content never pushes it upward
         setSheetOpen(false);
         const result = await nav.preview(ROUTE_MODE_TO_PROFILE[route.mode], origin, destinationPoint);
         if (!result) return;
         mapRef.current?.fitToCoordinates(result.geometry.coordinates, PEEK_FIT_BOTTOM_PADDING);
     };
 
-    // Starts turn-by-turn navigation along a public transport itinerary (walk to the stop, ride, walk).
-    // The legs' own paths are used when the backend sends them; otherwise they are estimated from a
-    // road route between the start and the destination, and the preview says so.
     const handleNavigateTransit = async (itinerary: TransitItinerary) => {
         if (!origin || !destinationPoint) return;
         setTripError(null);
@@ -235,7 +219,6 @@ function ExplorePage() {
         setTransitPreference(null);
         setOptionsOpen(false);
         setSheetOpen(false);
-        // planned (not yet started) trips for the other travel modes are no longer wanted
         void sessionRef.current.cancelExcept().catch(console.error);
 
         const name = destination?.name ?? "";
@@ -262,13 +245,7 @@ function ExplorePage() {
         }
         setTransitApproximate(built.approximate);
         setPreviewOption({
-            routeId: itinerary.id,
-            mode: "TRANSIT",
-            distanceKm: itinerary.distanceMeters / 1000,
-            durationMinutes: itinerary.durationSeconds / 60,
-            estimatedCost: itinerary.currency === "USD" ? itinerary.fare : null,
-            estimatedCo2Kg: null,
-            ecoScore: 0,
+            ...transitTripOption(itinerary),
             geometry: built.route.geometry.coordinates,
         });
         nav.previewTransit(built.route, destinationPoint);
@@ -322,11 +299,9 @@ function ExplorePage() {
         }
     }, [phase, isDemo, isTransit, exit, navProfile, user, previewOption, receipt]);
 
-    // Arrival triggers completion automatically; failures remain visible for an explicit retry.
     useEffect(() => {
         if (!(arrived && user && !nav.isDemo && !receipt && !tripError)) return;
         let cancelled = false;
-        // deferred a tick so the handler's state updates don't happen synchronously inside the effect
         queueMicrotask(() => {
             if (!cancelled) void handleTripComplete();
         });
@@ -353,8 +328,6 @@ function ExplorePage() {
         } finally { operationRef.current = false; }
     };
 
-    // Abandoning Explore also cancels requests that were still creating planned trips, but a trip
-    // that is being driven stays alive so it can be resumed when the user comes back.
     const navActiveRef = useRef(false);
     useEffect(() => {
         navActiveRef.current = navActive;
@@ -455,7 +428,6 @@ function ExplorePage() {
                     </div>
                     {!following && (
                         <div
-                            // the mobile tab bar overlays the bottom of the map, so sit above it there
                             className={`pointer-events-none absolute right-3 z-40 ${
                                 nav.isDemo
                                     ? "bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+14.5rem)] md:bottom-[14.5rem]"
@@ -493,6 +465,8 @@ function ExplorePage() {
 
             {!navActive && optionsOpen && destination && (
                 <RouteOptionsScreen
+                    origin={origin}
+                    destination={destinationPoint}
                     originLabel={originPlace?.name ?? "Your location"}
                     destinationName={destination.name}
                     routes={optionRoutes ?? routes}

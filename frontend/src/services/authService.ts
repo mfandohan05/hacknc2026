@@ -2,7 +2,6 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
 export type SignUpResult = {
-    // false when the project requires email confirmation before the first sign-in
     signedIn: boolean;
 };
 
@@ -17,8 +16,6 @@ export type SignUpProfile = {
     username: string;
 };
 
-// The name and username are stored as user metadata (full_name, username) so a database trigger
-// can copy them into the profile row.
 export async function signUp(email: string, password: string, profile: SignUpProfile): Promise<SignUpResult> {
     const { data, error } = await supabase.auth.signUp({
         email,

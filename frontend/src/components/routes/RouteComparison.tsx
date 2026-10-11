@@ -10,7 +10,6 @@ type Props = {
 
 function RouteComparison({ routes, recommendedRouteId, selectedRouteId, onSelect }: Props) {
     const car = routes.find((r) => r.mode === "CAR");
-    // recommended route first, the rest keep their order
     const ordered = [...routes].sort(
         (a, b) => Number(b.routeId === recommendedRouteId) - Number(a.routeId === recommendedRouteId),
     );

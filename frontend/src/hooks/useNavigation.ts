@@ -23,25 +23,20 @@ import type { LngLat } from "@/types/route";
 export type NavPhase = "idle" | "previewing" | "navigating" | "arrived";
 export type DemoSpeed = 1 | 2 | 4;
 
-// consecutive off-route fixes before rerouting
 const OFF_ROUTE_FIXES = 3;
-// minimum gap between reroute requests
 const REROUTE_COOLDOWN_MS = 8000;
-// how long to wait for a first GPS fix before telling the user
 const GPS_TIMEOUT_MS = 10000;
 const DEMO_SPEED_MPS = 12;
 const DEMO_TICK_MS = 250;
 
 export type NavigationState = {
     phase: NavPhase;
-    // fetching the preview route
     loading: boolean;
     error: string | null;
     profile: NavProfile;
     route: DirectionsRoute | null;
     steps: DirectionsStep[];
     stepIndex: number;
-    // snapped to the route line
     position: { lng: number; lat: number; bearing: number } | null;
     distanceToManeuver: number;
     remainingDistance: number;
@@ -51,15 +46,11 @@ export type NavigationState = {
     rerouting: boolean;
     rerouteError: string | null;
     isDemo: boolean;
-    // a public transport itinerary rather than a Mapbox route: never rerouted
     isTransit: boolean;
-    // where the trip is heading, kept so a trip can be restored after a refresh
     destination: LngLat | null;
-    // meters travelled along the route by the demo simulator
     demoDistance: number;
     demoSpeed: DemoSpeed;
     muted: boolean;
-    // navigating on real GPS before the first fix
     waitingForLocation: boolean;
     locationTimedOut: boolean;
 };
@@ -136,7 +127,6 @@ function emptyCore(): Core {
     };
 }
 
-// Rebuilds the mutable bookkeeping for a trip that was in progress before a refresh.
 function coreFromSession(session: NavSession): Core {
     const info = buildRouteInfo(session.route);
     return {
@@ -190,9 +180,6 @@ function viewFromCore(core: Core): NavigationState {
     };
 }
 
-// Navigation state machine: idle -> previewing -> navigating -> arrived.
-// Mutable bookkeeping lives in a ref so position handlers (GPS events, demo timer) never read stale state.
-// Pass a saved session to resume a trip that was in progress before a page refresh.
 export function useNavigation(initialSession: NavSession | null = null) {
     const [initialCore] = useState(() => (initialSession ? coreFromSession(initialSession) : emptyCore()));
     const [view, setView] = useState<NavigationState>(() => viewFromCore(initialCore));
@@ -248,7 +235,6 @@ export function useNavigation(initialSession: NavSession | null = null) {
         [applyRoute, patch],
     );
 
-    // Single entry point for both real GPS fixes and the demo simulator.
     const handlePosition = useCallback(
         (pos: NavPosition) => {
             const c = core.current;
@@ -257,7 +243,6 @@ export function useNavigation(initialSession: NavSession | null = null) {
             const raw: [number, number] = [pos.lng, pos.lat];
             const located = locate(info, raw);
 
-            // arrival
             if (metersBetween(raw, info.end) <= ARRIVAL_METERS) {
                 c.phase = "arrived";
                 cancelSpeech();
@@ -276,9 +261,7 @@ export function useNavigation(initialSession: NavSession | null = null) {
                 return;
             }
 
-            // off-route detection: a few consecutive fixes, then one debounced reroute
             c.offCount = located.offRoute > OFF_ROUTE_METERS ? c.offCount + 1 : 0;
-            // a transit itinerary is followed as is; the route is never swapped for a driving one
             const offRoute = !c.transit && c.offCount >= OFF_ROUTE_FIXES;
             if (offRoute && !c.rerouting && Date.now() - c.lastRerouteAt > REROUTE_COOLDOWN_MS) {
                 void reroute({ lng: pos.lng, lat: pos.lat });
@@ -356,7 +339,6 @@ export function useNavigation(initialSession: NavSession | null = null) {
         [applyRoute, patch],
     );
 
-    // Previews a public transport itinerary that has already been turned into a route.
     const previewTransit = useCallback(
         (route: DirectionsRoute, destination: LngLat) => {
             const c = core.current;
@@ -396,7 +378,6 @@ export function useNavigation(initialSession: NavSession | null = null) {
             c.demoDistance = 0;
             c.offCount = 0;
             c.spoken = new Set();
-            // must happen inside the tap handler for iOS
             if (c.muted) unlockSpeech();
             else unlockSpeech("Starting navigation.");
 
@@ -417,7 +398,6 @@ export function useNavigation(initialSession: NavSession | null = null) {
         [handlePosition, patch],
     );
 
-    // Real GPS feed (from the map's GeolocateControl). Ignored in demo mode.
     const feedPosition = useCallback(
         (pos: NavPosition) => {
             const c = core.current;
@@ -439,7 +419,6 @@ export function useNavigation(initialSession: NavSession | null = null) {
         c.offCount = 0;
         c.spoken = new Set();
         cancelSpeech();
-        // ending or completing a trip means it must not come back after a refresh
         clearNavSession();
         setView({ ...INITIAL, muted: c.muted });
     }, []);
@@ -467,7 +446,6 @@ export function useNavigation(initialSession: NavSession | null = null) {
         [patch],
     );
 
-    // demo simulator: moves along the route line and feeds the same handler as GPS
     useEffect(() => {
         if (view.phase !== "navigating" || !view.isDemo) return;
         const id = setInterval(() => {
@@ -483,14 +461,12 @@ export function useNavigation(initialSession: NavSession | null = null) {
         return () => clearInterval(id);
     }, [view.phase, view.isDemo, handlePosition]);
 
-    // tell the user when no GPS fix arrives (e.g. permission denied)
     useEffect(() => {
         if (!view.waitingForLocation) return;
         const id = setTimeout(() => patch({ locationTimedOut: true }), GPS_TIMEOUT_MS);
         return () => clearTimeout(id);
     }, [view.waitingForLocation, patch]);
 
-    // cancel in-flight requests and speech on unmount
     useEffect(() => {
         const c = core.current;
         return () => {

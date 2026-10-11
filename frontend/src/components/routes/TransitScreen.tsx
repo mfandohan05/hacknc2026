@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, Bus, Footprints, Loader2, Navigation } from "lucide-react";
 import { ApiError } from "@/services/api";
+import { useTransitPoints } from "@/hooks/useTransitPoints";
 import { formatDistance } from "@/lib/formatRoute";
 import { getTransitRoutes } from "@/services/transitService";
 import type { TransitItinerary, TransitPreference, TransitResponse } from "@/services/transitService";
@@ -13,7 +14,6 @@ type Props = {
     initialPreference: TransitPreference;
     onBack: () => void;
     onEditRoute: () => void;
-    // starts turn-by-turn navigation along an itinerary
     onNavigate: (itinerary: TransitItinerary) => void;
 };
 
@@ -33,6 +33,7 @@ export default function TransitScreen({ origin, destination, destinationName, in
     const originLng = origin?.lng;
     const destinationLat = destination?.lat;
     const destinationLng = destination?.lng;
+    const transitPoints = useTransitPoints(result?.routes ?? [], origin, destination);
 
     useEffect(() => {
         if (originLat === undefined || originLng === undefined || destinationLat === undefined || destinationLng === undefined) return;
@@ -149,6 +150,8 @@ export default function TransitScreen({ origin, destination, destinationName, in
                                     {error}
                                 </p>
                             )}
+                            {transitPoints.loading && <p role="status" className="px-1 text-sm">Loading transit points…</p>}
+                            {transitPoints.error && <p role="alert" className={`${card} text-sm`}>{transitPoints.error}</p>}
                             {!loading && !error && result?.routes.length === 0 && (
                                 <p className={`${card} text-sm`}>
                                     No public transport was found for this time and route. Try a different departure time.
@@ -166,6 +169,7 @@ export default function TransitScreen({ origin, destination, destinationName, in
                                             ? new Intl.NumberFormat(undefined, { style: "currency", currency: route.currency }).format(route.fare)
                                             : "Fare unavailable"}
                                     </p>
+                                    <p className="text-sm">Eco points <span className="font-semibold">{transitPoints.points[route.id] === undefined ? "—" : String(transitPoints.points[route.id])}</span></p>
                                     <ol className="space-y-3">
                                         {route.steps.map((step, stepIndex) => (
                                             <li key={stepIndex} className="flex gap-3 border-t border-[#17334A]/15 pt-3">
@@ -223,8 +227,8 @@ export default function TransitScreen({ origin, destination, destinationName, in
                             )}
 
                             <p className="px-1 text-xs text-[#17334A]/80">
-                                Schedules and fares may change. Preferences may include other transport modes. Transit trips
-                                currently do not award EcoPoints.
+                                Schedules and fares may change. Preferences may include other transport modes.
+                                Estimated points are credited only after you arrive. Canceled trips earn no points.
                             </p>
                             <p className="px-1 text-xs text-[#17334A]/80">
                                 Route information from{" "}

@@ -25,7 +25,6 @@ export type Progress = {
     distanceToManeuver: number;
     remainingDistance: number;
     remainingDuration: number;
-    // 0-1
     fraction: number;
 };
 
@@ -117,7 +116,6 @@ export function pickBanner(step: DirectionsStep | undefined, distanceToManeuver:
 }
 
 export type PendingVoice = {
-    // keys of every announcement now due, so they are not spoken again
     keys: string[];
     text: string;
 };
@@ -137,7 +135,6 @@ export function pendingVoice(
             .map((v) => ({ key: `${stepIndex}:${v.distanceAlongGeometry}`, v }))
             .filter((d) => !spoken.has(d.key));
         if (due.length === 0) return null;
-        // speak the closest one; earlier ones are stale
         const latest = due.reduce((a, b) => (b.v.distanceAlongGeometry < a.v.distanceAlongGeometry ? b : a));
         return { keys: due.map((d) => d.key), text: latest.v.announcement };
     }

@@ -1,7 +1,6 @@
 import { AlertTriangle, Loader2 } from "lucide-react";
 
 type Props = {
-    // "info" is a neutral in-progress note, "error" is a failure
     variant?: "info" | "error";
     message: string;
     onRetry?: () => void;

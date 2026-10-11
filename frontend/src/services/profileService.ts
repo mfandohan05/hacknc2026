@@ -3,8 +3,6 @@ import { API_ORIGIN } from "@/services/api";
 
 const pending = new Map<string, Promise<void>>();
 
-// Use the event's token directly: calling getSession from an auth callback can
-// contend with Supabase's auth lock. No privileged key or client user ID is sent.
 export function ensureProfile(session: Session): Promise<void> {
     const existing = pending.get(session.user.id);
     if (existing) return existing;
@@ -30,7 +28,6 @@ async function provisionProfile(session: Session): Promise<void> {
         method: "POST",
         headers,
         body: JSON.stringify({
-            // Keep a fallback for older accounts created without signup metadata.
             username: typeof username === "string" && username.trim()
                 ? username.trim() : `user_${session.user.id.replaceAll("-", "")}`,
             displayName: typeof name === "string" && name.trim()
@@ -39,7 +36,6 @@ async function provisionProfile(session: Session): Promise<void> {
     });
     if (created.ok) return;
     if (created.status === 409) {
-        // Another tab may have created this same user's profile in the meantime.
         const concurrent = await fetch(`${API_ORIGIN}/api/v1/profiles/me`, { headers });
         if (concurrent.ok) return;
     }

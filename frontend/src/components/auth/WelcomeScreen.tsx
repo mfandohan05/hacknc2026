@@ -1,18 +1,12 @@
 import type { ReactNode } from "react";
 
 type Props = {
-    // the big word under the ring; Windows 7 shows "Welcome" here
     title?: string;
-    // the smaller line below it, e.g. what is being set up
     status?: string;
-    // optional actions (retry, sign out) shown under the status
     children?: ReactNode;
-    // draw the loading ring (off for error states)
     busy?: boolean;
 };
 
-// A Windows 7 style Welcome screen: deep blue background with light rays, a green loading ring
-// and a light-weight "Welcome" heading.
 function WelcomeScreen({ title = "Welcome", status, children, busy = true }: Props) {
     return (
         <div
