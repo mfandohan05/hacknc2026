@@ -241,7 +241,7 @@ function SignInPage() {
                             setFormError(null);
                             setNotice(null);
                         }}
-                        className="font-semibold text-[#17334A] hover:underline"
+                        className="cursor-pointer font-semibold text-[#17334A] hover:underline"
                     >
                         {signingUp ? "Have an account? Sign in" : "New here? Create an account"}
                     </button>
