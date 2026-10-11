@@ -1,5 +1,7 @@
 package hacknc2026.backend.service;
 
+import hacknc2026.backend.dto.TripPointsResponse;
+import hacknc2026.backend.model.TripMode;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import org.springframework.stereotype.Service;
@@ -7,6 +9,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class PointCalculationService {
   private static final BigDecimal POINTS_PER_KG = BigDecimal.valueOf(20);
+
+  // Active alternatives have zero direct emissions; driving uses the baseline.
+  // Keep the selected route estimate consistent with completion awards.
+  public TripPointsResponse calculateAllModes(BigDecimal baseline, BigDecimal estimated, TripMode mode) {
+    int active = calculatePoints(baseline, BigDecimal.ZERO);
+    int selected = calculatePoints(baseline, estimated);
+    return new TripPointsResponse(mode == TripMode.WALKING ? selected : active,
+        mode == TripMode.CYCLING ? selected : active, mode == TripMode.DRIVING ? selected : 0);
+  }
 
   public int calculatePoints(BigDecimal baselineCo2Kg, BigDecimal estimatedCo2Kg) {
     if (baselineCo2Kg == null || estimatedCo2Kg == null) {

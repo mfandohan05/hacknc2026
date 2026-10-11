@@ -1,6 +1,7 @@
 package hacknc2026.backend.service;
 
 import hacknc2026.backend.dto.TripResponse;
+import hacknc2026.backend.dto.TripPointsResponse;
 import hacknc2026.backend.dto.CreateTripRequest;
 import hacknc2026.backend.model.Profile;
 import hacknc2026.backend.model.Trip;
@@ -30,22 +31,25 @@ public class TripService {
     private final ProfileRepository profileRepository;
     private final PointTransactionService pointTransactionService;
 
+    private final PointCalculationService pointCalculationService;
+
     public Page<TripResponse> getTrips(UUID userId, Pageable pageable) {
         return tripRepository
-                .findByProfile_IdOrderByCreatedAtDesc(userId, pageable)
+                .findByProfile_IdAndStatusNotOrderByCreatedAtDesc(userId, TripStatus.CANCELLED, pageable)
                 .map(TripResponse::from);
     }
 
     public TripResponse getTrip(UUID userId, UUID tripId) {
         Trip trip = tripRepository
                 .findByIdAndProfile_Id(tripId, userId)
+                .filter(t -> t.getStatus() != TripStatus.CANCELLED)
                 .orElseThrow(this::tripNotFound);
 
         return TripResponse.from(trip);
     }
 
     @Transactional
-    public TripResponse startTrip(UUID userId, CreateTripRequest request) {
+    public TripResponse createTrip(UUID userId, CreateTripRequest request) {
         Profile profile = profileRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
 
@@ -65,10 +69,27 @@ public class TripService {
             trip.setCurrency(DEFAULT_CURRENCY);
         }
         trip.setEmissionsMethodologyVersion(EMISSIONS_METHODOLOGY_VERSION);
-        trip.setStatus(TripStatus.IN_PROGRESS);
+        TripPointsResponse points = pointCalculationService.calculateAllModes(
+                request.baselineCo2Kg(), request.estimatedCo2Kg(), request.mode());
+        trip.setWalkingPoints(points.walking());
+        trip.setCyclingPoints(points.cycling());
+        trip.setDrivingPoints(points.driving());
+        trip.setStatus(TripStatus.PLANNED);
         trip.setCreatedAt(Instant.now());
 
         return TripResponse.from(tripRepository.save(trip));
+    }
+
+    public TripPointsResponse getTripPoints(UUID userId, UUID tripId) {
+        return getTrip(userId, tripId).points();
+    }
+
+    @Transactional
+    public TripResponse startTrip(UUID userId, UUID tripId) {
+        Trip trip = findOwnedTripForUpdate(userId, tripId);
+        requireStatus(trip, TripStatus.PLANNED);
+        trip.setStatus(TripStatus.IN_PROGRESS);
+        return TripResponse.from(trip);
     }
 
     @Transactional
@@ -79,7 +100,8 @@ public class TripService {
         }
         requireStatus(trip, TripStatus.IN_PROGRESS);
         trip.setStatus(TripStatus.COMPLETED);
-        trip.setCompletedAt(Instant.now());
+        // Match database timestamp precision so retries return the same timestamp.
+        trip.setCompletedAt(Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS));
         pointTransactionService.awardTripCompletion(userId, tripId);
         return TripResponse.from(trip);
     }
@@ -87,9 +109,6 @@ public class TripService {
     @Transactional
     public TripResponse cancelTrip(UUID userId, UUID tripId) {
         Trip trip = findOwnedTripForUpdate(userId, tripId);
-        if (trip.getStatus() == TripStatus.CANCELLED) {
-            return TripResponse.from(trip);
-        }
         if (trip.getStatus() != TripStatus.PLANNED
                 && trip.getStatus() != TripStatus.IN_PROGRESS) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
@@ -101,6 +120,7 @@ public class TripService {
 
     private Trip findOwnedTripForUpdate(UUID userId, UUID tripId) {
         return tripRepository.findForUpdate(tripId, userId)
+                .filter(t -> t.getStatus() != TripStatus.CANCELLED)
                 .orElseThrow(this::tripNotFound);
     }
 

@@ -33,18 +33,32 @@ class TripControllerTests {
   private final String createRequestJson =
       "{\"originLatitude\":35.0,\"originLongitude\":-78.0,\"destinationLatitude\":35.1,\"destinationLongitude\":-78.1,\"mode\":\"WALKING\",\"distanceMeters\":1000.0,\"durationSeconds\":600.0,\"estimatedCo2Kg\":0,\"baselineCo2Kg\":1}";
   private final TripResponse trip =
-      new TripResponse(tripId, "WALKING", "IN_PROGRESS", 1000.0, 600.0, null, null, null, null);
+      new TripResponse(tripId, "WALKING", "PLANNED", 1000.0, 600.0, null, null, null, null, null);
 
   @Test
-  void startsTripForAuthenticatedUser() throws Exception {
-    when(service.startTrip(userId, createRequest)).thenReturn(trip);
-    mvc.perform(post("/api/v1/trips/start").principal(principal)
+  void createsTripForAuthenticatedUser() throws Exception {
+    when(service.createTrip(userId, createRequest)).thenReturn(trip);
+    mvc.perform(post("/api/v1/trips").principal(principal)
             .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
             .content(createRequestJson))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id").value(tripId.toString()))
-        .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
-    verify(service).startTrip(userId, createRequest);
+        .andExpect(jsonPath("$.status").value("PLANNED"));
+    verify(service).createTrip(userId, createRequest);
+  }
+
+  @Test
+  void startsExistingTripAndReadsPoints() throws Exception {
+    when(service.startTrip(userId, tripId)).thenReturn(trip);
+    when(service.getTripPoints(userId, tripId))
+        .thenReturn(new hacknc2026.backend.dto.TripPointsResponse(20, 20, 0));
+    mvc.perform(post("/api/v1/trips/" + tripId + "/start").principal(principal))
+        .andExpect(status().isOk());
+    mvc.perform(get("/api/v1/trips/" + tripId + "/points").principal(principal))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.walking").value(20))
+        .andExpect(jsonPath("$.cycling").value(20)).andExpect(jsonPath("$.driving").value(0));
+    verify(service).startTrip(userId, tripId);
+    verify(service).getTripPoints(userId, tripId);
   }
 
   @Test
@@ -77,10 +91,10 @@ class TripControllerTests {
     mvc.perform(get("/api/v1/trips")).andExpect(status().isUnauthorized());
     mvc.perform(get("/api/v1/trips").principal(() -> "invalid"))
         .andExpect(status().isUnauthorized());
-    mvc.perform(post("/api/v1/trips/start").contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+    mvc.perform(post("/api/v1/trips").contentType(org.springframework.http.MediaType.APPLICATION_JSON)
             .content(createRequestJson))
         .andExpect(status().isUnauthorized());
-    mvc.perform(post("/api/v1/trips/start").principal(() -> "invalid")
+    mvc.perform(post("/api/v1/trips").principal(() -> "invalid")
             .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content(createRequestJson))
         .andExpect(status().isUnauthorized());
     verifyNoInteractions(service);

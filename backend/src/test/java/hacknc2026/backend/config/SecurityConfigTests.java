@@ -33,11 +33,11 @@ class SecurityConfigTests {
     }
 
     @Test
-    void accountAndTripEndpointsRequireAuthentication() throws Exception {
+    void allApiGroupsRequireAuthentication() throws Exception {
         for (String path : new String[]{"/api/v1/trips", "/api/v1/profiles/me", "/api/v1/leaderboards"}) {
             mvc.perform(get(path)).andExpect(status().isUnauthorized());
         }
-        for (String path : new String[]{"/api/v1/profiles", "/api/v1/trips/start"}) {
+        for (String path : new String[]{"/api/v1/routes/compare", "/api/v1/emissions/estimate", "/api/v1/trips"}) {
             mvc.perform(post(path).contentType("application/json").content("{}"))
                     .andExpect(status().isUnauthorized());
         }

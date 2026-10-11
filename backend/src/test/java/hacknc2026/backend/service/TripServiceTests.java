@@ -27,7 +27,7 @@ class TripServiceTests {
     private final TripRepository repository = mock(TripRepository.class);
     private final ProfileRepository profiles = mock(ProfileRepository.class);
     private final PointTransactionService points = mock(PointTransactionService.class);
-    private final TripService service = new TripService(repository, profiles, points);
+    private final TripService service = new TripService(repository, profiles, points, new PointCalculationService());
     private final UUID userId = UUID.randomUUID();
     private final UUID tripId = UUID.randomUUID();
     private final CreateTripRequest request = new CreateTripRequest(
@@ -35,7 +35,7 @@ class TripServiceTests {
             1000.0, 600.0, BigDecimal.ZERO, BigDecimal.ONE, null);
 
     @Test
-    void createsAndStartsTripForCurrentUser() {
+    void createsPlannedTripForCurrentUser() {
         Profile profile = new Profile();
         profile.setId(userId);
         when(profiles.findById(userId)).thenReturn(Optional.of(profile));
@@ -45,7 +45,7 @@ class TripServiceTests {
             return created;
         });
 
-        var response = service.startTrip(userId, request);
+        var response = service.createTrip(userId, request);
 
         var trip = org.mockito.ArgumentCaptor.forClass(Trip.class);
         verify(repository).save(trip.capture());
@@ -53,10 +53,13 @@ class TripServiceTests {
         assertEquals(request.originLatitude(), trip.getValue().getOriginLatitude());
         assertEquals(request.destinationLongitude(), trip.getValue().getDestinationLongitude());
         assertEquals(request.mode(), trip.getValue().getMode());
-        assertEquals(TripStatus.IN_PROGRESS, trip.getValue().getStatus());
+        assertEquals(TripStatus.PLANNED, trip.getValue().getStatus());
         assertNotNull(trip.getValue().getCreatedAt());
         assertEquals(tripId, response.id());
-        assertEquals("IN_PROGRESS", response.status());
+        assertEquals("PLANNED", response.status());
+        assertEquals(20, response.points().walking());
+        assertEquals(20, response.points().cycling());
+        assertEquals(0, response.points().driving());
         verifyNoInteractions(points);
     }
 
@@ -74,7 +77,7 @@ class TripServiceTests {
         older.setId(UUID.randomUUID());
         older.setCreatedAt(Instant.parse("2026-10-09T12:00:00Z"));
 
-        when(repository.findByProfile_IdOrderByCreatedAtDesc(userId, pageable))
+        when(repository.findByProfile_IdAndStatusNotOrderByCreatedAtDesc(userId, TripStatus.CANCELLED, pageable))
                 .thenReturn(new PageImpl<>(List.of(newer, older), pageable, 5));
 
         var result = service.getTrips(userId, pageable);
@@ -92,14 +95,14 @@ class TripServiceTests {
         assertEquals(2, result.getSize());
         assertEquals(5, result.getTotalElements());
         assertEquals(3, result.getTotalPages());
-        verify(repository).findByProfile_IdOrderByCreatedAtDesc(userId, pageable);
+        verify(repository).findByProfile_IdAndStatusNotOrderByCreatedAtDesc(userId, TripStatus.CANCELLED, pageable);
         verifyNoMoreInteractions(repository);
     }
 
     @Test
     void getTripsReturnsEmptyPageWhenUserHasNoTrips() {
         var pageable = PageRequest.of(0, 10);
-        when(repository.findByProfile_IdOrderByCreatedAtDesc(userId, pageable))
+        when(repository.findByProfile_IdAndStatusNotOrderByCreatedAtDesc(userId, TripStatus.CANCELLED, pageable))
                 .thenReturn(Page.empty(pageable));
 
         var result = service.getTrips(userId, pageable);
@@ -107,7 +110,7 @@ class TripServiceTests {
         assertTrue(result.isEmpty());
         assertEquals(0, result.getTotalElements());
         assertEquals(pageable, result.getPageable());
-        verify(repository).findByProfile_IdOrderByCreatedAtDesc(userId, pageable);
+        verify(repository).findByProfile_IdAndStatusNotOrderByCreatedAtDesc(userId, TripStatus.CANCELLED, pageable);
         verifyNoMoreInteractions(repository);
     }
 
@@ -142,6 +145,33 @@ class TripServiceTests {
         assertThrows(ResponseStatusException.class, () -> service.completeTrip(userId, tripId));
         assertEquals(TripStatus.CANCELLED, trip.getStatus());
         assertNull(trip.getCompletedAt());
+    }
+
+    @Test
+    void onlyPlannedTripsCanStart() {
+        Trip trip = tripWithStatus(TripStatus.PLANNED);
+        assertEquals("IN_PROGRESS", service.startTrip(userId, tripId).status());
+        for (TripStatus status : List.of(TripStatus.IN_PROGRESS, TripStatus.COMPLETED)) {
+            trip.setStatus(status);
+            assertEquals(HttpStatus.CONFLICT, assertThrows(ResponseStatusException.class,
+                    () -> service.startTrip(userId, tripId)).getStatusCode());
+        }
+        verifyNoInteractions(points);
+    }
+
+    @Test
+    void cancelledTripsAreHiddenFromEveryOperation() {
+        Trip trip = tripWithStatus(TripStatus.CANCELLED);
+        when(repository.findByIdAndProfile_Id(tripId, userId)).thenReturn(Optional.of(trip));
+        List<org.junit.jupiter.api.function.Executable> operations = List.of(
+                () -> service.getTrip(userId, tripId), () -> service.getTripPoints(userId, tripId),
+                () -> service.startTrip(userId, tripId), () -> service.completeTrip(userId, tripId),
+                () -> service.cancelTrip(userId, tripId));
+        for (var operation : operations) {
+            assertEquals(HttpStatus.NOT_FOUND,
+                    assertThrows(ResponseStatusException.class, operation).getStatusCode());
+        }
+        verifyNoInteractions(points);
     }
 
     private Trip tripWithStatus(TripStatus status) {

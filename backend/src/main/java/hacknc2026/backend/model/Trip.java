@@ -56,6 +56,12 @@ public class Trip {
     private BigDecimal estimatedCost;
 
     private String currency;
+    @Column(name = "walking_points")
+    private Integer walkingPoints;
+    @Column(name = "cycling_points")
+    private Integer cyclingPoints;
+    @Column(name = "driving_points")
+    private Integer drivingPoints;
 
     @Column(name = "emissions_methodology_version")
     private String emissionsMethodologyVersion;
