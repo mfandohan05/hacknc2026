@@ -32,6 +32,28 @@ class PointTransactionServiceTests {
                 () -> calculator.calculatePoints(BigDecimal.ONE, BigDecimal.valueOf(-1)));
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.EnumSource(TripMode.class)
+    void calculatesEveryModeAndPreservesSelectedEstimate(TripMode mode) {
+        var result = calculator.calculateAllModes(new BigDecimal("3.0"), new BigDecimal("0.5"), mode);
+        assertEquals(mode == TripMode.WALKING ? 50 : 60, result.walking());
+        assertEquals(mode == TripMode.CYCLING ? 50 : 60, result.cycling());
+        assertEquals(mode == TripMode.DRIVING ? 50 : 0, result.driving());
+        assertEquals(50, result.forMode(mode));
+    }
+
+    @Test
+    void awardsStoredPointsForSelectedMode() {
+        Trip trip = completedTrip();
+        trip.setMode(TripMode.CYCLING);
+        trip.setWalkingPoints(60);
+        trip.setCyclingPoints(42);
+        trip.setDrivingPoints(0);
+        when(ledger.findByAwardKey(anyString())).thenReturn(Optional.empty());
+        assertEquals(42, service.awardTripCompletion(userId, tripId));
+        verify(profiles).incrementTotalPoints(userId, 42);
+    }
+
     @Test
     void awardsOnceAndKeepsSelfReportedTripOutOfVerifiedLeaderboard() {
         Trip trip = completedTrip();

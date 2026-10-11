@@ -15,7 +15,8 @@ public record TripResponse(
         BigDecimal estimatedCo2Kg,
         Double co2SavedKg,
         Instant createdAt,
-        Instant completedAt
+        Instant completedAt,
+        TripPointsResponse points
 ) {
     public static TripResponse from(Trip trip) {
         return new TripResponse(
@@ -27,7 +28,8 @@ public record TripResponse(
                 trip.getEstimatedCo2Kg(),
                 trip.getCo2SavedKg(),
                 trip.getCreatedAt(),
-                trip.getCompletedAt()
+                trip.getCompletedAt(),
+                TripPointsResponse.from(trip)
         );
     }
 }
