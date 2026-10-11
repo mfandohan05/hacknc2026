@@ -12,6 +12,7 @@ const MODE_LABEL: Record<string, string> = {
     WALKING: "Walk",
     CYCLING: "Bike",
     DRIVING: "Drive",
+    TRANSIT: "Public transport",
 };
 
 type TripsState = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; page: TripPage };

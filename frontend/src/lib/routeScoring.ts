@@ -16,8 +16,8 @@ export const DEFAULT_WEIGHTS: PreferenceWeights = {
 };
 
 // comfort has no data source yet, so it is a mode-based heuristic: a base value minus an exertion penalty per km
-const COMFORT_BASE = { CAR: 0.9, BIKE: 0.7, WALK: 0.8 } as const;
-const COMFORT_PENALTY_PER_KM = { CAR: 0, BIKE: 0.04, WALK: 0.1 } as const;
+const COMFORT_BASE = { CAR: 0.9, BIKE: 0.7, WALK: 0.8, TRANSIT: 0.8 } as const;
+const COMFORT_PENALTY_PER_KM = { CAR: 0, BIKE: 0.04, WALK: 0.1, TRANSIT: 0 } as const;
 const COMFORT_FLOOR = 0.1;
 
 export function normalizeWeights(w: PreferenceWeights): PreferenceWeights {

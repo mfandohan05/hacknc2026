@@ -44,6 +44,7 @@ const ROUTE_MODE_TO_PROFILE: Record<RouteMode, NavProfile> = {
     CAR: "driving",
     WALK: "walking",
     BIKE: "cycling",
+    TRANSIT: "walking",
 };
 
 const PROFILE_TO_ROUTE_MODE: Record<NavProfile, RouteMode> = {
@@ -260,6 +261,16 @@ function ExplorePage() {
             return;
         }
         setTransitApproximate(built.approximate);
+        setPreviewOption({
+            routeId: itinerary.id,
+            mode: "TRANSIT",
+            distanceKm: itinerary.distanceMeters / 1000,
+            durationMinutes: itinerary.durationSeconds / 60,
+            estimatedCost: itinerary.currency === "USD" ? itinerary.fare : null,
+            estimatedCo2Kg: null,
+            ecoScore: 0,
+            geometry: built.route.geometry.coordinates,
+        });
         nav.previewTransit(built.route, destinationPoint);
         mapRef.current?.fitToCoordinates(built.route.geometry.coordinates, PEEK_FIT_BOTTOM_PADDING);
     };
@@ -271,9 +282,11 @@ function ExplorePage() {
         setTripError(null);
         setReceipt(null);
         try {
-            // demo drives and transit rides never create a server trip; drop any planned ones
-            if (demo || nav.isTransit) await sessionRef.current.cancelExcept();
+            if (demo) await sessionRef.current.cancelExcept();
             else if (user && previewOption) {
+                if (nav.isTransit && origin && destinationPoint) {
+                    await sessionRef.current.plan(origin, destinationPoint, previewOption);
+                }
                 tripIdRef.current = await sessionRef.current.start(previewOption.routeId);
                 activeKeyRef.current = previewOption.routeId;
                 setTripId(tripIdRef.current);
@@ -289,7 +302,7 @@ function ExplorePage() {
 
     const handleTripComplete = useCallback(async () => {
         if (operationRef.current || cancelRequestedRef.current || phase !== "arrived") return;
-        if (receipt || isDemo || isTransit || !user) { setTripId(null); exit(); return; }
+        if (receipt || isDemo || !user) { setTripId(null); exit(); return; }
         const id = tripIdRef.current;
         if (!id) return;
         operationRef.current = true;
@@ -299,7 +312,7 @@ function ExplorePage() {
             const trip = await completeTrip(id);
             sessionRef.current.complete(id);
             const profile = await getPointBalance();
-            setReceipt({ earned: pointsForMode(trip.points, previewOption?.mode ?? PROFILE_TO_ROUTE_MODE[navProfile]), balance: profile.totalPoints });
+            setReceipt({ earned: pointsForMode(trip.points, isTransit ? "TRANSIT" : previewOption?.mode ?? PROFILE_TO_ROUTE_MODE[navProfile]), balance: profile.totalPoints });
             window.dispatchEvent(new Event("points-updated"));
         } catch (e) {
             setTripError(e instanceof Error ? e.message : "Couldn't save your trip. Try again.");
@@ -311,7 +324,7 @@ function ExplorePage() {
 
     // Arrival triggers completion automatically; failures remain visible for an explicit retry.
     useEffect(() => {
-        if (!(arrived && user && !nav.isDemo && !nav.isTransit && !receipt && !tripError)) return;
+        if (!(arrived && user && !nav.isDemo && !receipt && !tripError)) return;
         let cancelled = false;
         // deferred a tick so the handler's state updates don't happen synchronously inside the effect
         queueMicrotask(() => {

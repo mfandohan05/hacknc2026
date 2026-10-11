@@ -2,12 +2,12 @@ import { apiJson } from "@/services/api";
 import { CAR_KG_CO2E_PER_KM } from "@/services/routeService";
 import type { LngLat, RouteMode, RouteOption } from "@/types/route";
 
-export type TripMode = "WALKING" | "CYCLING" | "DRIVING";
+export type TripMode = "WALKING" | "CYCLING" | "DRIVING" | "TRANSIT";
 
-export type TripPoints = { walking: number; cycling: number; driving: number };
+export type TripPoints = { walking: number; cycling: number; driving: number; transit: number };
 
 export const pointsForMode = (points: TripPoints, mode: RouteMode) =>
-    points[mode === "WALK" ? "walking" : mode === "BIKE" ? "cycling" : "driving"];
+    points[mode === "TRANSIT" ? "transit" : mode === "WALK" ? "walking" : mode === "BIKE" ? "cycling" : "driving"];
 
 export type TripResponse = {
     points: TripPoints;
@@ -31,6 +31,7 @@ const MODE_MAP: Record<RouteMode, TripMode> = {
     WALK: "WALKING",
     BIKE: "CYCLING",
     CAR: "DRIVING",
+    TRANSIT: "TRANSIT",
 };
 
 // A planned trip has estimates only; no balance is credited until completion.

@@ -1,4 +1,4 @@
-export type RouteMode = "WALK" | "BIKE" | "CAR";
+export type RouteMode = "WALK" | "BIKE" | "CAR" | "TRANSIT";
 
 export type LngLat = {
     lng: number;
