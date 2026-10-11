@@ -145,6 +145,26 @@ class TripServiceTests {
         assertThrows(ResponseStatusException.class, () -> service.completeTrip(userId, tripId));
         assertEquals(TripStatus.CANCELLED, trip.getStatus());
         assertNull(trip.getCompletedAt());
+        verifyNoInteractions(points);
+    }
+
+    @Test
+    void cancellingBeforeOrDuringTravelNeverAwardsPoints() {
+        for (TripStatus status : List.of(TripStatus.PLANNED, TripStatus.IN_PROGRESS)) {
+            Trip trip = tripWithStatus(status);
+            assertEquals("CANCELLED", service.cancelTrip(userId, tripId).status());
+            assertNull(trip.getCompletedAt());
+            assertThrows(ResponseStatusException.class, () -> service.completeTrip(userId, tripId));
+        }
+        verifyNoInteractions(points);
+    }
+
+    @Test
+    void plannedTripCannotEarnPointsWithoutStarting() {
+        Trip trip = tripWithStatus(TripStatus.PLANNED);
+        assertThrows(ResponseStatusException.class, () -> service.completeTrip(userId, tripId));
+        assertEquals(TripStatus.PLANNED, trip.getStatus());
+        verifyNoInteractions(points);
     }
 
     @Test
