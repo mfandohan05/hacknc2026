@@ -37,6 +37,11 @@ class RewardsServiceTests {
     assertTrue(result.achievements().get(1).unlocked());
     assertFalse(result.achievements().get(2).unlocked());
     assertEquals(1, result.achievements().get(0).progress());
+    for (int i = 3; i < 6; i++) {
+      var achievement = result.achievements().get(i);
+      assertEquals(Math.min(Math.max(0, balance), achievement.target()), achievement.progress());
+      assertEquals(balance >= achievement.target(), achievement.unlocked());
+    }
   }
 
   @Test

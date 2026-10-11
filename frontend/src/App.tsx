@@ -1,3 +1,5 @@
+import ThemeProvider from "./context/ThemeProvider"
+import "./themes.css"
 import './App.css'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import BottomNav from './components/layout/BottomNav'
@@ -13,7 +15,7 @@ function App() {
   const hideBottomNav = pathname === '/signin'
 
   return (
-    <div className="relative grid h-dvh grid-rows-[minmax(0,1fr)_auto] overflow-hidden">
+    <ThemeProvider><div className="relative grid h-dvh grid-rows-[minmax(0,1fr)_auto] overflow-hidden">
       <div className="col-start-1 row-span-2 row-start-1 min-h-0 overflow-y-auto overflow-x-clip [view-transition-name:page] md:row-span-1">
       <Routes>
         <Route path="/" element={<Navigate to="/explore" replace />} />
@@ -26,7 +28,7 @@ function App() {
       </Routes>
       </div>
       {!hideBottomNav && <BottomNav />}
-    </div>
+    </div></ThemeProvider>
   )
 }
 
