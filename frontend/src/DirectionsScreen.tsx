@@ -1,6 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { ArrowLeft, ArrowUpDown, Bike, Car, Footprints, Leaf, TrainFront, X } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, Leaf, X } from "lucide-react";
 import PlaceSuggestionList from "@/components/PlaceSuggestionList";
 import { usePlaceSearch } from "@/hooks/usePlaceSearch";
 import type { SelectedPlace, Suggestion } from "@/services/searchService";
@@ -8,20 +7,12 @@ import type { Mode } from "./DirectionsSheet";
 
 const YOUR_LOCATION = "Your location";
 
-const tabs: { id: Mode; label: string; Icon: LucideIcon }[] = [
-    { id: "drive", label: "Drive", Icon: Car },
-    { id: "all", label: "Public transport", Icon: TrainFront },
-    { id: "walk", label: "Walk", Icon: Footprints },
-    { id: "bike", label: "Bike", Icon: Bike },
-];
-
 type Endpoint = {
     text: string;
     place: SelectedPlace | null;
 };
 
 export type DirectionsResult = {
-    // null origin means the user's current location
     origin: SelectedPlace | null;
     destination: SelectedPlace | null;
     mode: Mode;
@@ -32,12 +23,11 @@ type Props = {
     origin?: SelectedPlace | null;
     destination?: SelectedPlace | null;
     onDone: (result: DirectionsResult) => void;
-    // used to bias place suggestions toward the user
     near?: { longitude: number; latitude: number } | null;
 };
 
 export default function DirectionsScreen({ initialMode = "drive", origin: initialOrigin, destination, onDone, near }: Props) {
-    const [mode, setMode] = useState<Mode>(initialMode);
+    const mode = initialMode;
     const [origin, setOrigin] = useState<Endpoint>({
         text: initialOrigin?.name ?? YOUR_LOCATION,
         place: initialOrigin ?? null,
@@ -64,7 +54,7 @@ export default function DirectionsScreen({ initialMode = "drive", origin: initia
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden md:inset-auto md:bottom-4 md:left-4 md:top-4 md:w-[400px] md:rounded-3xl md:border md:border-[#0c263c]/55 md:shadow-2xl">
             <div aria-hidden className="aero-bg pointer-events-none absolute inset-0 overflow-hidden">
                 <span className="aero-bubble -right-8 top-56 size-32" />
                 <span className="aero-bubble left-6 top-80 size-14" />
@@ -73,7 +63,7 @@ export default function DirectionsScreen({ initialMode = "drive", origin: initia
                 <span className="aero-bubble bottom-64 left-1/2 size-8" />
             </div>
 
-            <div className="aero-glass relative z-20 rounded-b-3xl pb-3">
+            <div className="aero-glass relative z-20 w-full rounded-b-3xl pb-3">
                 <div className="flex items-start gap-3 px-3 pt-4">
                     <button
                         type="button"
@@ -119,32 +109,6 @@ export default function DirectionsScreen({ initialMode = "drive", origin: initia
                     </button>
                 </div>
 
-                {!typing && (
-                    <div role="tablist" className="mt-4 flex px-2">
-                        {tabs.map(({ id, label, Icon }) => {
-                            const active = mode === id;
-                            return (
-                                <button
-                                    key={id}
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={active}
-                                    aria-label={label}
-                                    onClick={() => setMode(id)}
-                                    className="flex flex-1 justify-center"
-                                >
-                                    <span
-                                        className={`flex h-11 w-[4.5rem] items-center justify-center rounded-full transition ${
-                                            active ? "aero-gel" : "aero-orb"
-                                        }`}
-                                    >
-                                        <Icon className="size-6" />
-                                    </span>
-                                </button>
-                            );
-                        })}
-                    </div>
-                )}
             </div>
 
             <div className="relative flex flex-1 items-start justify-center overflow-y-auto px-6 pt-10">

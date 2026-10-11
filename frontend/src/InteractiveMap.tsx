@@ -8,10 +8,9 @@ import { syncNavRoute, removeNavRoute } from "@/lib/navRouteLayer";
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_KEY;
 
 export type MapHandle = {
-  // fly to a place and drop (or move) the single destination marker
+
   showPlace: (place: { longitude: number; latitude: number }) => void;
   clearPlace: () => void;
-  // the underlying map, for camera control and markers; null before it exists
   getMap: () => mapboxgl.Map | null;
   fitToCoordinates: (coords: Coordinate[], bottomPadding?: number) => void;
   flyToPoint: (point: Coordinate, zoom?: number) => void;
@@ -20,7 +19,6 @@ export type MapHandle = {
 export type UserLocationUpdate = {
   longitude: number;
   latitude: number;
-  // degrees clockwise from north, null when unavailable
   heading: number | null;
 };
 
@@ -28,7 +26,6 @@ type Props = {
   ref?: React.Ref<MapHandle>;
   onMapClick?: () => void;
   onUserLocation?: (location: UserLocationUpdate) => void;
-  // where the map starts instead of the default view (read once, at creation)
   initialCenter?: { longitude: number; latitude: number } | null;
   navRoute?: Coordinate[] | null;
   routes?: RouteOption[];
@@ -37,8 +34,13 @@ type Props = {
 
 const ROUTES_SOURCE = "routes";
 const ROUTES_LAYER = "routes-line";
-// keep the fitted route clear of the top bar and the bottom sheet
 const FIT_PADDING = { top: 140, bottom: 380, left: 40, right: 40 };
+const DESKTOP_FIT_PADDING = { top: 60, bottom: 60, left: 440, right: 60 };
+
+function fitPadding(bottomOverride?: number) {
+  if (window.matchMedia("(min-width: 768px)").matches) return DESKTOP_FIT_PADDING;
+  return { ...FIT_PADDING, bottom: bottomOverride ?? FIT_PADDING.bottom };
+}
 
 function createMarkerElement() {
   const el = document.createElement("div");
@@ -120,7 +122,7 @@ export default function InteractiveMap({ ref, onMapClick, onUserLocation, initia
       const bounds = new mapboxgl.LngLatBounds();
       coords.forEach((c) => bounds.extend(c));
       map.fitBounds(bounds, {
-        padding: { ...FIT_PADDING, bottom: bottomPadding ?? FIT_PADDING.bottom },
+        padding: fitPadding(bottomPadding),
         maxZoom: 17,
         duration: 800,
       });
@@ -207,7 +209,7 @@ export default function InteractiveMap({ ref, onMapClick, onUserLocation, initia
     if (!map || routes.length === 0) return;
     const bounds = new mapboxgl.LngLatBounds();
     routes.forEach((r) => r.geometry.forEach((c) => bounds.extend(c)));
-    map.fitBounds(bounds, { padding: FIT_PADDING, maxZoom: 16, duration: 800 });
+    map.fitBounds(bounds, { padding: fitPadding(), maxZoom: 16, duration: 800 });
   }, [routes]);
 
   return (

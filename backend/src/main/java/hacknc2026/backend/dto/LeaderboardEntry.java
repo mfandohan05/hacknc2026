@@ -1,5 +1,5 @@
 package hacknc2026.backend.dto;
 
-import hacknc2026.backend.model.Profile;
+import java.util.UUID;
 
-public record LeaderboardEntry(Profile profile, Long totalPoints) {}
+public record LeaderboardEntry(UUID profileId, String displayName, Long totalPoints, int rank) {}

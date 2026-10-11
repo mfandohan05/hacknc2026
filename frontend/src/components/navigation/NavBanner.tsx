@@ -34,7 +34,7 @@ function NavBanner({ step, nextStep, afterNextStep, banner, distanceToManeuver, 
 
     return (
         <div
-            className="pointer-events-none absolute inset-x-0 top-0 z-50 px-3 pb-2"
+            className="pointer-events-none absolute inset-x-0 top-0 z-50 px-3 pb-2 md:inset-x-auto md:left-4 md:top-4 md:w-[27rem] md:pt-0!"
             style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
         >
             <div className="aero-glass pointer-events-auto mx-auto flex max-w-md items-center gap-4 rounded-2xl px-4 py-3 text-[#17334A]">

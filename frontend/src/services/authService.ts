@@ -1,13 +1,29 @@
-export type Session = {
-    email: string;
-    // true while auth is a local placeholder and nothing was verified
-    mock: boolean;
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
+
+export type SignUpResult = {
+    // false when the project requires email confirmation before the first sign-in
+    signedIn: boolean;
 };
 
-// TODO: replace with a call to the Spring backend. This placeholder does NOT verify credentials;
-// it accepts any well-formed input so the rest of the app can be built against a session.
 export async function signIn(email: string, password: string): Promise<Session> {
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    if (!email || !password) throw new Error("Enter your email and password.");
-    return { email, mock: true };
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw new Error(error.message);
+    return data.session;
+}
+
+export async function signUp(email: string, password: string): Promise<SignUpResult> {
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) throw new Error(error.message);
+    return { signedIn: data.session !== null };
+}
+
+export async function signOut(): Promise<void> {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw new Error(error.message);
+}
+
+export async function getAccessToken(): Promise<string | null> {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token ?? null;
 }

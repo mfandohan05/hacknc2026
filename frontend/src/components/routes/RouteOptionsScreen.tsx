@@ -36,7 +36,7 @@ function RouteOptionsScreen({
     const selectedRoute = routes.find((r) => r.routeId === selectedRouteId) ?? null;
 
     return (
-        <div className="aero-bg fixed inset-0 z-[60] flex flex-col overflow-hidden text-[#17334A]">
+        <div className="aero-bg fixed inset-0 z-[60] flex flex-col overflow-hidden text-[#17334A] md:inset-auto md:bottom-4 md:left-4 md:top-4 md:w-[400px] md:rounded-3xl md:border md:border-[#0c263c]/55 md:shadow-2xl">
             <header className="aero-glass relative flex items-center gap-3 rounded-b-3xl px-3 pb-3 pt-4">
                 <button
                     type="button"

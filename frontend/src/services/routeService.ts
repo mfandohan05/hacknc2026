@@ -1,110 +1,86 @@
-import { DEFAULT_WEIGHTS, recommendedRouteId } from "@/lib/routeScoring";
+import { ApiError, apiJson } from "@/services/api";
+import { DEFAULT_WEIGHTS } from "@/lib/routeScoring";
 import type { LngLat, RouteComparison, RouteMode, RouteOption } from "@/types/route";
 
-// kg CO2e per km for a typical passenger car; walking and cycling are treated as zero direct emissions
-export const CAR_KG_CO2E_PER_KM = 0.17;
-export const WALK_KG_CO2E_PER_KM = 0;
-export const BIKE_KG_CO2E_PER_KM = 0;
-export const CAR_KM_PER_LITER = 10;
-export const FUEL_PRICE_PER_LITER = 1.0;
-const KM_TO_MILES = 0.621371;
-const ECO_POINTS_PER_TENTH_MILE = 1;
+// kg CO2e per km for a solo-occupant car. Mirrors the backend's EmissionService; used for the
+// trip baseline sent to /api/v1/trips/start.
+export const CAR_KG_CO2E_PER_KM = 0.192;
 
-const PROFILES: { mode: RouteMode; profile: "walking" | "cycling" | "driving" }[] = [
-    { mode: "WALK", profile: "walking" },
-    { mode: "BIKE", profile: "cycling" },
-    { mode: "CAR", profile: "driving" },
-];
+type ApiTravelMode = "WALKING" | "CYCLING" | "DRIVING";
 
-const CO2_PER_KM: Record<RouteMode, number> = {
-    CAR: CAR_KG_CO2E_PER_KM,
-    WALK: WALK_KG_CO2E_PER_KM,
-    BIKE: BIKE_KG_CO2E_PER_KM,
-};
-
-export function calculateEcoScore(mode: RouteMode, distanceKm: number): number {
-    if (mode === "CAR") return 0;
-
-    const miles = distanceKm * KM_TO_MILES;
-    return Math.floor((miles / 0.1) * ECO_POINTS_PER_TENTH_MILE);
-}
-
-type DirectionsResponse = {
-    routes?: {
-        distance: number;
-        duration: number;
-        geometry: { coordinates: [number, number][] };
-        legs?: {
-            summary?: string;
-            steps?: {
-                distance: number;
-                duration: number;
-                maneuver: { instruction: string; type: string };
-            }[];
-        }[];
+// POST /api/v1/routes/compare response (RouteResponse / RouteOption on the backend)
+type CompareResponse = {
+    routes: {
+        routeId: string;
+        mode: ApiTravelMode;
+        distanceKm: number;
+        durationMinutes: number;
+        estimatedCost: number | null;
+        estimatedCo2Kg: number | null;
+        ecoScore: number;
+        geometry: [number, number][];
     }[];
+    recommendedRouteId: string | null;
 };
 
-async function fetchRoute(
-    mode: RouteMode,
-    profile: string,
-    from: LngLat,
-    to: LngLat,
-    signal?: AbortSignal,
-): Promise<Omit<RouteOption, "estimatedCost" | "estimatedCo2Kg" | "ecoScore">> {
-    const params = new URLSearchParams({
-        geometries: "geojson",
-        steps: "true",
-        overview: "full",
-        access_token: import.meta.env.VITE_MAPBOX_KEY,
-    });
-    const url = `https://api.mapbox.com/directions/v5/mapbox/${profile}/${from.lng},${from.lat};${to.lng},${to.lat}?${params}`;
-    const res = await fetch(url, { signal });
-    if (!res.ok) throw new Error(`Directions (${profile}) failed: ${res.status}`);
-    const data: DirectionsResponse = await res.json();
-    const route = data.routes?.[0];
-    if (!route) throw new Error(`No ${profile} route found`);
-    return {
-        routeId: mode.toLowerCase(),
-        mode,
-        distanceKm: route.distance / 1000,
-        durationMinutes: Math.max(1, Math.round(route.duration / 60)),
-        via: route.legs?.[0]?.summary || null,
-        steps: (route.legs ?? [])
-            .flatMap((leg) => leg.steps ?? [])
-            .filter((s) => s.maneuver.type !== "arrive")
-            .map((s) => ({
-                instruction: s.maneuver.instruction,
-                distanceKm: s.distance / 1000,
-                durationSeconds: s.duration,
-            })),
-        geometry: route.geometry.coordinates,
-    };
-}
+const MODE_MAP: Record<ApiTravelMode, RouteMode> = {
+    WALKING: "WALK",
+    CYCLING: "BIKE",
+    DRIVING: "CAR",
+};
 
-// Client-side stand-in for POST /api/v1/routes/compare; swap the body of this function once the backend exists.
-export async function compareRoutes(
-    from: LngLat,
-    to: LngLat,
-    signal?: AbortSignal,
-): Promise<RouteComparison> {
-    const settled = await Promise.allSettled(
-        PROFILES.map(({ mode, profile }) => fetchRoute(mode, profile, from, to, signal)),
-    );
-    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+// Compares walking, cycling and driving through the backend, which owns the Mapbox calls and the
+// emissions and cost estimates.
+export async function compareRoutes(from: LngLat, to: LngLat, signal?: AbortSignal): Promise<RouteComparison> {
+    let data: CompareResponse;
+    try {
+        data = await apiJson<CompareResponse>("/api/v1/routes/compare", {
+            method: "POST",
+            signal,
+            body: JSON.stringify({
+                origin: { latitude: from.lat, longitude: from.lng },
+                destination: { latitude: to.lat, longitude: to.lng },
+                preferences: {
+                    environment: DEFAULT_WEIGHTS.environment,
+                    time: DEFAULT_WEIGHTS.time,
+                    cost: DEFAULT_WEIGHTS.cost,
+                },
+            }),
+        });
+    } catch (e) {
+        if (e instanceof ApiError && (e.status === 502 || e.status === 503)) {
+            throw new Error("The route service is unavailable right now. Try again in a moment.", { cause: e });
+        }
+        throw e;
+    }
 
-    const base = settled.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
-    if (base.length === 0) throw new Error("No routes found between these places.");
+    if (data.routes.length === 0) throw new Error("No routes found between these places.");
 
-    const routes: RouteOption[] = base.map((r) => {
-        const co2 = r.distanceKm * CO2_PER_KM[r.mode];
+    // eco score: how much of a car's emissions this route avoids (car = 0, no emissions = 100).
+    // The backend's own ecoScore is a blend of the user's priorities, so it is not shown as one.
+    const carCo2 = data.routes.find((r) => r.mode === "DRIVING")?.estimatedCo2Kg ?? null;
+
+    const routes: RouteOption[] = data.routes.map((r) => {
+        const co2 = r.estimatedCo2Kg;
+        const ecoScore =
+            co2 === null
+                ? 0
+                : carCo2 !== null && carCo2 > 0
+                  ? Math.round(Math.min(100, Math.max(0, (1 - co2 / carCo2) * 100)))
+                  : 100;
         return {
-            ...r,
+            routeId: r.routeId,
+            mode: MODE_MAP[r.mode],
+            distanceKm: r.distanceKm,
+            durationMinutes: Math.max(1, Math.round(r.durationMinutes)),
+            estimatedCost: r.estimatedCost,
             estimatedCo2Kg: co2,
-            estimatedCost: r.mode === "CAR" ? (r.distanceKm / CAR_KM_PER_LITER) * FUEL_PRICE_PER_LITER : 0,
-            ecoScore: calculateEcoScore(r.mode, r.distanceKm),
+            ecoScore,
+            geometry: r.geometry,
         };
     });
 
-    return { routes, recommendedRouteId: recommendedRouteId(routes, DEFAULT_WEIGHTS) };
+    // The recommendation is re-ranked live on the client (the comfort slider has no backend
+    // equivalent), so the backend's pick is only used when the client has nothing to rank.
+    return { routes, recommendedRouteId: data.recommendedRouteId };
 }

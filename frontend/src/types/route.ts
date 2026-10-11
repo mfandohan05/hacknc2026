@@ -5,12 +5,6 @@ export type LngLat = {
     lat: number;
 };
 
-export type RouteStep = {
-    instruction: string;
-    distanceKm: number;
-    durationSeconds: number;
-};
-
 export type RouteOption = {
     routeId: string;
     mode: RouteMode;
@@ -21,11 +15,7 @@ export type RouteOption = {
     estimatedCo2Kg: number | null;
     // Points earned: 0 for driving, one point per 0.1 miles for walking/biking
     ecoScore: number;
-    // short "via" description of the main roads, when the provider supplies one
-    via: string | null;
-    // turn-by-turn breakdown, excluding the final arrival step
-    steps: RouteStep[];
-    // line to draw on the map as [lng, lat] pairs (client-side addition to the backend shape)
+    // line to draw on the map as [lng, lat] pairs
     geometry: [number, number][];
 };
 

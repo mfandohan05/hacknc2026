@@ -15,8 +15,9 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/routes/compare").permitAll()
-                        .anyRequest().authenticated())
+                        // TEMP: auth disabled for cross-machine testing — revert to
+                        // .anyRequest().authenticated() before leaving this running.
+                        .anyRequest().permitAll())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .build();
     }

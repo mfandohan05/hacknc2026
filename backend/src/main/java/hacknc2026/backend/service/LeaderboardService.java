@@ -4,6 +4,7 @@ import hacknc2026.backend.dto.LeaderboardEntry;
 import hacknc2026.backend.model.Profile;
 import hacknc2026.backend.repository.ProfileRepository;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,17 +14,25 @@ import org.springframework.stereotype.Service;
 public class LeaderboardService {
 
   private final ProfileRepository profileRepository;
+  private final PointTransactionService pointTransactionService;
+
+  private record RankedProfile(Profile profile, long totalPoints) {}
 
   public List<LeaderboardEntry> getLeaderboard() {
-    List<LeaderboardEntry> leaderboard = new ArrayList<>();
     List<Profile> profiles =
         profileRepository.findAll(); // Get all because who cares about optimization ;)
 
-    profiles.sort((a, b) -> b.getTotalPoints().compareTo(a.getTotalPoints()));
+    List<RankedProfile> ranked = profiles.stream()
+        .map(p -> new RankedProfile(p, pointTransactionService.getTotalPoints(p.getId())))
+        .sorted(Comparator.comparingLong(RankedProfile::totalPoints).reversed())
+        .limit(100)
+        .toList();
 
-    for (int i = 0; i < Math.min(100, profiles.size()); i++) {
-      Profile profile = profiles.get(i);
-      leaderboard.add(new LeaderboardEntry(profile, profile.getTotalPoints()));
+    List<LeaderboardEntry> leaderboard = new ArrayList<>();
+    for (int i = 0; i < ranked.size(); i++) {
+      RankedProfile entry = ranked.get(i);
+      leaderboard.add(new LeaderboardEntry(
+          entry.profile().getId(), entry.profile().getDisplayName(), entry.totalPoints(), i + 1));
     }
 
     return leaderboard;
