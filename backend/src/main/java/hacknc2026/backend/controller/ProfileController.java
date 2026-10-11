@@ -8,6 +8,7 @@ import java.security.Principal;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +21,11 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/api/v1/profiles")
 public class ProfileController {
   private final ProfileService profileService;
+
+  @GetMapping("/me")
+  public ProfileResponse getMyProfile(Principal principal) {
+    return profileService.getProfile(currentUserId(principal));
+  }
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)

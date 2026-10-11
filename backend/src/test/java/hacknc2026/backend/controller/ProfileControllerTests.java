@@ -1,6 +1,7 @@
 package hacknc2026.backend.controller;
 
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -69,6 +70,23 @@ class ProfileControllerTests {
     mvc.perform(post("/api/v1/profiles").principal(() -> "invalid").contentType(MediaType.APPLICATION_JSON)
             .content("{\"username\":\"alex\",\"displayName\":\"Alex\"}"))
         .andExpect(status().isUnauthorized());
+    verifyNoInteractions(service);
+  }
+
+  @Test
+  void getsOwnProfileWithLedgerPoints() throws Exception {
+    when(service.getProfile(userId))
+        .thenReturn(new ProfileResponse(userId, "alex", "Alex", 229L, 1L, LocalDate.now()));
+
+    mvc.perform(get("/api/v1/profiles/me").principal(principal))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(userId.toString()))
+        .andExpect(jsonPath("$.totalPoints").value(229));
+  }
+
+  @Test
+  void rejectsGetMeWithoutIdentity() throws Exception {
+    mvc.perform(get("/api/v1/profiles/me")).andExpect(status().isUnauthorized());
     verifyNoInteractions(service);
   }
 }

@@ -22,11 +22,21 @@ class ProfilePersistenceTests {
     var response = service.createProfile(userId, new CreateProfileRequest("alex", "Alex"));
 
     assertEquals(userId, response.id());
+    assertEquals(0L, response.totalPoints());
     var saved = repository.findByUsername("alex").orElseThrow();
     assertEquals(userId, saved.getId());
     assertEquals("Alex", saved.getDisplayName());
-    assertEquals(0L, saved.getTotalPoints());
     assertEquals(1L, saved.getLevel());
     assertNotNull(saved.getCreatedAt());
+  }
+
+  @Test
+  void getProfileReflectsPointsUpdatedOutsideTheCreateFlow() {
+    UUID userId = UUID.randomUUID();
+    service.createProfile(userId, new CreateProfileRequest("sam", "Sam"));
+
+    repository.incrementTotalPoints(userId, 50);
+
+    assertEquals(50L, service.getProfile(userId).totalPoints());
   }
 }
