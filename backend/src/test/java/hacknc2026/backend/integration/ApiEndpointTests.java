@@ -112,6 +112,29 @@ class ApiEndpointTests {
     }
 
     @Test
+    void transitTripPersistsAndAwardsHalfActivePointsOnlyOnce() throws Exception {
+        createProfile(token, "transit-rider");
+        String created = call("POST", "/api/v1/trips", TRIP.replace("WALKING", "TRANSIT"), token)
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.mode").value("TRANSIT"))
+                .andExpect(jsonPath("$.points.walking").value(50))
+                .andExpect(jsonPath("$.points.cycling").value(50))
+                .andExpect(jsonPath("$.points.transit").value(25))
+                .andReturn().getResponse().getContentAsString();
+        String id = json.readTree(created).get("id").asText();
+        call("GET", "/api/v1/trips/" + id + "/points", "", token)
+                .andExpect(status().isOk()).andExpect(jsonPath("$.transit").value(25));
+        call("POST", "/api/v1/trips/" + id + "/start", "", token).andExpect(status().isOk());
+        for (int retry = 0; retry < 2; retry++) {
+            call("POST", "/api/v1/trips/" + id + "/complete", "", token)
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.points.transit").value(25));
+        }
+        call("GET", "/api/v1/profiles/me/points", "", token)
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalPoints").value(25));
+        assertEquals(1, points.count());
+    }
+
+    @Test
     void profileTripCompletionAndLeaderboardWorkTogether() throws Exception {
         call("GET", "/api/v1/profiles/me/points", "", token).andExpect(status().isNotFound());
         call("GET", "/api/v1/profiles/me", "", token).andExpect(status().isNotFound());

@@ -52,7 +52,9 @@ public class PointTransactionService {
     Integer storedPoints = trip.getMode() == null ? null
         : hacknc2026.backend.dto.TripPointsResponse.from(trip).forMode(trip.getMode());
     int points = storedPoints == null
-        ? calculator.calculatePoints(trip.getBaselineCo2Kg(), trip.getEstimatedCo2Kg()) : storedPoints;
+        ? (trip.getMode() == hacknc2026.backend.model.TripMode.TRANSIT
+            ? calculator.calculateAllModes(trip.getBaselineCo2Kg(), trip.getEstimatedCo2Kg(), trip.getMode()).transit()
+            : calculator.calculatePoints(trip.getBaselineCo2Kg(), trip.getEstimatedCo2Kg())) : storedPoints;
     if (points == 0) {
       return 0;
     }

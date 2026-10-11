@@ -15,8 +15,9 @@ public class PointCalculationService {
   public TripPointsResponse calculateAllModes(BigDecimal baseline, BigDecimal estimated, TripMode mode) {
     int active = calculatePoints(baseline, BigDecimal.ZERO);
     int selected = calculatePoints(baseline, estimated);
-    return new TripPointsResponse(mode == TripMode.WALKING ? selected : active,
-        mode == TripMode.CYCLING ? selected : active, mode == TripMode.DRIVING ? selected : 0);
+    int walking = mode == TripMode.WALKING ? selected : active;
+    return new TripPointsResponse(walking,
+        mode == TripMode.CYCLING ? selected : active, mode == TripMode.DRIVING ? selected : 0, walking / 2);
   }
 
   public int calculatePoints(BigDecimal baselineCo2Kg, BigDecimal estimatedCo2Kg) {

@@ -39,7 +39,40 @@ class PointTransactionServiceTests {
         assertEquals(mode == TripMode.WALKING ? 50 : 60, result.walking());
         assertEquals(mode == TripMode.CYCLING ? 50 : 60, result.cycling());
         assertEquals(mode == TripMode.DRIVING ? 50 : 0, result.driving());
-        assertEquals(50, result.forMode(mode));
+        assertEquals(result.walking() / 2, result.transit());
+        assertEquals(mode == TripMode.TRANSIT ? 30 : 50, result.forMode(mode));
+    }
+
+    @Test
+    void transitPointsAreHalfActivePointsRoundedDownRegardlessOfEmissions() {
+        var result = calculator.calculateAllModes(new BigDecimal("1.099"), BigDecimal.TEN, TripMode.TRANSIT);
+        assertEquals(21, result.walking());
+        assertEquals(21, result.cycling());
+        assertEquals(10, result.transit());
+        assertEquals(0, calculator.calculateAllModes(null, BigDecimal.ZERO, TripMode.TRANSIT).transit());
+    }
+
+    @Test
+    void transitCompletionAwardsHalfStoredActivePointsOnce() {
+        Trip trip = completedTrip();
+        trip.setMode(TripMode.TRANSIT);
+        trip.setWalkingPoints(61);
+        trip.setCyclingPoints(61);
+        PointTransaction existing = new PointTransaction();
+        existing.setPoints(30);
+        when(ledger.findByAwardKey(anyString())).thenReturn(Optional.empty(), Optional.of(existing));
+        assertEquals(30, service.awardTripCompletion(userId, tripId));
+        assertEquals(30, service.awardTripCompletion(userId, tripId));
+        verify(ledger, times(1)).save(any());
+        verify(profiles, times(1)).incrementTotalPoints(userId, 30);
+    }
+
+    @Test
+    void transitCompletionWithoutStoredEstimateStillAwardsHalfActivePoints() {
+        completedTrip().setMode(TripMode.TRANSIT);
+        when(ledger.findByAwardKey(anyString())).thenReturn(Optional.empty());
+        assertEquals(30, service.awardTripCompletion(userId, tripId));
+        verify(profiles).incrementTotalPoints(userId, 30);
     }
 
     @Test

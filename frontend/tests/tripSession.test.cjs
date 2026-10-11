@@ -87,3 +87,20 @@ test('API uses CREATE, per-ID START, points, completion, and cancellation endpoi
         '/api/v1/trips/id/start', '/api/v1/trips/id/points', '/api/v1/trips/id/complete', '/api/v1/trips/id/cancel',
     ]);
 });
+
+test('transit trips send their itinerary estimates and use transit points', async () => {
+    let payload;
+    const service = load('src/services/tripService.ts', {
+        '@/services/api': { apiJson: async (_url, init) => { payload = JSON.parse(init.body); } },
+        '@/services/routeService': { CAR_KG_CO2E_PER_KM: 0.192 },
+    });
+    await service.createTrip({ lat: 1, lng: 2 }, { lat: 3, lng: 4 }, {
+        mode: 'TRANSIT', distanceKm: 5, durationMinutes: 20, estimatedCo2Kg: null, estimatedCost: 2.5,
+    });
+    assert.equal(payload.mode, 'TRANSIT');
+    assert.equal(payload.distanceMeters, 5000);
+    assert.equal(payload.durationSeconds, 1200);
+    assert.equal(payload.baselineCo2Kg, 0.96);
+    assert.equal(payload.estimatedCost, 2.5);
+    assert.equal(service.pointsForMode({ walking: 19, cycling: 19, driving: 0, transit: 9 }, 'TRANSIT'), 9);
+});

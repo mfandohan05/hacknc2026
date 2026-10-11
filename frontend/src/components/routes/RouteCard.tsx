@@ -1,4 +1,4 @@
-import { Bike, Car, Footprints, Star } from "lucide-react";
+import { Bike, Bus, Car, Footprints, Star } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { formatCo2, formatDistance, formatDuration } from "@/lib/formatRoute";
 import type { RouteMode, RouteOption } from "@/types/route";
@@ -7,6 +7,7 @@ const MODE_META: Record<RouteMode, { label: string; Icon: LucideIcon }> = {
     WALK: { label: "Walk", Icon: Footprints },
     BIKE: { label: "Bike", Icon: Bike },
     CAR: { label: "Drive", Icon: Car },
+    TRANSIT: { label: "Public transport", Icon: Bus },
 };
 
 type Props = {

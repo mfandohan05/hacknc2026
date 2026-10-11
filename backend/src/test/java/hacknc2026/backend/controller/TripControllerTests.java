@@ -51,12 +51,13 @@ class TripControllerTests {
   void startsExistingTripAndReadsPoints() throws Exception {
     when(service.startTrip(userId, tripId)).thenReturn(trip);
     when(service.getTripPoints(userId, tripId))
-        .thenReturn(new hacknc2026.backend.dto.TripPointsResponse(20, 20, 0));
+        .thenReturn(new hacknc2026.backend.dto.TripPointsResponse(20, 20, 0, 10));
     mvc.perform(post("/api/v1/trips/" + tripId + "/start").principal(principal))
         .andExpect(status().isOk());
     mvc.perform(get("/api/v1/trips/" + tripId + "/points").principal(principal))
         .andExpect(status().isOk()).andExpect(jsonPath("$.walking").value(20))
-        .andExpect(jsonPath("$.cycling").value(20)).andExpect(jsonPath("$.driving").value(0));
+        .andExpect(jsonPath("$.cycling").value(20)).andExpect(jsonPath("$.driving").value(0))
+        .andExpect(jsonPath("$.transit").value(10));
     verify(service).startTrip(userId, tripId);
     verify(service).getTripPoints(userId, tripId);
   }

@@ -51,7 +51,7 @@ export type NavigationState = {
     rerouting: boolean;
     rerouteError: string | null;
     isDemo: boolean;
-    // a public transport itinerary rather than a Mapbox route: never rerouted, no server trip
+    // a public transport itinerary rather than a Mapbox route: never rerouted
     isTransit: boolean;
     // where the trip is heading, kept so a trip can be restored after a refresh
     destination: LngLat | null;
