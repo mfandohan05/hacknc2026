@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Crown, Medal, RefreshCw, Trophy } from "lucide-react";
 import AeroWindow from "@/components/layout/AeroWindow";
+import { apiFetch } from "@/services/api";
 
 type LeaderboardEntry = {
     id: string;
@@ -9,11 +10,13 @@ type LeaderboardEntry = {
     rank: number;
 };
 
+// The API has returned both a flat entry and one nested under `profile`; accept either.
 type LeaderboardApiEntry = {
-    profileId: string;
-    displayName: string;
-    totalPoints: number;
-    rank: number;
+    profileId?: string;
+    displayName?: string;
+    totalPoints?: number;
+    rank?: number;
+    profile?: { id?: string; displayName?: string | null; username?: string | null };
 };
 
 const LEADERBOARD_URL = "/api/v1/leaderboards";
@@ -34,7 +37,7 @@ function LeaderboardPage() {
         setError(null);
 
         try {
-            const response = await fetch(LEADERBOARD_URL, { signal });
+            const response = await apiFetch(LEADERBOARD_URL, { signal });
 
             if (!response.ok) {
                 throw new Error(`Leaderboard request failed (${response.status})`);
@@ -52,11 +55,12 @@ function LeaderboardPage() {
             // Map the API field names to the fields used by the UI. The API already
             // returns this list sorted, so keep its order unchanged.
             setLeaderboard(
-                (entries as LeaderboardApiEntry[]).map(({ profileId, displayName, totalPoints, rank }) => ({
-                    id: profileId,
-                    username: displayName,
-                    points: totalPoints,
-                    rank,
+                (entries as LeaderboardApiEntry[]).map((entry, index) => ({
+                    id: entry.profileId ?? entry.profile?.id ?? String(index),
+                    username:
+                        entry.displayName ?? entry.profile?.displayName ?? entry.profile?.username ?? "Explorer",
+                    points: entry.totalPoints ?? 0,
+                    rank: entry.rank ?? index + 1,
                 })),
             );
         } catch (requestError) {

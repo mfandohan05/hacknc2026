@@ -32,7 +32,7 @@ function PlaceSuggestionList({
             id={id}
             role="listbox"
             className={`absolute inset-x-0 top-full z-10 overflow-y-auto border-white/80 bg-white/55 py-1 backdrop-blur-md backdrop-saturate-150 ${
-                variant === "screen" ? "mx-3 mt-2 max-h-[calc(100dvh-100%-1.25rem)]" : "mt-2 max-h-80"
+                variant === "screen" ? "mx-3 mt-2 max-h-[calc(100dvh-100%-1.25rem)] md:max-h-[calc(100dvh-100%-3.25rem)]" : "mt-2 max-h-80"
             } rounded-2xl border shadow-lg ${className}`}
         >
             {loading && (

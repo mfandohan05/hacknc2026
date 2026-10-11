@@ -6,12 +6,16 @@ type Props = {
     durationSeconds: number;
     isDemo: boolean;
     onComplete: () => void;
+    // saving the trip
+    busy?: boolean;
+    // saving failed; the user can try again
+    error?: string | null;
 };
 
-function ArrivedCard({ distanceMeters, durationSeconds, isDemo, onComplete }: Props) {
+function ArrivedCard({ distanceMeters, durationSeconds, isDemo, onComplete, busy = false, error = null }: Props) {
     return (
         <div
-            className="absolute inset-x-0 bottom-0 z-50 px-3"
+            className="absolute inset-x-0 bottom-0 z-50 px-3 md:inset-x-auto md:bottom-4 md:left-4 md:w-[27rem]"
             style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)" }}
         >
             <div
@@ -37,12 +41,18 @@ function ArrivedCard({ distanceMeters, durationSeconds, isDemo, onComplete }: Pr
                         <dd className="text-lg font-bold">{formatNavDuration(durationSeconds)}</dd>
                     </div>
                 </dl>
+                {error && (
+                    <p role="alert" className="text-sm font-medium text-[#c93a30]">
+                        {error}
+                    </p>
+                )}
                 <button
                     type="button"
                     onClick={onComplete}
-                    className="aero-gel h-12 w-full rounded-full text-base font-semibold"
+                    disabled={busy}
+                    className="aero-gel h-12 w-full rounded-full text-base font-semibold disabled:opacity-70"
                 >
-                    Complete trip
+                    {busy ? "Saving…" : error ? "Try again" : "Complete trip"}
                 </button>
             </div>
         </div>

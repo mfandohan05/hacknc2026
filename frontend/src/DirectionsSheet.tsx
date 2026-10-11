@@ -25,7 +25,6 @@ type Props = {
     destinationLabel: string | null;
     onEditRoute: () => void;
     onViewRoutes: () => void;
-    // when set, replaces the default content (used for the turn-by-turn preview)
     preview?: ReactNode;
 };
 
@@ -80,7 +79,7 @@ export default function DirectionsSheet({
 
     return (
         <div
-            className="aero-glass absolute flex flex-col inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] md:bottom-0 z-50 rounded-t-3xl border-b-0"
+            className="aero-glass absolute flex flex-col inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-50 rounded-t-3xl border-b-0 md:inset-x-auto md:bottom-4 md:left-4 md:top-40 md:h-auto! md:w-[400px] md:transform-none! md:rounded-3xl md:border-b"
             style={{
                 height: sheetHeight,
                 transform: `translateY(${offset}px)`,
@@ -88,13 +87,13 @@ export default function DirectionsSheet({
             }}
         >
             <div
-                className="shrink-0 cursor-grab touch-none select-none pb-2 pt-2 active:cursor-grabbing"
+                className="shrink-0 cursor-grab touch-none select-none pb-2 pt-2 active:cursor-grabbing md:cursor-default md:active:cursor-default"
                 onPointerDown={onPointerDown}
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
                 onPointerCancel={onPointerUp}
             >
-                <div className="mx-auto h-1.5 w-10 rounded-full bg-[#17334A]/30 shadow-[inset_0_1px_1px_rgba(0,0,0,0.15)]" />
+                <div className="mx-auto h-1.5 w-10 rounded-full md:hidden bg-[#17334A]/30 shadow-[inset_0_1px_1px_rgba(0,0,0,0.15)]" />
                 <h2 className="mt-3 text-center text-xl font-semibold text-[#17334A] drop-shadow-[0_1px_0_rgba(255,255,255,0.9)]">
                     Directions
                 </h2>
@@ -103,7 +102,7 @@ export default function DirectionsSheet({
             {preview ? (
                 <div className="min-h-0 flex-1 px-4 pb-4 pt-1">{preview}</div>
             ) : (
-            <div className="px-4 pt-2">
+            <div className="px-4 pt-2 md:min-h-0 md:flex-1 md:overflow-y-auto md:pb-4">
                 <button
                     type="button"
                     onClick={onEditRoute}
