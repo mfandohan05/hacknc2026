@@ -15,7 +15,7 @@ function App() {
   const hideBottomNav = pathname === '/signin'
 
   return (
-    <ThemeProvider><div className="relative grid h-dvh grid-rows-[minmax(0,1fr)_auto] overflow-hidden">
+    <ThemeProvider><div className="app-shell relative grid h-dvh grid-rows-[minmax(0,1fr)_auto] overflow-hidden">
       <div className="col-start-1 row-span-2 row-start-1 min-h-0 overflow-y-auto overflow-x-clip [view-transition-name:page] md:row-span-1">
       <Routes>
         <Route path="/" element={<Navigate to="/explore" replace />} />
