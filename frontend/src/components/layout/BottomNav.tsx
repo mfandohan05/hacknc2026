@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { Gift, Map, Trophy, User, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import TaskbarTray from "./TaskbarTray";
 
 const tabs: { to: string; label: string; icon: LucideIcon }[] = [
     { to: "/explore", label: "Explore", icon: Map },
@@ -10,36 +10,20 @@ const tabs: { to: string; label: string; icon: LucideIcon }[] = [
     { to: "/profile", label: "Profile", icon: User },
 ];
 
-// Tray clock, desktop only. Re-reads the time every 30 seconds.
-function TrayClock() {
-    const [now, setNow] = useState(() => new Date());
-
-    useEffect(() => {
-        const id = setInterval(() => setNow(new Date()), 30000);
-        return () => clearInterval(id);
-    }, []);
-
-    return (
-        <div className="flex flex-col items-end px-3 text-xs leading-tight text-white" aria-label="Current time">
-            <span className="font-semibold">{now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>
-            <span className="text-white/75">{now.toLocaleDateString([], { month: "numeric", day: "numeric", year: "numeric" })}</span>
-        </div>
-    );
-}
-
 // Mobile: a four-tab bar. Desktop (md+): a Windows-style taskbar with the logo as the start button,
-// task buttons beside it and a clock in the tray.
+// task buttons beside it and a notification area (status icons and clock) on the right.
 function BottomNav() {
     return (
         <nav
             aria-label="Primary"
-            className="relative z-50 col-start-1 row-start-2 transition-transform duration-300 motion-reduce:transition-none [html[data-navigating=true]_&]:absolute [html[data-navigating=true]_&]:inset-x-0 [html[data-navigating=true]_&]:bottom-0 [html[data-navigating=true]_&]:translate-y-full aero-taskbar pb-[env(safe-area-inset-bottom)]"
+            className="relative z-50 col-start-1 row-start-2 transition-transform duration-300 motion-reduce:transition-none [html[data-navigating=true]_&]:absolute [html[data-navigating=true]_&]:inset-x-0 [html[data-navigating=true]_&]:bottom-0 [html[data-navigating=true]_&]:translate-y-full aero-taskbar [view-transition-name:taskbar] pb-[env(safe-area-inset-bottom)]"
         >
             <div className="flex h-(--bottom-nav-h) md:h-12 md:items-center md:gap-3 md:px-2">
                 <Link
                     to="/explore"
+                    viewTransition
                     aria-label="EcoQuest home"
-                    className="aero-start-orb -mt-1 hidden size-11 shrink-0 items-center justify-center rounded-full transition hover:brightness-110 md:flex"
+                    className="aero-start-orb -mt-1 hidden size-11 shrink-0 items-center justify-center rounded-full md:flex"
                 >
                     <img src="/image_assets/vista_search_globe.ico" alt="" className="size-7" />
                 </Link>
@@ -49,6 +33,7 @@ function BottomNav() {
                         <li key={to} className="flex-1 md:flex-none">
                             <NavLink
                                 to={to}
+                                viewTransition
                                 className={({ isActive }) =>
                                     cn(
                                         "aero-taskbtn flex h-full flex-col items-center justify-center gap-0.5 text-[11px] md:h-10 md:flex-row md:gap-2 md:rounded-md md:border md:border-transparent md:px-3 md:text-sm",
@@ -77,9 +62,7 @@ function BottomNav() {
                     ))}
                 </ul>
 
-                <div className="ml-auto hidden border-l border-white/20 md:block">
-                    <TrayClock />
-                </div>
+                <TaskbarTray />
             </div>
         </nav>
     );

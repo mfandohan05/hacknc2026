@@ -96,7 +96,7 @@ function LeaderboardPage() {
                     </div>
 
                     <div
-                        className="min-h-0 flex-1 overflow-y-auto p-2 [scrollbar-color:auto] [scrollbar-width:auto] [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar]:bg-transparent [&::-webkit-scrollbar-track]:my-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:border [&::-webkit-scrollbar-track]:border-white/60 [&::-webkit-scrollbar-track]:bg-white/25 [&::-webkit-scrollbar-track]:shadow-[inset_0_1px_3px_rgba(23,51,74,0.12)] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white/60 [&::-webkit-scrollbar-thumb]:bg-gradient-to-b [&::-webkit-scrollbar-thumb]:from-white/90 [&::-webkit-scrollbar-thumb]:via-[#7fcdf5]/75 [&::-webkit-scrollbar-thumb]:to-[#208A5D]/75 [&::-webkit-scrollbar-thumb]:shadow-[inset_1px_1px_0_rgba(255,255,255,0.95),inset_-1px_-1px_0_rgba(23,51,74,0.25),0_0_6px_rgba(47,182,232,0.35)] hover:[&::-webkit-scrollbar-thumb]:from-white hover:[&::-webkit-scrollbar-thumb]:via-[#9edfff] hover:[&::-webkit-scrollbar-thumb]:to-[#34b57f]"
+                        className="min-h-0 flex-1 overflow-y-auto p-2"
                     >
                         {loading ? (
                             <div className="space-y-2 p-2" aria-label="Loading leaderboard" role="status">

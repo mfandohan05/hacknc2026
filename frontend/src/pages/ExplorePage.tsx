@@ -227,7 +227,7 @@ function ExplorePage() {
             )}
 
             {!navActive && (
-                <div className="absolute top-20 left-4 right-4 z-40 flex md:right-auto md:top-[5.5rem] md:w-[400px]">
+                <div className="absolute top-20 left-4 right-4 z-[55] flex md:right-auto md:top-[5.5rem] md:w-[400px]">
                     <MapSearchBox onSelectPlace={handlePlaceSelect} userLocation={userLocation} />
                 </div>
             )}

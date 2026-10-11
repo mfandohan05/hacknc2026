@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { AlertTriangle, CheckCircle2, Eye, EyeOff, Leaf, Loader2, Lock, Mail } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { AlertTriangle, AtSign, CheckCircle2, Eye, EyeOff, Leaf, Loader2, Lock, Mail, User } from "lucide-react";
 import AeroWindow from "@/components/layout/AeroWindow";
 import { useAuth } from "@/hooks/useAuth";
 import { signIn, signUp } from "@/services/authService";
@@ -9,8 +9,16 @@ import { signIn, signUp } from "@/services/authService";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Supabase's default minimum password length
 const MIN_PASSWORD_LENGTH = 6;
+// 3-20 letters, numbers or underscores
+const USERNAME_PATTERN = /^[A-Za-z0-9_]{3,20}$/;
 
-type FieldErrors = { email?: string; password?: string };
+type FieldErrors = {
+    fullName?: string;
+    username?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+};
 
 function SignInPage() {
     const navigate = useNavigate();
@@ -19,19 +27,37 @@ function SignInPage() {
     const [mode, setMode] = useState<"signin" | "signup">("signin");
     const [notice, setNotice] = useState<string | null>(null);
     const destination = (location.state as { from?: string } | null)?.from ?? "/explore";
+    const [fullName, setFullName] = useState("");
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState<FieldErrors>({});
     const [formError, setFormError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
+    // Already signed in when arriving here. While a submit is in flight the handler navigates
+    // itself, so the page change keeps its transition.
+    useEffect(() => {
+        if (user && !submitting) navigate(destination, { replace: true, viewTransition: true });
+    }, [user, submitting, destination, navigate]);
+
     const validate = (): FieldErrors => {
         const next: FieldErrors = {};
+        if (mode === "signup") {
+            if (fullName.trim().length < 2) next.fullName = "Enter your full name.";
+            if (!USERNAME_PATTERN.test(username.trim())) {
+                next.username = "Use 3-20 letters, numbers or underscores.";
+            }
+        }
         if (!EMAIL_PATTERN.test(email.trim())) next.email = "Enter a valid email address.";
         if (password.length === 0) next.password = "Enter your password.";
         else if (mode === "signup" && password.length < MIN_PASSWORD_LENGTH) {
             next.password = `Use at least ${MIN_PASSWORD_LENGTH} characters.`;
+        }
+        if (mode === "signup" && confirmPassword !== password) {
+            next.confirmPassword = "Passwords don't match.";
         }
         return next;
     };
@@ -47,12 +73,15 @@ function SignInPage() {
         setSubmitting(true);
         try {
             if (mode === "signup") {
-                const result = await signUp(email.trim(), password);
-                if (result.signedIn) navigate(destination, { replace: true });
+                const result = await signUp(email.trim(), password, {
+                    fullName: fullName.trim(),
+                    username: username.trim(),
+                });
+                if (result.signedIn) navigate(destination, { replace: true, viewTransition: true });
                 else setNotice("Check your email to confirm your account, then sign in.");
             } else {
                 await signIn(email.trim(), password);
-                navigate(destination, { replace: true });
+                navigate(destination, { replace: true, viewTransition: true });
             }
         } catch (err) {
             setFormError(err instanceof Error ? err.message : "Couldn't sign you in. Try again.");
@@ -61,19 +90,16 @@ function SignInPage() {
         }
     };
 
-    // already signed in (including right after a successful sign-in)
-    if (user) return <Navigate to={destination} replace />;
-
     const signingUp = mode === "signup";
 
     return (
-        <main className="aero-bg relative flex min-h-full items-center justify-center px-4 py-10 pt-[calc(env(safe-area-inset-top)+2.5rem)]">
+        <main className="aero-bg relative flex h-full items-center justify-center px-4 py-6 pt-[calc(env(safe-area-inset-top)+1.5rem)]">
             <span aria-hidden className="aero-bubble -right-10 top-20 size-40" />
             <span aria-hidden className="aero-bubble left-4 top-1/3 size-16" />
             <span aria-hidden className="aero-bubble bottom-24 right-6 size-24" />
             <span aria-hidden className="aero-bubble -left-8 bottom-10 size-32" />
 
-            <AeroWindow title={signingUp ? "Create your EcoQuest account" : "Sign in to EcoQuest"} Icon={Leaf} as="h1" className="w-full max-w-sm" bodyClassName="p-6">
+            <AeroWindow title={signingUp ? "Create your EcoQuest account" : "Sign in to EcoQuest"} Icon={Leaf} as="h1" className="max-h-full w-full max-w-sm" bodyClassName="min-h-0 overflow-y-auto p-6">
                 <div className="flex flex-col items-center text-center">
                     <span className="aero-gel flex size-16 items-center justify-center rounded-full">
                         <Leaf className="size-8" aria-hidden="true" />
@@ -101,6 +127,43 @@ function SignInPage() {
                         </div>
                     )}
 
+                    {signingUp && (
+                        <>
+                            <Field label="Full name" error={errors.fullName} htmlFor="signin-fullname">
+                                <User className="size-5 shrink-0 text-[#17334A]/60" aria-hidden="true" />
+                                <input
+                                    id="signin-fullname"
+                                    type="text"
+                                    autoComplete="name"
+                                    autoFocus
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                    aria-invalid={!!errors.fullName}
+                                    aria-describedby={errors.fullName ? "signin-fullname-error" : undefined}
+                                    placeholder="Alex Green"
+                                    className="min-w-0 flex-1 bg-transparent text-base text-[#17334A] outline-none placeholder:text-[#17334A]/45"
+                                />
+                            </Field>
+
+                            <Field label="Username" error={errors.username} htmlFor="signin-username">
+                                <AtSign className="size-5 shrink-0 text-[#17334A]/60" aria-hidden="true" />
+                                <input
+                                    id="signin-username"
+                                    type="text"
+                                    autoComplete="username"
+                                    autoCapitalize="none"
+                                    spellCheck={false}
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    aria-invalid={!!errors.username}
+                                    aria-describedby={errors.username ? "signin-username-error" : undefined}
+                                    placeholder="greenrunner"
+                                    className="min-w-0 flex-1 bg-transparent text-base text-[#17334A] outline-none placeholder:text-[#17334A]/45"
+                                />
+                            </Field>
+                        </>
+                    )}
+
                     <Field label="Email" error={errors.email} htmlFor="signin-email">
                         <Mail className="size-5 shrink-0 text-[#17334A]/60" aria-hidden="true" />
                         <input
@@ -108,7 +171,7 @@ function SignInPage() {
                             type="email"
                             inputMode="email"
                             autoComplete="email"
-                            autoFocus
+                            autoFocus={!signingUp}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             aria-invalid={!!errors.email}
@@ -142,6 +205,23 @@ function SignInPage() {
                         </button>
                     </Field>
 
+                    {signingUp && (
+                        <Field label="Confirm password" error={errors.confirmPassword} htmlFor="signin-confirm">
+                            <Lock className="size-5 shrink-0 text-[#17334A]/60" aria-hidden="true" />
+                            <input
+                                id="signin-confirm"
+                                type={showPassword ? "text" : "password"}
+                                autoComplete="new-password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                aria-invalid={!!errors.confirmPassword}
+                                aria-describedby={errors.confirmPassword ? "signin-confirm-error" : undefined}
+                                placeholder="Re-enter your password"
+                                className="min-w-0 flex-1 bg-transparent text-base text-[#17334A] outline-none placeholder:text-[#17334A]/45"
+                            />
+                        </Field>
+                    )}
+
                     <button
                         type="submit"
                         disabled={submitting}
@@ -165,7 +245,7 @@ function SignInPage() {
                     >
                         {signingUp ? "Have an account? Sign in" : "New here? Create an account"}
                     </button>
-                    <Link to="/explore" className="font-semibold text-[#208A5D] hover:underline">
+                    <Link to="/explore" viewTransition className="font-semibold text-[#208A5D] hover:underline">
                         Continue as guest
                     </Link>
                 </div>

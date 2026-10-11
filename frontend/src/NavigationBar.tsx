@@ -14,7 +14,7 @@ function NavigationBar() {
                 size="icon-lg"
                 className="aero-orb rounded-full hover:bg-transparent"
                 aria-label="Open profile"
-                onClick={() => navigate("/profile")}
+                onClick={() => navigate("/profile", { viewTransition: true })}
             >
                 <Avatar>
                     <AvatarImage 
