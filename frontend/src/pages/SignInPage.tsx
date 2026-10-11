@@ -46,7 +46,7 @@ function SignInPage() {
     const validate = (): FieldErrors => {
         const next: FieldErrors = {};
         if (mode === "signup") {
-            if (fullName.trim().length < 2) next.fullName = "Enter your full name.";
+            if (fullName.trim().length < 2) next.fullName = "Enter your display name.";
             if (!USERNAME_PATTERN.test(username.trim())) {
                 next.username = "Use 3-20 letters, numbers or underscores.";
             }
@@ -129,7 +129,7 @@ function SignInPage() {
 
                     {signingUp && (
                         <>
-                            <Field label="Full name" error={errors.fullName} htmlFor="signin-fullname">
+                            <Field label="Display name" error={errors.fullName} htmlFor="signin-fullname">
                                 <User className="size-5 shrink-0 text-[#17334A]/60" aria-hidden="true" />
                                 <input
                                     id="signin-fullname"
