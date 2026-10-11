@@ -12,7 +12,10 @@ function App() {
   const hideBottomNav = pathname === '/signin'
 
   return (
-    <>
+    // one grid owns the viewport: the content spans the full height and the tab bar overlaps its bottom row,
+    // so page backgrounds show through the bar's frosted glass
+    <div className="relative grid h-dvh grid-rows-[minmax(0,1fr)_auto] overflow-hidden">
+      <div className="col-start-1 row-span-2 row-start-1 min-h-0 overflow-y-auto overflow-x-clip">
       <Routes>
         <Route path="/" element={<Navigate to="/explore" replace />} />
         <Route path="/explore" element={<ExplorePage />} />
@@ -22,8 +25,9 @@ function App() {
         <Route path="/signin" element={<SignInPage />} />
         <Route path="*" element={<Navigate to="/explore" replace />} />
       </Routes>
+      </div>
       {!hideBottomNav && <BottomNav />}
-    </>
+    </div>
   )
 }
 

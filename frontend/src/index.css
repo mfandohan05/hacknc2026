@@ -159,13 +159,6 @@
   background-color: #208A5D;
 }
 
-@media (max-width: 767px) {
-  .mapboxgl-ctrl-bottom-right,
-  .mapboxgl-ctrl-bottom-left {
-    bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
-  }
-}
-
 .aero-bg {
   background: linear-gradient(180deg, #7fcdf5 0%, #bfe9ff 30%, #e4fbf1 68%, #aeeabf 100%);
 }
@@ -236,6 +229,14 @@
   border: 1px solid rgba(255, 255, 255, 0.85);
   box-shadow: 0 4px 12px rgba(201, 58, 48, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   color: #fff;
+}
+
+/* the mobile tab bar overlays the bottom of the map, so keep the controls above it */
+@media (max-width: 767px) {
+  .mapboxgl-ctrl-bottom-right,
+  .mapboxgl-ctrl-bottom-left {
+    bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
+  }
 }
 
 /* while turn-by-turn navigation is active: our own arrow replaces the geolocate dot, and

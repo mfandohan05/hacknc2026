@@ -42,10 +42,8 @@ const PROFILE_LABEL: Record<NavProfile, string> = {
     cycling: "Cycling",
 };
 
-// ignore GPS updates smaller than this (about 50 m) so route requests are not refired by jitter
 const LOCATION_JITTER_DEG = 0.0005;
 
-// room for the collapsed drawer (peek) and the tab bar below a fitted route
 const PEEK_FIT_BOTTOM_PADDING = 290;
 
 const NO_ROUTES: RouteOption[] = [];
@@ -148,7 +146,7 @@ function ExplorePage() {
     const previewLoading = nav.loading;
 
     return (
-        <div className="relative h-screen w-full overflow-hidden">
+        <div className="relative h-full w-full overflow-hidden">
             <InteractiveMap
                 ref={mapRef}
                 initialCenter={initialCenter}

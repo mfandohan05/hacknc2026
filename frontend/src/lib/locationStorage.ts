@@ -1,5 +1,4 @@
 const KEY = "ecoquest:lastLocation";
-// a location older than this is not trusted as a starting view
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 export type StoredLocation = {
@@ -9,7 +8,6 @@ export type StoredLocation = {
 
 type Saved = StoredLocation & { savedAt: number };
 
-// Storage can throw (private mode, blocked site data), so every access is guarded.
 export function loadLastLocation(): StoredLocation | null {
     try {
         const raw = localStorage.getItem(KEY);

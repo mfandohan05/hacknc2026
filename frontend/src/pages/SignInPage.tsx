@@ -43,7 +43,7 @@ function SignInPage() {
     };
 
     return (
-        <main className="aero-bg relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 pt-[calc(env(safe-area-inset-top)+2.5rem)]">
+        <main className="aero-bg relative flex min-h-full items-center justify-center px-4 py-10 pt-[calc(env(safe-area-inset-top)+2.5rem)]">
             <span aria-hidden className="aero-bubble -right-10 top-20 size-40" />
             <span aria-hidden className="aero-bubble left-4 top-1/3 size-16" />
             <span aria-hidden className="aero-bubble bottom-24 right-6 size-24" />

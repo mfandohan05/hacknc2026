@@ -211,7 +211,7 @@ export default function InteractiveMap({ ref, onMapClick, onUserLocation, initia
   }, [routes]);
 
   return (
-    <div className="relative h-screen w-full">
+    <div className="relative h-full w-full">
       <div ref={mapContainer} className="absolute inset-0 h-full w-full" />
     </div>
   );

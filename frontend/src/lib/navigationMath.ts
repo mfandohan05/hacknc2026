@@ -2,29 +2,21 @@ import { along, bearing, distance, length, lineString, nearestPointOnLine, point
 import type { Feature, LineString } from "geojson";
 import type { BannerInstruction, Coordinate, DirectionsRoute, DirectionsStep } from "@/types/navigation";
 
-// distance to a maneuver at which the step counter advances
 export const STEP_ADVANCE_METERS = 20;
-// distance to the route end at which the trip counts as arrived
 export const ARRIVAL_METERS = 25;
-// distance from the route line beyond which a fix counts as off-route
 export const OFF_ROUTE_METERS = 50;
-// spoken fallback when the API provides no voice instructions
 const FALLBACK_VOICE_METERS = 80;
 
 export type RouteInfo = {
     steps: DirectionsStep[];
     line: Feature<LineString>;
-    // meters along the line
     totalLength: number;
-    // cumulative meters along the line at the end of each step
     stepEnds: number[];
     end: Coordinate;
 };
 
 export type Located = {
-    // meters along the line
     along: number;
-    // meters from the line
     offRoute: number;
     snapped: Coordinate;
 };
@@ -46,7 +38,6 @@ export function buildRouteInfo(route: DirectionsRoute): RouteInfo {
     const line = lineString(route.geometry.coordinates);
     const totalLength = length(line, { units: "meters" });
 
-    // step distances are scaled onto the line length so along-line math stays consistent
     const stepsTotal = steps.reduce((sum, s) => sum + s.distance, 0);
     const scale = stepsTotal > 0 ? totalLength / stepsTotal : 1;
     let acc = 0;
@@ -72,7 +63,6 @@ export function metersBetween(a: Coordinate, b: Coordinate): number {
     return distance(point(a), point(b), { units: "meters" });
 }
 
-// Advances through steps whose maneuver has been reached; never goes backwards.
 export function advanceStep(info: RouteInfo, stepIndex: number, alongMeters: number, snapped: Coordinate): number {
     let i = stepIndex;
     while (i < info.steps.length - 1) {
@@ -116,7 +106,6 @@ export function routeBearingAt(info: RouteInfo, alongMeters: number): number {
     return (raw + 360) % 360;
 }
 
-// The banner for the upcoming maneuver: the last one whose trigger distance has been reached.
 export function pickBanner(step: DirectionsStep | undefined, distanceToManeuver: number): BannerInstruction | null {
     const banners = step?.bannerInstructions;
     if (!banners || banners.length === 0) return null;

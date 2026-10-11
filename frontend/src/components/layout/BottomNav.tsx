@@ -13,7 +13,7 @@ function BottomNav() {
     return (
         <nav
             aria-label="Primary"
-            className="fixed inset-x-0 bottom-0 z-50 transition-transform duration-300 motion-reduce:transition-none [html[data-navigating=true]_&]:translate-y-full border-t border-white/70 bg-gradient-to-b from-white/75 to-white/45 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_24px_rgba(23,51,74,0.15),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-md backdrop-saturate-150 md:hidden"
+            className="relative z-50 col-start-1 row-start-2 transition-transform duration-300 motion-reduce:transition-none [html[data-navigating=true]_&]:absolute [html[data-navigating=true]_&]:inset-x-0 [html[data-navigating=true]_&]:bottom-0 [html[data-navigating=true]_&]:translate-y-full border-t border-white/70 bg-gradient-to-b from-white/75 to-white/45 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_24px_rgba(23,51,74,0.15),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-md backdrop-saturate-150 md:hidden"
         >
             <ul className="flex h-(--bottom-nav-h)">
                 {tabs.map(({ to, label, icon: Icon }) => (

@@ -16,7 +16,7 @@ const profile: ProfileData = {
 
 function ProfilePage() {
     return (
-        <main className="aero-bg relative min-h-screen overflow-hidden px-4 pt-16 pb-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+1.5rem)] md:px-6 md:pb-6">
+        <main className="aero-bg relative min-h-full px-4 pt-16 pb-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+1.5rem)] md:px-6 md:pb-6">
             <span aria-hidden className="aero-bubble -right-10 top-24 size-36" />
             <span aria-hidden className="aero-bubble left-4 top-1/2 size-16" />
             <span aria-hidden className="aero-bubble bottom-40 right-8 size-24" />
