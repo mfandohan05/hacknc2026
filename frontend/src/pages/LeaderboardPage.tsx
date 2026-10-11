@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import { Crown, Medal, RefreshCw, Trophy } from "lucide-react";
-import AeroWindow from "@/components/layout/AeroWindow";
-import { apiFetch } from "@/services/api";
 
 type LeaderboardEntry = {
     id: string;
@@ -10,16 +8,14 @@ type LeaderboardEntry = {
     rank: number;
 };
 
-// The API has returned both a flat entry and one nested under `profile`; accept either.
 type LeaderboardApiEntry = {
-    profileId?: string;
-    displayName?: string;
-    totalPoints?: number;
-    rank?: number;
-    profile?: { id?: string; displayName?: string | null; username?: string | null };
+    profileId: string;
+    displayName: string;
+    totalPoints: number;
+    rank: number;
 };
 
-const LEADERBOARD_URL = "/api/v1/leaderboards";
+const LEADERBOARD_URL = "https://elf-extras-paternity.ngrok-free.dev/api/v1/leaderboards";
 
 const rankStyles = [
     "bg-amber-100 text-amber-700",
@@ -37,7 +33,7 @@ function LeaderboardPage() {
         setError(null);
 
         try {
-            const response = await apiFetch(LEADERBOARD_URL, { signal });
+            const response = await fetch(LEADERBOARD_URL, { signal });
 
             if (!response.ok) {
                 throw new Error(`Leaderboard request failed (${response.status})`);
@@ -55,12 +51,11 @@ function LeaderboardPage() {
             // Map the API field names to the fields used by the UI. The API already
             // returns this list sorted, so keep its order unchanged.
             setLeaderboard(
-                (entries as LeaderboardApiEntry[]).map((entry, index) => ({
-                    id: entry.profileId ?? entry.profile?.id ?? String(index),
-                    username:
-                        entry.displayName ?? entry.profile?.displayName ?? entry.profile?.username ?? "Explorer",
-                    points: entry.totalPoints ?? 0,
-                    rank: entry.rank ?? index + 1,
+                (entries as LeaderboardApiEntry[]).map(({ profileId, displayName, totalPoints, rank }) => ({
+                    id: profileId,
+                    username: displayName,
+                    points: totalPoints,
+                    rank,
                 })),
             );
         } catch (requestError) {
@@ -79,17 +74,20 @@ function LeaderboardPage() {
     }, [loadLeaderboard]);
 
     return (
-        <main className="aero-bg relative flex h-full flex-col px-4 pt-16 pb-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+1.5rem)] md:px-6 md:pb-6">
+        <main className="aero-bg relative flex h-[calc(100svh-var(--bottom-nav-h)-env(safe-area-inset-bottom))] flex-col overflow-hidden px-4 pt-16 pb-6 md:h-screen md:px-6">
             <span aria-hidden className="aero-bubble -right-10 top-24 size-36" />
             <span aria-hidden className="aero-bubble left-4 top-1/2 size-16" />
 
-            <AeroWindow
-                title="Global Leaderboard"
-                Icon={Trophy}
-                as="h1"
-                className="mx-auto min-h-0 w-full max-w-lg flex-1"
-                bodyClassName="flex min-h-0 flex-1 flex-col p-4 sm:p-5"
-            >
+            <section className="aero-glass relative mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col rounded-3xl p-5 sm:p-6">
+                <div className="mb-5 flex items-center gap-3">
+                    <span className="aero-gel flex size-12 shrink-0 items-center justify-center rounded-full">
+                        <Trophy className="size-6" />
+                    </span>
+                    <div>
+                        <h1 className="text-2xl font-semibold text-[#17334A]">Global Leaderboard</h1>
+                    </div>
+                </div>
+
                 <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/35">
                     <div className="grid grid-cols-[3rem_1fr_auto] items-center gap-3 border-b border-white/60 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#17334A]/60">
                         <span>Rank</span>
@@ -152,7 +150,7 @@ function LeaderboardPage() {
                         )}
                     </div>
                 </div>
-            </AeroWindow>
+            </section>
         </main>
     );
 }
