@@ -50,7 +50,7 @@ function AccountRewards({ userId }: { userId: string }) {
                     </div>
                     <div className="flex justify-between gap-3 text-sm"><span>Next: level {data.level + 1}</span><span>{data.pointsPerLevel - data.pointsIntoLevel} points to go</span></div>
                     <progress aria-label="Progress to next level" className="rewards-progress rewards-progress-large mt-2" max={data.pointsPerLevel} value={data.pointsIntoLevel} />
-                    <p className="mt-2 text-xs text-slate-600">{data.lifetimePoints.toLocaleString()} earned · {data.completedTrips} completed trips · One level every {data.pointsPerLevel} earned points</p>
+                    <p className="mt-2 text-xs text-slate-600">{data.completedTrips} completed trips · One level every {data.pointsPerLevel} points in your balance</p>
                 </>}
         </AeroWindow>
         {data && <>

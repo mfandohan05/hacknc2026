@@ -27,10 +27,13 @@ public class RewardsService {
     var profile = profiles.findById(userId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
     long earned = points.earnedPointsForUser(userId);
-    long level = earned / 250 + 1;
+    long balance = profile.getTotalPoints() == null ? 0 : profile.getTotalPoints();
+    // Match the displayed balance, including administrative adjustments in Supabase.
+    long progressionPoints = Math.max(0, balance);
+    long level = progressionPoints / 250 + 1;
     long completed = trips.countByProfile_IdAndStatus(userId, TripStatus.COMPLETED);
-    return new RewardsResponse(profile.getTotalPoints() == null ? 0 : profile.getTotalPoints(),
-        earned, level, earned % 250, 250, completed,
+    return new RewardsResponse(balance,
+        earned, level, progressionPoints % 250, 250, completed,
         List.of(
             achievement("first-trip", "First steps", "Complete your first trip.", completed, 1),
             achievement("five-trips", "Finding your rhythm", "Complete 5 trips.", completed, 5),
