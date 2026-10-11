@@ -16,11 +16,13 @@ import RecenterButton from "@/components/navigation/RecenterButton";
 import { useNavigation } from "@/hooks/useNavigation";
 import { useNavigationCamera } from "@/hooks/useNavigationCamera";
 import { useRouteComparison } from "@/hooks/useRouteComparison";
+import { useAuth } from "@/hooks/useAuth";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { loadLastLocation, saveLastLocation } from "@/lib/locationStorage";
 import { DEFAULT_WEIGHTS, recommendedRouteId } from "@/lib/routeScoring";
 import type { PreferenceWeights } from "@/lib/routeScoring";
 import type { SelectedPlace } from "@/services/searchService";
+import { cancelTrip, completeTrip, startTrip } from "@/services/tripService";
 import type { DirectionsStep, NavProfile } from "@/types/navigation";
 import type { RouteMode, RouteOption } from "@/types/route";
 
@@ -63,6 +65,13 @@ function ExplorePage() {
     const mapRef = useRef<MapHandle>(null);
 
     const nav = useNavigation();
+    const { user } = useAuth();
+    // the option the user picked on the comparison page; its estimates are saved with the trip
+    const [previewOption, setPreviewOption] = useState<RouteOption | null>(null);
+    // resolves to the server trip id once /trips/start returns (null for guests, demos and failures)
+    const tripIdRef = useRef<Promise<string | null> | null>(null);
+    const [completing, setCompleting] = useState(false);
+    const [tripError, setTripError] = useState<string | null>(null);
     const navigating = nav.phase === "navigating";
     const arrived = nav.phase === "arrived";
     const navActive = navigating || arrived;
@@ -125,6 +134,7 @@ function ExplorePage() {
     const handleStartTrip = async (route: RouteOption) => {
         if (!origin || !destinationPoint) return;
         setOptionsOpen(false);
+        setPreviewOption(route);
         // collapse the drawer to its peek right away, so the preview content never pushes it upward
         setSheetOpen(false);
         const result = await nav.preview(ROUTE_MODE_TO_PROFILE[route.mode], origin, destinationPoint);
@@ -132,12 +142,46 @@ function ExplorePage() {
         mapRef.current?.fitToCoordinates(result.geometry.coordinates, PEEK_FIT_BOTTOM_PADDING);
     };
 
-    const handleTripComplete = (trip: { isDemo: boolean }) => {
-        if (!trip.isDemo) {
-            // TODO: submit the completed trip to the backend. Demo trips are never submitted,
-            // so they cannot count toward verified rankings.
+    // Real trips are recorded on the backend when signed in. Demo trips never touch it, so they
+    // cannot count toward verified rankings.
+    const handleStartNavigation = (demo: boolean) => {
+        nav.start({ demo });
+        setTripError(null);
+        tripIdRef.current = null;
+        if (demo || !user || !previewOption || !nav.route || !origin || !destinationPoint) return;
+        tripIdRef.current = startTrip(origin, destinationPoint, previewOption, nav.route)
+            .then((trip) => trip.id)
+            .catch((e: unknown) => {
+                console.error("Could not start the trip on the server", e);
+                return null;
+            });
+    };
+
+    const handleTripComplete = async (trip: { isDemo: boolean }) => {
+        const pending = tripIdRef.current;
+        if (!trip.isDemo && pending) {
+            setCompleting(true);
+            setTripError(null);
+            try {
+                const id = await pending;
+                if (id) await completeTrip(id);
+            } catch (e) {
+                setTripError(e instanceof Error ? e.message : "Couldn't save your trip. Try again.");
+                setCompleting(false);
+                return;
+            }
+            setCompleting(false);
         }
+        tripIdRef.current = null;
         nav.exit();
+    };
+
+    const handleEndNavigation = () => {
+        const pending = tripIdRef.current;
+        tripIdRef.current = null;
+        nav.exit();
+        // best effort: mark the server trip cancelled
+        if (pending) void pending.then((id) => (id ? cancelTrip(id) : undefined)).catch(() => undefined);
     };
 
     const step = nav.steps[nav.stepIndex];
@@ -172,8 +216,8 @@ function ExplorePage() {
                                 route={nav.route}
                                 steps={nav.steps}
                                 modeLabel={PROFILE_LABEL[nav.profile]}
-                                onStart={() => nav.start({ demo: false })}
-                                onDemo={() => nav.start({ demo: true })}
+                                onStart={() => handleStartNavigation(false)}
+                                onDemo={() => handleStartNavigation(true)}
                                 onSelectStep={(s: DirectionsStep) => mapRef.current?.flyToPoint(s.maneuver.location, 17)}
                                 onClose={nav.exit}
                             />
@@ -183,13 +227,13 @@ function ExplorePage() {
             )}
 
             {!navActive && (
-                <div className="absolute top-20 left-4 right-4 z-40 flex">
+                <div className="absolute top-20 left-4 right-4 z-40 flex md:right-auto md:top-[5.5rem] md:w-[400px]">
                     <MapSearchBox onSelectPlace={handlePlaceSelect} userLocation={userLocation} />
                 </div>
             )}
 
             {!navActive && (previewLoading || nav.error) && (
-                <div className="pointer-events-none absolute inset-x-0 top-36 z-40 px-4">
+                <div className="pointer-events-none absolute inset-x-0 top-36 z-40 px-4 md:inset-x-auto md:left-4 md:top-[10.5rem] md:w-[400px] md:px-0">
                     <NavToast
                         variant={previewLoading ? "info" : "error"}
                         message={previewLoading ? "Getting directions…" : (nav.error ?? "")}
@@ -209,7 +253,7 @@ function ExplorePage() {
                         isDemo={nav.isDemo}
                     />
                     <div
-                        className="pointer-events-none absolute inset-x-0 z-40 flex flex-col gap-2 px-3"
+                        className="pointer-events-none absolute inset-x-0 z-40 flex flex-col gap-2 px-3 md:inset-x-auto md:left-4 md:w-[27rem]"
                         style={{ top: "calc(env(safe-area-inset-top) + 9.5rem)" }}
                     >
                         {nav.rerouteError && <NavToast message={nav.rerouteError} onRetry={nav.retryReroute} />}
@@ -239,7 +283,7 @@ function ExplorePage() {
                         demoSpeed={nav.demoSpeed}
                         onToggleMute={nav.toggleMuted}
                         onSetDemoSpeed={nav.setDemoSpeed}
-                        onEnd={nav.exit}
+                        onEnd={handleEndNavigation}
                     />
                 </>
             )}
@@ -249,7 +293,9 @@ function ExplorePage() {
                     distanceMeters={nav.route.distance}
                     durationSeconds={nav.route.duration}
                     isDemo={nav.isDemo}
-                    onComplete={() => handleTripComplete({ isDemo: nav.isDemo })}
+                    onComplete={() => void handleTripComplete({ isDemo: nav.isDemo })}
+                    busy={completing}
+                    error={tripError}
                 />
             )}
 

@@ -1,6 +1,6 @@
 import { Bike, Car, Footprints, Star } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { formatCo2, formatCost, formatDistance, formatDuration } from "@/lib/formatRoute";
+import { formatCo2, formatDistance, formatDuration } from "@/lib/formatRoute";
 import type { RouteMode, RouteOption } from "@/types/route";
 
 const MODE_META: Record<RouteMode, { label: string; Icon: LucideIcon }> = {
@@ -48,23 +48,22 @@ function RouteCard({ route, selected, recommended, savingsKg, onSelect }: Props)
                 <div className="text-right text-lg font-semibold">{formatDuration(route.durationMinutes)}</div>
             </div>
 
-            <dl className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-                <Stat label="Cost (est.)" value={formatCost(route.estimatedCost)} />
+            <dl className="mt-3 grid grid-cols-2 gap-2 text-center text-xs">
                 <Stat label="CO₂e (est.)" value={formatCo2(route.estimatedCo2Kg)} />
-                <Stat label="Eco score" value={String(route.ecoScore)} />
+                <Stat label="Eco points" value={String(route.ecoScore)} />
             </dl>
 
             <div
                 className="aero-progress-track mt-2 h-2.5 overflow-hidden rounded-full"
                 role="meter"
-                aria-label="Eco score"
+                aria-label="Eco points"
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-valuenow={route.ecoScore}
+                        aria-valuenow={Math.min(100, route.ecoScore)}
             >
                 <div
                     className="aero-progress-fill h-full rounded-full"
-                    style={{ width: `${route.ecoScore}%` }}
+                    style={{ width: `${Math.min(100, route.ecoScore)}%` }}
                 />
             </div>
 

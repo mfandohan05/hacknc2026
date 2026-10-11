@@ -49,16 +49,25 @@ function lowerIsBetter(values: (number | null)[]): number[] {
     });
 }
 
+function higherIsBetter(values: number[]): number[] {
+    const max = Math.max(...values);
+    const min = Math.min(...values);
+    if (max === min) return values.map(() => 1);
+    return values.map((value) => (value - min) / (max - min));
+}
+
 export function scoreRoutes(routes: RouteOption[], weights: PreferenceWeights): Map<string, number> {
     const w = normalizeWeights(weights);
     const time = lowerIsBetter(routes.map((r) => r.durationMinutes));
     const cost = lowerIsBetter(routes.map((r) => r.estimatedCost));
+    // Normalize eco points only for comparing environmental preference.
+    // Slider weights never change the raw points earned for a route.
+    const environment = higherIsBetter(routes.map((r) => r.ecoScore));
     const scores = new Map<string, number>();
     routes.forEach((r, i) => {
-        const env = r.ecoScore / 100;
         scores.set(
             r.routeId,
-            w.environment * env + w.time * time[i] + w.cost * cost[i] + w.comfort * comfortScore(r),
+            w.environment * environment[i] + w.time * time[i] + w.cost * cost[i] + w.comfort * comfortScore(r),
         );
     });
     return scores;

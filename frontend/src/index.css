@@ -219,11 +219,35 @@
   -webkit-backdrop-filter: blur(14px) saturate(160%);
 }
 
-/* the selected taskbar button glows */
-.aero-taskbtn-active {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(120, 200, 255, 0.35) 50%, rgba(40, 140, 210, 0.45) 51%, rgba(130, 220, 255, 0.5) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  box-shadow: 0 0 12px rgba(120, 210, 255, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+/* the selected taskbar button glows: the icon pill on mobile, the whole button on desktop */
+@media (max-width: 767px) {
+  .aero-taskbtn-active {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(120, 200, 255, 0.35) 50%, rgba(40, 140, 210, 0.45) 51%, rgba(130, 220, 255, 0.5) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow: 0 0 12px rgba(120, 210, 255, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+}
+
+@media (min-width: 768px) {
+  .aero-taskbtn-current {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(120, 200, 255, 0.35) 50%, rgba(40, 140, 210, 0.45) 51%, rgba(130, 220, 255, 0.5) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow: 0 0 12px rgba(120, 210, 255, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .aero-taskbtn:hover {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(120, 200, 255, 0.2));
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+}
+
+/* the round start-style button holding the logo */
+.aero-start-orb {
+  background:
+    radial-gradient(ellipse at 50% 115%, rgba(150, 255, 210, 0.95), transparent 60%),
+    linear-gradient(180deg, #8fdcff 0%, #2b93d6 48%, #0b5fa6 52%, #2fb6e8 100%);
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 0 14px rgba(110, 210, 255, 0.8), 0 3px 8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 /* glossy green progress bar */

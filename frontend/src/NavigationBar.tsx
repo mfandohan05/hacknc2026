@@ -7,7 +7,7 @@ function NavigationBar() {
     const navigate = useNavigate();
 
     return (
-        <nav className="aero-glass absolute inset-x-0 top-0 z-50 flex items-center justify-between rounded-b-3xl border-x-0 border-t-0 px-6 py-3">
+        <nav className="aero-glass absolute inset-x-0 top-0 z-50 flex items-center justify-between rounded-b-3xl border-x-0 border-t-0 px-6 py-3 md:inset-x-auto md:left-4 md:top-4 md:w-[400px] md:rounded-3xl md:border">
             <h1 className="select-none text-[#17334A] text-2xl font-semibold flex flex-row items-center gap-2 drop-shadow-[0_1px_0_rgba(255,255,255,0.9)]"><img src='../image_assets/vista_search_globe.ico' className='size-8' alt=""/>EcoQuest</h1>
             <Button
                 variant="ghost"

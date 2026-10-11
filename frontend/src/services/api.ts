@@ -1,19 +1,35 @@
-import { supabase } from "@/lib/supabase";
+import { getAccessToken } from "@/services/authService";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/api/v1";
+export class ApiError extends Error {
+    readonly status: number;
 
-export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-    const { data: { session } } = await supabase.auth.getSession();
+    constructor(status: number, message: string) {
+        super(message);
+        this.name = "ApiError";
+        this.status = status;
+    }
+}
 
-    const res = await fetch(`${API_BASE_URL}${path}`, {
-        ...init,
-        headers: {
-            "Content-Type": "application/json",
-            ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}),
-            ...init.headers,
-        },
-    });
+// Calls the Spring backend through the dev proxy (/api) with the Supabase access token attached.
+export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+    const token = await getAccessToken();
+    const headers = new Headers(init.headers);
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+    return fetch(path, { ...init, headers });
+}
 
-    if (!res.ok) throw new Error(`Request to ${path} failed (${res.status})`);
-    return res.json() as Promise<T>;
+export async function apiJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+    const res = await apiFetch(path, init);
+    if (!res.ok) {
+        let detail = "";
+        try {
+            const body = (await res.json()) as { message?: string; error?: string };
+            detail = body.message ?? body.error ?? "";
+        } catch {
+            // not a JSON error body
+        }
+        throw new ApiError(res.status, detail || `Request failed (${res.status})`);
+    }
+    return (await res.json()) as T;
 }
