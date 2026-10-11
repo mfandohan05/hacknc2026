@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "sh -c \"java -jar target/backend-0.0.1-SNAPSHOT.jar\"",
+    "startCommand": "sh -c \"java -jar backend/target/backend-0.0.1-SNAPSHOT.jar\"",
     "restartPolicyType": "ON_FAILURE"
   }
 }

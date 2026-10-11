@@ -1,4 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
+import { API_ORIGIN } from "@/services/api";
 
 const pending = new Map<string, Promise<void>>();
 
@@ -17,7 +18,7 @@ async function provisionProfile(session: Session): Promise<void> {
         Authorization: `Bearer ${session.access_token}`,
         "Content-Type": "application/json",
     };
-    const current = await fetch("/api/v1/profiles/me", { headers });
+    const current = await fetch(`${API_ORIGIN}/api/v1/profiles/me`, { headers });
     if (current.ok) return;
     if (current.status !== 404) {
         throw new Error(`Couldn't load your profile (${current.status}). Please try again.`);
@@ -25,7 +26,7 @@ async function provisionProfile(session: Session): Promise<void> {
 
     const name = session.user.user_metadata?.full_name;
     const username = session.user.user_metadata?.username;
-    const created = await fetch("/api/v1/profiles", {
+    const created = await fetch(`${API_ORIGIN}/api/v1/profiles`, {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -39,7 +40,7 @@ async function provisionProfile(session: Session): Promise<void> {
     if (created.ok) return;
     if (created.status === 409) {
         // Another tab may have created this same user's profile in the meantime.
-        const concurrent = await fetch("/api/v1/profiles/me", { headers });
+        const concurrent = await fetch(`${API_ORIGIN}/api/v1/profiles/me`, { headers });
         if (concurrent.ok) return;
     }
     throw new Error(`Your account is signed in, but profile setup failed (${created.status}). Please retry.`);
