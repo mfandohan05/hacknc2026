@@ -25,8 +25,8 @@ function TransitCard({ itinerary, onSelect, onNavigate }: Props) {
             : "Fare unavailable";
 
     return (
-        <div className="rounded-2xl border border-white/80 bg-white/75 text-[#17334A] shadow-[0_4px_14px_rgba(23,51,74,0.12),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-md">
-            <button type="button" onClick={onSelect} className="w-full rounded-2xl p-3 text-left transition hover:bg-white/60">
+        <div className="route-choice rounded-2xl border border-white/80 bg-white/75 text-[#17334A] shadow-[0_4px_14px_rgba(23,51,74,0.12),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-md">
+            <button type="button" onClick={onSelect} className="w-full cursor-pointer rounded-2xl p-3 text-left transition">
                 <div className="flex items-center gap-3">
                     <span className="aero-blue flex size-11 shrink-0 items-center justify-center rounded-full">
                         <Bus className="size-5" aria-hidden="true" />

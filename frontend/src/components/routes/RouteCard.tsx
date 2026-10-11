@@ -25,8 +25,8 @@ function RouteCard({ route, selected, recommended, savingsKg, onSelect }: Props)
             type="button"
             onClick={onSelect}
             aria-pressed={selected}
-            className={`w-full rounded-2xl border bg-white/75 p-3 text-left text-[#17334A] shadow-[0_4px_14px_rgba(23,51,74,0.12),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-md transition ${
-                selected ? "border-[#208A5D] ring-2 ring-[#208A5D]/60" : "border-white/80 hover:bg-white/90"
+            className={`route-choice w-full rounded-2xl border bg-white/75 p-3 text-left text-[#17334A] shadow-[0_4px_14px_rgba(23,51,74,0.12),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-md transition ${
+                selected ? "border-[#208A5D] ring-2 ring-[#208A5D]/60" : "border-white/80"
             }`}
         >
             <div className="flex items-center gap-3">
