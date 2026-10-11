@@ -21,6 +21,7 @@ import { useNavigationCamera } from "@/hooks/useNavigationCamera";
 import { useRouteComparison } from "@/hooks/useRouteComparison";
 import { useAuth } from "@/hooks/useAuth";
 import { useWakeLock } from "@/hooks/useWakeLock";
+import { loadNavSession, saveNavSession } from "@/lib/navSession";
 import { runViewTransition } from "@/lib/viewTransition";
 import { loadLastLocation, saveLastLocation } from "@/lib/locationStorage";
 import { DEFAULT_WEIGHTS, recommendedRouteId } from "@/lib/routeScoring";
@@ -69,12 +70,18 @@ function ExplorePage() {
     const [initialCenter] = useState(userLocation);
     const mapRef = useRef<MapHandle>(null);
 
-    const nav = useNavigation();
+    // a trip that was in progress when the page was refreshed picks up where it left off
+    const [restoredSession] = useState(() => loadNavSession());
+    const nav = useNavigation(restoredSession);
     const { user } = useAuth();
     // the option the user picked on the comparison page; its estimates are saved with the trip
     const [previewOption, setPreviewOption] = useState<RouteOption | null>(null);
     // resolves to the server trip id once /trips/start returns (null for guests, demos and failures)
-    const tripIdRef = useRef<Promise<string | null> | null>(null);
+    const tripIdRef = useRef<Promise<string | null> | null>(
+        restoredSession?.tripId ? Promise.resolve(restoredSession.tripId) : null,
+    );
+    // the resolved id, kept in state so it is saved with the session
+    const [tripId, setTripId] = useState<string | null>(restoredSession?.tripId ?? null);
     const [completing, setCompleting] = useState(false);
     const [tripError, setTripError] = useState<string | null>(null);
     const navigating = nav.phase === "navigating";
@@ -84,6 +91,28 @@ function ExplorePage() {
     const getMap = useCallback(() => mapRef.current?.getMap() ?? null, []);
     const { following, recenter } = useNavigationCamera({ getMap, active: navActive, position: nav.position });
     useWakeLock(navigating);
+
+    // keep the trip saved while it is in progress so a refresh can resume it
+    const { route: navRoute, destination: navDestination } = nav;
+    const savedPhase = nav.phase === "navigating" || nav.phase === "arrived" ? nav.phase : null;
+    useEffect(() => {
+        if (!savedPhase || !navRoute || !navDestination) return;
+        saveNavSession(
+            {
+                phase: savedPhase,
+                profile: nav.profile,
+                route: navRoute,
+                destination: navDestination,
+                stepIndex: nav.stepIndex,
+                lastPosition: nav.position,
+                isDemo: nav.isDemo,
+                demoDistance: nav.demoDistance,
+                muted: nav.muted,
+                tripId,
+            },
+            false,
+        );
+    });
 
     // lets the app shell slide the bottom tab bar away while navigating
     useEffect(() => {
@@ -163,7 +192,10 @@ function ExplorePage() {
         tripIdRef.current = null;
         if (demo || !user || !previewOption || !nav.route || !origin || !destinationPoint) return;
         tripIdRef.current = startTrip(origin, destinationPoint, previewOption, nav.route)
-            .then((trip) => trip.id)
+            .then((trip) => {
+                setTripId(trip.id);
+                return trip.id;
+            })
             .catch((e: unknown) => {
                 console.error("Could not start the trip on the server", e);
                 return null;
@@ -186,12 +218,14 @@ function ExplorePage() {
             setCompleting(false);
         }
         tripIdRef.current = null;
+        setTripId(null);
         nav.exit();
     };
 
     const handleEndNavigation = () => {
         const pending = tripIdRef.current;
         tripIdRef.current = null;
+        setTripId(null);
         nav.exit();
         // best effort: mark the server trip cancelled
         if (pending) void pending.then((id) => (id ? cancelTrip(id) : undefined)).catch(() => undefined);

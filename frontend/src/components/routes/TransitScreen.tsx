@@ -54,16 +54,13 @@ export default function TransitScreen({ origin, destination, destinationName, in
     const embedKey = import.meta.env.VITE_GOOGLE_MAPS_EMBED_KEY;
     const embedUrl = mapParams && embedKey
         ? `https://www.google.com/maps/embed/v1/directions?${mapParams}&key=${encodeURIComponent(embedKey)}` : null;
-    const externalUrl = ready ? `https://www.google.com/maps/dir/?${new URLSearchParams({
-        api: "1", origin: `${origin.lat},${origin.lng}`, destination: `${destination.lat},${destination.lng}`, travelmode: "transit",
-    })}` : null;
 
     const card = "rounded-2xl border border-white/80 bg-white/75 p-4 shadow-[0_4px_14px_rgba(23,51,74,0.12),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-md";
     const field = "aero-input mt-1 h-11 w-full rounded-xl px-3 text-base text-[#17334A] outline-none";
 
     return (
         <section
-            className="aero-bg fixed inset-0 z-[80] flex flex-col overflow-hidden text-[#17334A] md:inset-auto md:bottom-4 md:left-4 md:top-4 md:w-[400px] md:rounded-3xl md:border md:border-[#0c263c]/55 md:shadow-2xl"
+            className="aero-bg fixed inset-0 z-[80] flex flex-col overflow-hidden text-[#17334A] md:absolute md:inset-auto md:bottom-4 md:left-4 md:top-4 md:w-[400px] md:rounded-3xl md:border md:border-[#0c263c]/55 md:shadow-2xl"
             aria-label="Public transport"
         >
             <header className="aero-glass relative flex items-center gap-3 rounded-b-3xl px-3 pb-3 pt-4">
@@ -213,16 +210,6 @@ export default function TransitScreen({ origin, destination, destinationName, in
                                     allowFullScreen
                                     referrerPolicy="no-referrer-when-downgrade"
                                 />
-                            )}
-                            {externalUrl && (
-                                <a
-                                    className="aero-gel inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 font-semibold"
-                                    href={externalUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                >
-                                    Open in Google Maps <ExternalLink size={16} />
-                                </a>
                             )}
 
                             <p className="px-1 text-xs text-[#17334A]/80">
