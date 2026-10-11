@@ -104,5 +104,4 @@ class TripControllerTests {
     mvc.perform(post("/api/v1/trips/" + tripId + "/complete").principal(principal))
         .andExpect(status().isConflict());
   }
-
 }
