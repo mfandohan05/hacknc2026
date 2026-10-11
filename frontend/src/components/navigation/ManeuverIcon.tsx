@@ -1,5 +1,7 @@
 import {
     ArrowUp,
+    Bus,
+    Footprints,
     ArrowUpLeft,
     ArrowUpRight,
     CornerUpLeft,
@@ -10,9 +12,11 @@ import {
     Undo2,
 } from "lucide-react";
 
-type IconKey = "straight" | "left" | "right" | "slightLeft" | "slightRight" | "uturn" | "roundabout" | "arrive" | "depart";
+type IconKey = "board" | "walk" | "straight" | "left" | "right" | "slightLeft" | "slightRight" | "uturn" | "roundabout" | "arrive" | "depart";
 
 const ICONS = {
+    board: Bus,
+    walk: Footprints,
     straight: ArrowUp,
     left: CornerUpLeft,
     right: CornerUpRight,
@@ -25,6 +29,8 @@ const ICONS = {
 } as const;
 
 function iconKey(type: string, modifier?: string): IconKey {
+    if (type === "transit-board") return "board";
+    if (type === "transit-walk") return "walk";
     if (type === "arrive") return "arrive";
     if (type === "depart") return "depart";
     if (type === "roundabout" || type === "rotary" || type === "roundabout turn") return "roundabout";

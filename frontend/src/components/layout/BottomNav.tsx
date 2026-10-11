@@ -16,7 +16,7 @@ function BottomNav() {
     return (
         <nav
             aria-label="Primary"
-            className="relative z-50 col-start-1 row-start-2 transition-transform duration-300 motion-reduce:transition-none [html[data-navigating=true]_&]:absolute [html[data-navigating=true]_&]:inset-x-0 [html[data-navigating=true]_&]:bottom-0 [html[data-navigating=true]_&]:translate-y-full aero-taskbar [view-transition-name:taskbar] pb-[env(safe-area-inset-bottom)]"
+            className="relative z-50 col-start-1 row-start-2 aero-taskbar [view-transition-name:taskbar] pb-[env(safe-area-inset-bottom)]"
         >
             <div className="flex h-(--bottom-nav-h) md:h-12 md:items-center md:gap-3 md:px-2">
                 <Link

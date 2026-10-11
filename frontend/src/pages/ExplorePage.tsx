@@ -9,7 +9,9 @@ import type { DirectionsResult } from "../DirectionsScreen";
 import RouteOptionsScreen from "@/components/routes/RouteOptionsScreen";
 import TransitScreen from "@/components/routes/TransitScreen";
 import { useTransitRoutes } from "@/hooks/useTransitRoutes";
-import type { TransitPreference } from "@/services/transitService";
+import type { TransitItinerary, TransitPreference } from "@/services/transitService";
+import { getRoute } from "@/services/directionsService";
+import { itineraryToRoute } from "@/lib/transitRoute";
 import DirectionsPreviewPanel from "@/components/navigation/DirectionsPreviewPanel";
 import NavBanner from "@/components/navigation/NavBanner";
 import TripPanel from "@/components/navigation/TripPanel";
@@ -80,7 +82,7 @@ function ExplorePage() {
     // a trip that was in progress when the page was refreshed picks up where it left off
     const [restoredSession] = useState(() => loadNavSession());
     const nav = useNavigation(restoredSession);
-    const { phase, isDemo, exit, profile: navProfile } = nav;
+    const { phase, isDemo, isTransit, exit, profile: navProfile } = nav;
     const { user } = useAuth();
     // the option the user picked on the comparison page; its estimates are saved with the trip
     const [previewOption, setPreviewOption] = useState<RouteOption | null>(null);
@@ -96,6 +98,9 @@ function ExplorePage() {
     const [plannedRoutes, setPlannedRoutes] = useState<{ key: string; routes: RouteOption[] } | null>(null);
     const [receipt, setReceipt] = useState<{ earned: number; balance: number } | null>(null);
     const [completing, setCompleting] = useState(false);
+    // public transport navigation: building the route, and whether its path is an estimate
+    const [transitBuilding, setTransitBuilding] = useState(false);
+    const [transitApproximate, setTransitApproximate] = useState(false);
     const [tripError, setTripError] = useState<string | null>(null);
     const navigating = nav.phase === "navigating";
     const arrived = nav.phase === "arrived";
@@ -126,20 +131,12 @@ function ExplorePage() {
                 isDemo: nav.isDemo,
                 demoDistance: nav.demoDistance,
                 muted: nav.muted,
+                transit: nav.isTransit,
                 tripId,
             },
             false,
         );
     });
-
-    // lets the app shell slide the bottom tab bar away while navigating
-    useEffect(() => {
-        if (!navActive) return;
-        document.documentElement.dataset.navigating = "true";
-        return () => {
-            delete document.documentElement.dataset.navigating;
-        };
-    }, [navActive]);
 
     const originPoint = originPlace ?? userLocation;
     const origin = originPoint ? { lng: originPoint.longitude, lat: originPoint.latitude } : null;
@@ -227,6 +224,46 @@ function ExplorePage() {
         mapRef.current?.fitToCoordinates(result.geometry.coordinates, PEEK_FIT_BOTTOM_PADDING);
     };
 
+    // Starts turn-by-turn navigation along a public transport itinerary (walk to the stop, ride, walk).
+    // The legs' own paths are used when the backend sends them; otherwise they are estimated from a
+    // road route between the start and the destination, and the preview says so.
+    const handleNavigateTransit = async (itinerary: TransitItinerary) => {
+        if (!origin || !destinationPoint) return;
+        setTripError(null);
+        setPreviewOption(null);
+        setTransitPreference(null);
+        setOptionsOpen(false);
+        setSheetOpen(false);
+        // planned (not yet started) trips for the other travel modes are no longer wanted
+        void sessionRef.current.cancelExcept().catch(console.error);
+
+        const name = destination?.name ?? "";
+        let built = itineraryToRoute(itinerary, name);
+        if (!built) {
+            setTransitBuilding(true);
+            try {
+                let base;
+                try {
+                    base = await getRoute("driving", origin, destinationPoint);
+                } catch {
+                    base = await getRoute("walking", origin, destinationPoint);
+                }
+                built = itineraryToRoute(itinerary, name, base.geometry.coordinates);
+            } catch {
+                built = null;
+            } finally {
+                setTransitBuilding(false);
+            }
+        }
+        if (!built) {
+            setTripError("Couldn't build a path for this public transport route. Please try again.");
+            return;
+        }
+        setTransitApproximate(built.approximate);
+        nav.previewTransit(built.route, destinationPoint);
+        mapRef.current?.fitToCoordinates(built.route.geometry.coordinates, PEEK_FIT_BOTTOM_PADDING);
+    };
+
     const handleStartNavigation = async (demo: boolean) => {
         if (operationRef.current || nav.phase !== "previewing") return;
         operationRef.current = true;
@@ -234,7 +271,8 @@ function ExplorePage() {
         setTripError(null);
         setReceipt(null);
         try {
-            if (demo) await sessionRef.current.cancelExcept();
+            // demo drives and transit rides never create a server trip; drop any planned ones
+            if (demo || nav.isTransit) await sessionRef.current.cancelExcept();
             else if (user && previewOption) {
                 tripIdRef.current = await sessionRef.current.start(previewOption.routeId);
                 activeKeyRef.current = previewOption.routeId;
@@ -251,7 +289,7 @@ function ExplorePage() {
 
     const handleTripComplete = useCallback(async () => {
         if (operationRef.current || cancelRequestedRef.current || phase !== "arrived") return;
-        if (receipt || isDemo || !user) { setTripId(null); exit(); return; }
+        if (receipt || isDemo || isTransit || !user) { setTripId(null); exit(); return; }
         const id = tripIdRef.current;
         if (!id) return;
         operationRef.current = true;
@@ -269,11 +307,11 @@ function ExplorePage() {
             operationRef.current = false;
             setCompleting(false);
         }
-    }, [phase, isDemo, exit, navProfile, user, previewOption, receipt]);
+    }, [phase, isDemo, isTransit, exit, navProfile, user, previewOption, receipt]);
 
     // Arrival triggers completion automatically; failures remain visible for an explicit retry.
     useEffect(() => {
-        if (!(arrived && user && !nav.isDemo && !receipt && !tripError)) return;
+        if (!(arrived && user && !nav.isDemo && !nav.isTransit && !receipt && !tripError)) return;
         let cancelled = false;
         // deferred a tick so the handler's state updates don't happen synchronously inside the effect
         queueMicrotask(() => {
@@ -282,7 +320,7 @@ function ExplorePage() {
         return () => {
             cancelled = true;
         };
-    }, [arrived, user, nav.isDemo, receipt, tripError, handleTripComplete]);
+    }, [arrived, user, nav.isDemo, nav.isTransit, receipt, tripError, handleTripComplete]);
 
     const handleEndNavigation = async () => {
         cancelRequestedRef.current = true;
@@ -318,7 +356,7 @@ function ExplorePage() {
 
     const step = nav.steps[nav.stepIndex];
     const showPreview = nav.phase === "previewing" && nav.route !== null;
-    const previewLoading = nav.loading;
+    const previewLoading = nav.loading || transitBuilding;
 
     return (
         <div className="relative h-full w-full overflow-hidden">
@@ -353,7 +391,7 @@ function ExplorePage() {
                             <DirectionsPreviewPanel
                                 route={nav.route}
                                 steps={nav.steps}
-                                modeLabel={PROFILE_LABEL[nav.profile]}
+                                modeLabel={nav.isTransit ? (transitApproximate ? "Public transport · approximate path" : "Public transport") : PROFILE_LABEL[nav.profile]}
                                 onStart={() => handleStartNavigation(false)}
                                 onDemo={() => handleStartNavigation(true)}
                                 onSelectStep={(s: DirectionsStep) => mapRef.current?.flyToPoint(s.maneuver.location, 17)}
@@ -404,10 +442,12 @@ function ExplorePage() {
                     </div>
                     {!following && (
                         <div
-                            className="pointer-events-none absolute right-3 z-40"
-                            style={{
-                                bottom: `calc(env(safe-area-inset-bottom) + ${nav.isDemo ? "14.5rem" : "10.5rem"})`,
-                            }}
+                            // the mobile tab bar overlays the bottom of the map, so sit above it there
+                            className={`pointer-events-none absolute right-3 z-40 ${
+                                nav.isDemo
+                                    ? "bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+14.5rem)] md:bottom-[14.5rem]"
+                                    : "bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+10.5rem)] md:bottom-[10.5rem]"
+                            }`}
                         >
                             <RecenterButton onClick={recenter} />
                         </div>
@@ -454,6 +494,7 @@ function ExplorePage() {
                     onBack={() => void handleEndNavigation()}
                     onTransit={() => { void handleEndNavigation().then(() => setTransitPreference("ALL")); }}
                     transit={transit}
+                    onNavigateTransit={(itinerary) => void handleNavigateTransit(itinerary)}
                 />
             )}
             {!navActive && screenOpen && (
@@ -470,6 +511,7 @@ function ExplorePage() {
                 destination={destinationPoint}
                 destinationName={destination?.name ?? ""}
                 initialPreference={transitPreference}
+                onNavigate={(itinerary) => void handleNavigateTransit(itinerary)}
                 onBack={() => setTransitPreference(null)}
                 onEditRoute={() => {
                     setScreenMode(transitPreference === "BUS" ? "bus" : transitPreference === "SUBWAY" ? "metro" : transitPreference === "TRAIN" ? "train" : "all");

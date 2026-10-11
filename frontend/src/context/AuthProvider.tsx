@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { AuthContext } from "./AuthContext";
+import WelcomeScreen from "@/components/auth/WelcomeScreen";
 import { ensureProfile } from "@/services/profileService";
 import { signOut } from "@/services/authService";
 
@@ -70,21 +71,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return (
         <AuthContext.Provider value={value}>
             {loading ? (
-                <div className="aero-bg flex min-h-dvh items-center justify-center" role="status">
-                    {session ? "Setting up your profile…" : "Loading…"}
-                </div>
+                <WelcomeScreen
+                    status={session ? "Setting up your profile…" : "Starting EcoQuest…"}
+                />
             ) : profileError ? (
-                <div className="aero-bg flex min-h-dvh flex-col items-center justify-center gap-4 p-6">
-                    <p role="alert">{profileError}</p>
-                    <button className="aero-gel rounded-full px-6 py-3" onClick={() => setRetry((value) => value + 1)}>
-                        Retry profile setup
-                    </button>
-                    <button onClick={() => {
-                        void signOut().catch((error: unknown) => {
-                            setProfileError(error instanceof Error ? error.message : "Couldn't sign out.");
-                        });
-                    }}>Sign out</button>
-                </div>
+                <WelcomeScreen title="Something went wrong" status={profileError} busy={false}>
+                    <div className="mt-2 flex flex-col items-center gap-3">
+                        <button
+                            className="aero-gel h-11 rounded-full px-6 font-semibold"
+                            onClick={() => setRetry((value) => value + 1)}
+                        >
+                            Retry profile setup
+                        </button>
+                        <button
+                            className="text-sm font-semibold text-white/90 underline"
+                            onClick={() => {
+                                void signOut().catch((error: unknown) => {
+                                    setProfileError(error instanceof Error ? error.message : "Couldn't sign out.");
+                                });
+                            }}
+                        >
+                            Sign out
+                        </button>
+                    </div>
+                </WelcomeScreen>
             ) : children}
         </AuthContext.Provider>
     );
