@@ -1,5 +1,4 @@
-FROM ubuntu:latest
-LABEL authors="taras"
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /src
 COPY pom.xml ./
 COPY backend/pom.xml backend/pom.xml
