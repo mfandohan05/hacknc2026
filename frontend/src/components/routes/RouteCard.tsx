@@ -1,6 +1,7 @@
 import { Bike, Bus, Car, Footprints, Star } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { formatCo2, formatDistance, formatDuration } from "@/lib/formatRoute";
+import { routePoints } from "@/lib/routePoints";
 import type { RouteMode, RouteOption } from "@/types/route";
 
 const MODE_META: Record<RouteMode, { label: string; Icon: LucideIcon }> = {
@@ -20,6 +21,7 @@ type Props = {
 
 function RouteCard({ route, selected, recommended, savingsKg, onSelect }: Props) {
     const { label, Icon } = MODE_META[route.mode];
+    const points = routePoints(route);
 
     return (
         <button
@@ -49,7 +51,7 @@ function RouteCard({ route, selected, recommended, savingsKg, onSelect }: Props)
 
             <dl className="mt-3 grid grid-cols-2 gap-2 text-center text-xs">
                 <Stat label="CO₂e (est.)" value={formatCo2(route.estimatedCo2Kg)} />
-                <Stat label="Eco points" value={route.tripPoints === undefined ? "—" : String(route.tripPoints)} />
+                <Stat label="Eco points (est.)" value={points === null ? "—" : String(points)} />
             </dl>
 
             <div

@@ -91,7 +91,7 @@ function ExplorePage() {
     const activeKeyRef = useRef<string | undefined>(undefined);
     const operationRef = useRef(false);
     const cancelRequestedRef = useRef(false);
-    const [plannedRoutes, setPlannedRoutes] = useState<{ key: string; routes: RouteOption[] } | null>(null);
+    const [plannedRoutes, setPlannedRoutes] = useState<{ key: string; routes: RouteOption[]; pointsError: string | null } | null>(null);
     const [receipt, setReceipt] = useState<{ earned: number; balance: number } | null>(null);
     const [completing, setCompleting] = useState(false);
     const [transitBuilding, setTransitBuilding] = useState(false);
@@ -148,12 +148,17 @@ function ExplorePage() {
         void (async () => {
             await session.cancelExcept();
             if (!active) return;
-            const planned = await Promise.all(options.map(async (option) => {
+            const results = await Promise.allSettled(options.map(async (option) => {
                 await session.plan(from, to, option);
                 const points = await session.points(option.routeId);
                 return { ...option, tripPoints: pointsForMode(points, option.mode) };
             }));
-            if (active) setPlannedRoutes({ key: planningKey, routes: planned });
+            if (active) setPlannedRoutes({
+                key: planningKey,
+                routes: results.map((result, index) => result.status === "fulfilled" ? result.value : options[index]),
+                pointsError: results.some((result) => result.status === "rejected")
+                    ? "Account point estimates are unavailable for some routes. Showing route-based estimates." : null,
+            });
         })().catch((e: unknown) => {
             if (active) setTripError(e instanceof Error ? e.message : "Couldn't plan your trip.");
         });
@@ -261,7 +266,7 @@ function ExplorePage() {
         try {
             if (demo) await sessionRef.current.cancelExcept();
             else if (user && previewOption) {
-                if (nav.isTransit && origin && destinationPoint) {
+                if (origin && destinationPoint) {
                     await sessionRef.current.plan(origin, destinationPoint, previewOption);
                 }
                 tripIdRef.current = await sessionRef.current.start(previewOption.routeId);
@@ -474,6 +479,7 @@ function ExplorePage() {
                     selectedRouteId={selectedRouteId}
                     loading={loading || (!!user && !optionRoutes && !tripError)}
                     error={tripError ?? error}
+                    pointsError={plannedRoutes?.key === planningKey ? plannedRoutes.pointsError : null}
                     weights={weights}
                     onWeightsChange={setWeights}
                     onSelectRoute={(id) => setSelectedMode(routes.find((r) => r.routeId === id)?.mode ?? null)}

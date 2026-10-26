@@ -18,13 +18,18 @@ export function useTransitPoints(routes: TransitItinerary[], origin: LngLat | nu
         const [, from, to, options] = JSON.parse(key) as [string, LngLat, LngLat, ReturnType<typeof transitTripOption>[]];
         const session = new TripSession();
         let active = true;
-        void Promise.all(options.map(async (option) => {
+        void Promise.allSettled(options.map(async (option) => {
             await session.plan(from, to, option);
             if (!active) return null;
             const points = await session.points(option.routeId);
             return [option.routeId, pointsForMode(points, "TRANSIT")] as const;
-        })).then((entries) => {
-            if (active) setSettled({ key, points: Object.fromEntries(entries.filter((entry) => entry !== null)), error: null });
+        })).then((results) => {
+            const entries = results.flatMap((result) => result.status === "fulfilled" && result.value ? [result.value] : []);
+            if (active) setSettled({
+                key, points: Object.fromEntries(entries),
+                error: results.some((result) => result.status === "rejected")
+                    ? "Account point estimates are unavailable for some transit routes. Showing route-based estimates." : null,
+            });
         }).catch((cause: unknown) => {
             if (active) setSettled({ key, points: {}, error: cause instanceof Error ? cause.message : "Couldn't load transit points." });
         });

@@ -87,6 +87,33 @@ test('failed cancellation retains the trip for retry', async () => {
     assert.equal(attempts, 2);
 });
 
+test('a failed trip creation can be retried when starting a route', async () => {
+    let attempts = 0;
+    const { session } = setup({ createTrip: async () => {
+        if (++attempts === 1) throw new Error('offline');
+        return { id: 'retry' };
+    } });
+    await assert.rejects(session.plan({}, {}, { routeId: 'walk' }), /offline/);
+    await session.plan({}, {}, { routeId: 'walk' });
+    assert.equal(await session.start('walk'), 'retry');
+    assert.equal(attempts, 2);
+});
+
+test('route cards have point estimates without authentication or a successful points request', () => {
+    const { routePoints } = load('src/lib/routePoints.ts', {
+        '@/services/routeService': { CAR_KG_CO2E_PER_KM: 0.192 },
+    });
+    const route = { distanceKm: 5, estimatedCo2Kg: 0 };
+    assert.equal(routePoints({ ...route, mode: 'WALK' }), 19);
+    assert.equal(routePoints({ ...route, mode: 'BIKE' }), 19);
+    assert.equal(routePoints({ ...route, mode: 'CAR', estimatedCo2Kg: 0.96 }), 0);
+    assert.equal(routePoints({ ...route, mode: 'TRANSIT', estimatedCo2Kg: null }), 9);
+    assert.equal(routePoints({ ...route, mode: 'WALK', tripPoints: 42 }), 42);
+    assert.equal(routePoints({ ...route, mode: 'WALK', tripPoints: 0 }), 0);
+    assert.equal(routePoints({ ...route, mode: 'WALK', estimatedCo2Kg: null }), null);
+    assert.equal(routePoints({ ...route, mode: 'WALK', distanceKm: NaN }), null);
+});
+
 test('a completed trip is never canceled during cleanup', async () => {
     const { session, calls } = setup();
     await session.plan({}, {}, { routeId: 'walk' });

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Bus, Footprints, Loader2, Navigation } from "lucide-react";
 import { ApiError } from "@/services/api";
 import { useTransitPoints } from "@/hooks/useTransitPoints";
+import { routePoints } from "@/lib/routePoints";
+import { transitTripOption } from "@/services/transitService";
 import { formatDistance } from "@/lib/formatRoute";
 import { getTransitRoutes } from "@/services/transitService";
 import type { TransitItinerary, TransitPreference, TransitResponse } from "@/services/transitService";
@@ -169,7 +171,7 @@ export default function TransitScreen({ origin, destination, destinationName, in
                                             ? new Intl.NumberFormat(undefined, { style: "currency", currency: route.currency }).format(route.fare)
                                             : "Fare unavailable"}
                                     </p>
-                                    <p className="text-sm">Eco points <span className="font-semibold">{transitPoints.points[route.id] === undefined ? "—" : String(transitPoints.points[route.id])}</span></p>
+                                    <p className="text-sm">Eco points (est.) <span className="font-semibold">{routePoints({ ...transitTripOption(route), tripPoints: transitPoints.points[route.id] }) ?? "—"}</span></p>
                                     <ol className="space-y-3">
                                         {route.steps.map((step, stepIndex) => (
                                             <li key={stepIndex} className="flex gap-3 border-t border-[#17334A]/15 pt-3">

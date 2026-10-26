@@ -17,6 +17,7 @@ type Props = {
     selectedRouteId: string | null;
     loading: boolean;
     error: string | null;
+    pointsError: string | null;
     weights: PreferenceWeights;
     onWeightsChange: (weights: PreferenceWeights) => void;
     onSelectRoute: (routeId: string) => void;
@@ -39,6 +40,7 @@ function RouteOptionsScreen({
     selectedRouteId,
     loading,
     error,
+    pointsError,
     weights,
     onWeightsChange,
     onSelectRoute,
@@ -147,6 +149,7 @@ function RouteOptionsScreen({
                                 onSelect={onSelectRoute}
                             />
                             {transitSection}
+                            {pointsError && <Note>{pointsError}</Note>}
                             <PreferenceSliders value={weights} onChange={onWeightsChange} />
                             <button
                                 type="button"
