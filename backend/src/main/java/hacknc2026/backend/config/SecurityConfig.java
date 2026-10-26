@@ -19,6 +19,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/v1/routes/compare", "/api/v1/emissions/estimate",
                                 "/api/v1/transit/routes").permitAll()

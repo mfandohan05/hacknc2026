@@ -54,6 +54,18 @@ class SecurityConfigTests {
     }
 
     @Test
+    void healthCheckIsPublicAndHidesDetails() throws Exception {
+        mvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"))
+                .andExpect(jsonPath("$.components").doesNotExist());
+        for (String path : new String[]{"/actuator", "/actuator/health/db"}) {
+            mvc.perform(get(path)).andExpect(status().isUnauthorized());
+        }
+        mvc.perform(post("/actuator/health")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void invalidBearerTokenIsRejected() throws Exception {
         when(decoder.decode("invalid-token")).thenThrow(new BadJwtException("Invalid token"));
         mvc.perform(get("/api/v1/trips").header("Authorization", "Bearer invalid-token"))
