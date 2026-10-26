@@ -62,7 +62,7 @@ Levels advance every **250 EcoPoints** of balance. Achievements track completed-
 | Authentication | Supabase Auth; bearer JWTs validated by the backend |
 | Database | PostgreSQL hosted through Supabase for profiles, trips, and point transactions |
 | Routing | Mapbox Directions for walking, cycling, and driving; Google Routes for transit |
-| Hosting | Vercel frontend and Railway backend deployment configuration |
+| Hosting | Vercel frontend and Render backend (Docker) |
 
 ```mermaid
 flowchart LR
@@ -105,7 +105,7 @@ backend/
   src/test/            Backend unit, persistence, security, and API tests
   sql/                 Sample-data and cleanup utilities
 pom.xml                Root Maven project containing the backend module
-railway.json           Backend deployment configuration
+Dockerfile             Backend container image for Render
 ```
 
 ## API overview
@@ -188,11 +188,13 @@ Provide these build-time settings:
 - `VITE_MAPBOX_KEY`: Browser Mapbox token for maps and place search.
 - `VITE_GOOGLE_MAPS_EMBED_KEY`: Google Maps embed key for transit map previews.
 
-### Backend: Railway
+### Backend: Render
 
-The root Maven project builds the backend module. `railway.json` selects Nixpacks and starts `backend/target/backend-0.0.1-SNAPSHOT.jar`. Spring binds to the platform's `PORT` variable, defaulting to 8080.
+The root `Dockerfile` builds the backend module with Maven and runs it on a Java 21 JRE, with heap settings sized for Render's 512 MB free instance. Create a Render web service with the Docker runtime and `./Dockerfile` as the Dockerfile path. Spring binds to the platform's `PORT` variable, defaulting to 8080.
 
-Provide database credentials through `SUPABASE_DB_URL`, `SUPABASE_DB_USER`, and `SUPABASE_DB_PASSWORD`; routing credentials through `MAPBOX_ACCESS_TOKEN` and `GOOGLE_ROUTES_API_KEY`; and authentication settings through `SUPABASE_JWKS_URL` and `SUPABASE_JWT_ISSUER`. Configure `CORS_ALLOWED_ORIGINS` for the deployed frontend origin.
+Provide database credentials through `SUPABASE_DB_URL`, `SUPABASE_DB_USER`, and `SUPABASE_DB_PASSWORD`; routing credentials through `MAPBOX_ACCESS_TOKEN` and `GOOGLE_ROUTES_API_KEY`; and authentication settings through `SUPABASE_JWKS_URL` and `SUPABASE_JWT_ISSUER`. Configure `CORS_ALLOWED_ORIGINS` for the deployed frontend origin. Set `SPRING_DATASOURCE_HIKARI_MAXIMUMPOOLSIZE` (for example `5`) so every running backend instance fits within the Supabase session pooler's 15-client limit.
+
+Use `/actuator/health` as the health check path; it is public and returns only the service status. Free instances spin down after about 15 minutes without traffic, so an external pinger calling this endpoint every 10 minutes keeps the backend awake.
 
 The backend validates the existing database schema at startup, so the PostgreSQL schema must already match the application entities.
 

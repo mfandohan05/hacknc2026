@@ -4,20 +4,28 @@
 # into the Supabase SQL Editor to backfill trips/points for them.
 #
 # Requires: curl, jq
-# Requires env var: SUPABASE_SERVICE_ROLE_KEY (Project Settings -> API -> service_role)
+# Requires env vars:
+#   SUPABASE_SERVICE_ROLE_KEY (Project Settings -> API -> service_role)
+#   BACKEND_URL               (deployed Render backend, no trailing slash)
 #   export SUPABASE_SERVICE_ROLE_KEY="..."
+#   export BACKEND_URL="https://<service>.onrender.com"
 #   ./create_fake_users.sh
 
 set -euo pipefail
 
 SUPABASE_URL="https://tqefntzocdoudayuevpc.supabase.co"
 SUPABASE_ANON_KEY="sb_publishable_u0zN0s95Dq_5_ycNAoSvMg_BCTPevGp"
-BACKEND_URL="https://hacknc2026-production.up.railway.app"
+BACKEND_URL="${BACKEND_URL:-}"
 
 if [[ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
   echo "Set SUPABASE_SERVICE_ROLE_KEY first (Supabase dashboard -> Project Settings -> API)." >&2
   exit 1
 fi
+if [[ -z "$BACKEND_URL" ]]; then
+  echo "Set BACKEND_URL first (the Render backend URL, e.g. https://<service>.onrender.com)." >&2
+  exit 1
+fi
+BACKEND_URL="${BACKEND_URL%/}"
 
 # username | display name | password | total_points | level
 USERS=(
