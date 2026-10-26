@@ -1,0 +1,56 @@
+# Version control
+.git
+.gitattributes
+.gitignore
+
+# IDE and editors
+.idea
+.vscode
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Backend - Maven
+backend/target
+backend/.mvn
+backend/mvnw
+backend/mvnw.cmd
+backend/src/test
+backend/.env.example
+
+# Frontend - Node.js
+frontend/node_modules
+frontend/dist
+frontend/tests
+frontend/mock
+frontend/.env.example
+frontend/package-lock.json
+
+# Documentation
+README.md
+frontend/README.md
+*.md
+
+# SQL scripts (development only)
+backend/sql
+
+# Logs
+*.log
+logs
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test files
+**/*.test.*
+**/*.spec.*
+
+# Image assets (if not needed in runtime)
+frontend/image_assets
+
+.env
+**/.env*
+**/target
+frontend
